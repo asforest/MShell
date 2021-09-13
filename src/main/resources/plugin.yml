@@ -1,0 +1,6 @@
+id: com.github.asforest.mshell
+name: MShell
+version: 0.3
+author: asforest
+dependencies:
+  - "net.mamoe.mirai.console.chat-command"
