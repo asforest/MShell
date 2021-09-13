@@ -80,13 +80,13 @@ object MainCommand : CompositeCommand(
             val usersConnected = session.usersConnected.map { u -> u.name}
             output += "[$index] $pid: $usersConnected\n"
         }
-        sendMessage(output)
+        sendMessage(output.ifEmpty { " " })
     }
 
     @SubCommand @Description("显示资源消耗情况")
     suspend fun CommandSender.status()
     {
-        var output = ""
+        var output = " "
 
         val executor = SessionManager.scd.executor
         val active = executor.activeCount
@@ -97,7 +97,7 @@ object MainCommand : CompositeCommand(
         output += "Queue: $queue\n"
         output += "PoolSize: $poolSize\n"
 
-        sendMessage(output)
+        sendMessage(output.ifEmpty { " " })
     }
 
     fun getPresetWithThrow(presetName: String): EnvPresets.Preset

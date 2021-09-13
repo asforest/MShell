@@ -53,7 +53,7 @@ object EnvCommand : CompositeCommand(
         ep.ins.presets.filter { presetName==null || presetName in it.key }.forEach {
             output += "${it.key}: ${it.value}\n"
         }
-        sendMessage(output)
+        sendMessage(output.ifEmpty { " " })
     }
 
     @SubCommand @Description("设置会话(子进程)的入口程序(一般是shell程序)")

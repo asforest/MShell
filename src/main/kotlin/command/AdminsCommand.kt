@@ -22,7 +22,7 @@ object AdminsCommand : CompositeCommand(
             var output = ""
             for((k, v) in MainConfig.admins.withIndex())
                 output += "$k: $v\n"
-            sendMessage(output)
+            sendMessage(output.ifEmpty { " " })
         }
     }
 
@@ -49,7 +49,7 @@ object AdminsCommand : CompositeCommand(
             var output = ""
             for((k, v) in MainConfig.admins.withIndex())
                 output += "$k: $v\n"
-            sendMessage(output)
+            sendMessage(output.ifEmpty { " " })
         }
     }
 
