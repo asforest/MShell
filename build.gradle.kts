@@ -20,7 +20,7 @@ dependencies {
 }
 
 tasks.register("buildTest", Copy::class) {
-    dependsOn(tasks.named("clean"))
+//    dependsOn(tasks.named("clean"))
     dependsOn(tasks.named("buildPlugin"))
 }
 
