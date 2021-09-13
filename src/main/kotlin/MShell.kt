@@ -14,6 +14,7 @@ import com.github.asforest.mshell.command.MainCommand
 import com.github.asforest.mshell.configuration.MainConfig
 import com.github.asforest.mshell.configuration.ConfigProxy
 import com.github.asforest.mshell.configuration.EnvPresets
+import com.github.asforest.mshell.exception.BaseException
 import com.github.asforest.mshell.session.SessionHistory
 import com.github.asforest.mshell.session.SessionManager
 
@@ -34,20 +35,23 @@ object MShell : KotlinPlugin(JvmPluginDescription.loadFromResource())
             if(user.id !in MainConfig.admins)
                 return@subscribeAlways
 
-            val pokePresent = message.filterIsInstance<PokeMessage>().isNotEmpty()
-            val session = SessionManager.getSessionByUserConnected(user)
+            withCatch {
+                val pokePresent = message.filterIsInstance<PokeMessage>().isNotEmpty()
+                val session = SessionManager.getSessionByUserConnected(user)
 
-            if(pokePresent)
-            {
-                if(session != null)
+                if(pokePresent)
                 {
-                    session.disconnect(user)
+                    if(session != null)
+                    {
+                        session.disconnect(user)
+                    } else {
+                        SessionHistory.tryToResume(user)
+                    }
                 } else {
-                    SessionHistory.tryToResume(user)
+                    session?.stdin?.println(message.content)
                 }
-            } else {
-                session?.stdin?.println(message.content)
             }
+
         }
 
 //        GlobalEventChannel.filter { it is BotEvent }.subscribeAlways<GroupMessageEvent> {
@@ -64,4 +68,10 @@ object MShell : KotlinPlugin(JvmPluginDescription.loadFromResource())
 //            }
 //        }
     }
+
+    suspend inline fun FriendMessageEvent.withCatch(block: FriendMessageEvent.() -> Unit)
+    {
+        try { block() } catch (e: BaseException) { user.sendMessage(e.message ?: e.stackTraceToString()) }
+    }
+
 }
