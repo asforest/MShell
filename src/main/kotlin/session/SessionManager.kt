@@ -7,6 +7,7 @@ import com.github.asforest.mshell.command.MainCommand
 import com.github.asforest.mshell.configuration.EnvPresets
 import com.github.asforest.mshell.exception.*
 import com.github.asforest.mshell.type.USER
+import net.mamoe.mirai.contact.User
 import java.io.File
 
 object SessionManager
@@ -14,6 +15,26 @@ object SessionManager
     val scd = SessionContinuationDispatcher()
     val sessions = mutableListOf<Session>()
     val connections = mutableMapOf<USER, Session>()
+    val historicalConnections = mutableMapOf<User, Long>()
+
+    suspend fun ResumeOrCreate(user: User)
+    {
+        if(isUserConnected(user))
+            throw UserAlreadyConnectedException("You have already connected to a session")
+
+        if(user in historicalConnections.keys)
+        {
+            try {
+                val pid = historicalConnections[user]!!
+                connect(user, pid)
+                user.sendMessage("Reconnected to pid($pid)")
+            } catch (e: SessionNotFoundException) {
+                historicalConnections[user] = openSessionAutomatically(user).pid
+            }
+        } else {
+            historicalConnections[user] = openSessionAutomatically(user).pid
+        }
+    }
 
     suspend fun openSessionAutomatically(user: USER, preset: String? = null): Session
     {
@@ -83,7 +104,7 @@ object SessionManager
 
         // 记录链接历史
         if(user != null)
-            SessionHistory.records[user] = session.pid
+            historicalConnections[user] = session.pid
 
         // 注册连接(Connection)
         connections[user] = session

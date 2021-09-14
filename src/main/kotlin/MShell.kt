@@ -8,7 +8,6 @@ import com.github.asforest.mshell.configuration.EnvPresets
 import com.github.asforest.mshell.configuration.MainConfig
 import com.github.asforest.mshell.exception.BaseException
 import com.github.asforest.mshell.permission.MShellPermissions
-import com.github.asforest.mshell.session.SessionHistory
 import com.github.asforest.mshell.session.SessionManager
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandSender.Companion.toCommandSender
@@ -50,7 +49,7 @@ object MShell : KotlinPlugin(JvmPluginDescription.loadFromResource())
                     {
                         session.disconnect(user)
                     } else {
-                        SessionHistory.tryToResume(user)
+                        SessionManager.ResumeOrCreate(user)
                     }
                 } else {
                     session?.stdin?.println(message.content)
