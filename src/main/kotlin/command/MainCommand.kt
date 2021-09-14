@@ -27,12 +27,50 @@ object MainCommand : CompositeCommand(
         }
     }
 
-    @SubCommand @Description("向当前连接的会话stdin里输出内容")
+    @SubCommand @Description("向当前连接的会话stdin里输出内容并换行")
     suspend fun CommandSender.write(
         @Name("text") vararg text: String
     ) {
-        for (session in SessionManager.sessions)
+        withCatch {
+            val session = SessionManager.getSessionByUserConnected(user)
+                ?: throw throw UserNotConnectedYetException("You have not connected to a session yet")
             session.stdin.println(text.joinToString(" "))
+        }
+    }
+
+    @SubCommand @Description("向当前连接的会话stdin里输出内容但不换行")
+    suspend fun CommandSender.write2(
+        @Name("text") vararg text: String
+    ) {
+        withCatch {
+            val session = SessionManager.getSessionByUserConnected(user)
+                ?: throw throw UserNotConnectedYetException("You have not connected to a session yet")
+            session.stdin.print(text.joinToString(" "))
+        }
+    }
+
+    @SubCommand @Description("向目标会话的stdin里输出内容并换行")
+    suspend fun CommandSender.writeto(
+        @Name("pid") pid: Long,
+        @Name("text") vararg text: String
+    ) {
+        withCatch {
+            val session = SessionManager.getSessionByPid(pid)
+                ?: throw SessionNotFoundException("The session of pid($pid) was not be found")
+            session.stdin.println(text.joinToString(" "))
+        }
+    }
+
+    @SubCommand @Description("向目标会话的stdin里输出内容但不换行")
+    suspend fun CommandSender.writeto2(
+        @Name("pid") pid: Long,
+        @Name("text") vararg text: String
+    ) {
+        withCatch {
+            val session = SessionManager.getSessionByPid(pid)
+                ?: throw SessionNotFoundException("The session of pid($pid) was not be found")
+            session.stdin.print(text.joinToString(" "))
+        }
     }
 
     @SubCommand @Description("强制断开一个会话的所有连接")
