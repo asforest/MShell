@@ -5,6 +5,7 @@ import com.github.asforest.mshell.configuration.MainConfig
 import com.github.asforest.mshell.event.EventDelegate
 import com.github.asforest.mshell.session.SessionManager.sendMessage2
 import com.github.asforest.mshell.type.USER
+import java.io.File
 import java.io.PrintStream
 import java.nio.charset.Charset
 import kotlin.coroutines.Continuation
@@ -12,8 +13,10 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 class Session(
-    val process: Process,
-    val manager: SessionManager
+    val manager: SessionManager,
+    command: String,
+    workdir: String? =null,
+    env: Map<String, String>? =null
 ) {
     val onProcessExit = EventDelegate<Session, suspend () -> Unit>(this)
     val onStdoutMessage = EventDelegate<Session, suspend (message: String) -> Unit>(this)
@@ -21,9 +24,10 @@ class Session(
     val onUserConnect = EventDelegate<Session, suspend (user: USER) -> Unit>(this)
     val onUserDisconnect = EventDelegate<Session, suspend (user: USER) -> Unit>(this)
 
-    val stdin = PrintStream(process.outputStream, true)
+    val process: Process
+    val stdin: PrintStream
     var stdoutBuffer = mutableListOf<String>()
-    val isAlive: Boolean get() = !process.isAlive
+    val pid: Long get() = process.pid()
 
     var job_main: Job? = null
     var job_stdoutGatheringMonitor: Job? = null
@@ -32,8 +36,24 @@ class Session(
     private var continuation_stdoutPrinter: Continuation<Unit>? = null
 
     init {
+        // 启动子进程
+        val _workdir = File(if(workdir!=null && workdir!= "") workdir else System.getProperty("user.dir"))
+        val _env = env ?: mapOf()
+        process = ProcessBuilder()
+            .command(command)
+            .directory(_workdir)
+            .also { it.environment().putAll(_env) }
+            .redirectErrorStream(true)
+            .redirectInput(ProcessBuilder.Redirect.PIPE)
+            .redirectOutput(ProcessBuilder.Redirect.PIPE)
+            .start()
+        stdin = PrintStream(process.outputStream, true)
+
         // 子进程存活监控协程
         job_main = startCoroutine {
+            // 等User连接上来，避免丢失对其输出的信息（如果有User连接的话）
+            delay(100)
+
             // 启动消息
             stdoutBuffer += "Process created with pid($pid)\n"
 
@@ -119,17 +139,17 @@ class Session(
                 usersConnected.forEach { it.sendMessage2(text) }
             }
         }
+
+        // 注册Session
+        SessionManager.sessions += this
+
+        // 启动主协程
+        job_main?.start()
     }
 
     private fun startCoroutine(block: suspend CoroutineScope.() -> Unit): Job
     {
         return GlobalScope.launch(manager.scd, CoroutineStart.LAZY, block)
-    }
-
-    fun start(): Session
-    {
-        job_main?.start()
-        return this
     }
 
     fun kill(): Session
@@ -161,6 +181,4 @@ class Session(
     val isConnected: Boolean get() = usersConnected.isNotEmpty()
 
     val usersConnected: List<USER> get() = manager.getUsersConnectedToSession(this)
-
-    val pid: Long get() = process.pid()
 }

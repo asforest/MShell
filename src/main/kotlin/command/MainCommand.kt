@@ -23,7 +23,7 @@ object MainCommand : CompositeCommand(
         @Name("preset") preset: String? = null
     ) {
         withCatch {
-            SessionManager.openSessionAutomatically(user, preset)
+            SessionManager.openSession(preset).connect(user)
         }
     }
 

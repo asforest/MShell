@@ -29,16 +29,11 @@ object SessionManager
                 connect(user, pid)
                 user.sendMessage("Reconnected to pid($pid)")
             } catch (e: SessionNotFoundException) {
-                historicalConnections[user] = openSessionAutomatically(user).pid
+                historicalConnections[user] = openSession(null).connect(user).pid
             }
         } else {
-            historicalConnections[user] = openSessionAutomatically(user).pid
+            historicalConnections[user] = openSession(null).connect(user).pid
         }
-    }
-
-    suspend fun openSessionAutomatically(user: USER, preset: String? = null): Session
-    {
-        return openSession(preset).connect(user).start()
     }
 
     fun openSession(preset: String? = null): Session
@@ -57,34 +52,18 @@ object SessionManager
                 throw PresetNotFoundException("The preset '$preset' was not found")
             ep.defaultPreset
         }
-        envPreset = MainCommand.getPresetWithThrow(epName)
+        envPreset = MShell.ep.ins.presets[epName] ?: throw PresetNotFoundException("The preset '$epName' was not found")
 
         if(envPreset.shell == "")
             throw PresetIsIncompeleteException("The preset '$envPreset' is incomplete, the field 'shell' is not be set yet")
 
-        val session = createSession(envPreset.shell, envPreset.cwd, envPreset.env)
+        val session = Session(this, envPreset.shell, envPreset.cwd, envPreset.env)
 
         // 自动执行exec
         if(envPreset.exec != "")
             session.stdin.println(envPreset.exec)
 
         return session
-    }
-
-    fun createSession(command: String, workdir: String? =null, env: Map<String, String>? =null): Session
-    {
-        val _workdir = File(if(workdir!=null && workdir!= "") workdir else System.getProperty("user.dir"))
-        val _env = env ?: mapOf()
-
-        val process = ProcessBuilder()
-            .command(command)
-            .directory(_workdir)
-            .also { it.environment().putAll(_env) }
-            .redirectErrorStream(true)
-            .redirectInput(ProcessBuilder.Redirect.PIPE)
-            .redirectOutput(ProcessBuilder.Redirect.PIPE)
-            .start()
-        return Session(process, this).also { sessions += it }
     }
 
     suspend fun connect(user: USER, pid: Long)
