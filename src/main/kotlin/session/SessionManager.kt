@@ -90,7 +90,7 @@ object SessionManager
         connections[user] = session
 
         // 分发事件
-        session.onUserConnect(session) { it(user) }
+        session.onUserConnect { it(user) }
 
         user.sendMessage2("Connect ${user.name} to (${session.pid})")
     }
@@ -103,7 +103,7 @@ object SessionManager
         val session = getSessionByUserConnected(user)!!
 
         // 分发事件
-        session.onUserDisconnect(session) { it(user) }
+        session.onUserDisconnect { it(user) }
 
         // 注销连接(Connection)
         connections.remove(user)
@@ -116,7 +116,7 @@ object SessionManager
         for(user in getUsersConnectedToSession(session))
         {
             // 分发事件
-            session.onUserDisconnect(session) { it(user) }
+            session.onUserDisconnect { it(user) }
 
             // 注销连接(Connection)
             connections.remove(user)

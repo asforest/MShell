@@ -1,6 +1,7 @@
 package com.github.asforest.mshell.event
 
-class EventDelegate<Context, Callback>: Iterable<Callback> where Callback : Function<Unit>
+class EventDelegate<Context, Callback>(val context: Context)
+    : Iterable<Callback> where Callback : Function<Unit>
 {
     val listeners = mutableListOf<Callback>()
 
@@ -9,12 +10,12 @@ class EventDelegate<Context, Callback>: Iterable<Callback> where Callback : Func
         this += cb
     }
 
-    fun invoke(context: Context, calling: (arg: Callback) -> Unit)
+    fun invoke( calling: (arg: Callback) -> Unit)
     {
         listeners.forEach { calling(it) }
     }
 
-    suspend fun invokeSuspend(context: Context, calling: suspend (arg: Callback) -> Unit)
+    suspend fun invokeSuspend(calling: suspend (arg: Callback) -> Unit)
     {
         listeners.forEach { calling(it) }
     }
@@ -24,9 +25,9 @@ class EventDelegate<Context, Callback>: Iterable<Callback> where Callback : Func
         listeners += cb
     }
 
-    suspend operator fun invoke(context: Context, calling: suspend (arg: Callback) -> Unit)
+    suspend operator fun invoke(calling: suspend (arg: Callback) -> Unit)
     {
-        invokeSuspend(context, calling)
+        invokeSuspend(calling)
     }
 
     override fun iterator(): MutableIterator<Callback>

@@ -15,11 +15,11 @@ class Session(
     val process: Process,
     val manager: SessionManager
 ) {
-    val onProcessExit = EventDelegate<Session, suspend () -> Unit>()
-    val onStdoutMessage = EventDelegate<Session, suspend (message: String) -> Unit>()
-    val onStdPipelineClose = EventDelegate<Session, suspend () -> Unit>()
-    val onUserConnect = EventDelegate<Session, suspend (user: USER) -> Unit>()
-    val onUserDisconnect = EventDelegate<Session, suspend (user: USER) -> Unit>()
+    val onProcessExit = EventDelegate<Session, suspend () -> Unit>(this)
+    val onStdoutMessage = EventDelegate<Session, suspend (message: String) -> Unit>(this)
+    val onStdPipelineClose = EventDelegate<Session, suspend () -> Unit>(this)
+    val onUserConnect = EventDelegate<Session, suspend (user: USER) -> Unit>(this)
+    val onUserDisconnect = EventDelegate<Session, suspend (user: USER) -> Unit>(this)
 
     val stdin = PrintStream(process.outputStream, true)
     var stdoutBuffer = mutableListOf<String>()
@@ -51,7 +51,7 @@ class Session(
             usersConnected.forEach { it.sendMessage2("Process exited pid(${pid})") }
 
             // 触发事件
-            onProcessExit(this@Session) { it() }
+            onProcessExit { it() }
 
             // 断开所有用户并从列表里移除
             manager.disconnectAllUsers(this@Session)
@@ -82,7 +82,7 @@ class Session(
                 }
             }
 
-            onStdPipelineClose(this@Session) { it() }
+            onStdPipelineClose { it() }
         }
 
         // stdout输出协程
@@ -113,7 +113,7 @@ class Session(
                 val text = buffered.toString()
 
                 // 分发事件
-                onStdoutMessage(this@Session) { it(text) }
+                onStdoutMessage { it(text) }
 
                 // 发送消息
                 usersConnected.forEach { it.sendMessage2(text) }

@@ -1,6 +1,18 @@
 package com.github.asforest.mshell
 
+import com.github.asforest.mshell.command.AdminsCommand
+import com.github.asforest.mshell.command.EnvCommand
+import com.github.asforest.mshell.command.MainCommand
+import com.github.asforest.mshell.configuration.ConfigProxy
+import com.github.asforest.mshell.configuration.EnvPresets
+import com.github.asforest.mshell.configuration.MainConfig
+import com.github.asforest.mshell.exception.BaseException
+import com.github.asforest.mshell.permission.MShellPermissions
+import com.github.asforest.mshell.session.SessionHistory
+import com.github.asforest.mshell.session.SessionManager
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
+import net.mamoe.mirai.console.command.CommandSender.Companion.toCommandSender
+import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.event.GlobalEventChannel
@@ -8,15 +20,6 @@ import net.mamoe.mirai.event.events.BotEvent
 import net.mamoe.mirai.event.events.FriendMessageEvent
 import net.mamoe.mirai.message.data.PokeMessage
 import net.mamoe.mirai.message.data.content
-import com.github.asforest.mshell.command.AdminsCommand
-import com.github.asforest.mshell.command.EnvCommand
-import com.github.asforest.mshell.command.MainCommand
-import com.github.asforest.mshell.configuration.MainConfig
-import com.github.asforest.mshell.configuration.ConfigProxy
-import com.github.asforest.mshell.configuration.EnvPresets
-import com.github.asforest.mshell.exception.BaseException
-import com.github.asforest.mshell.session.SessionHistory
-import com.github.asforest.mshell.session.SessionManager
 
 object MShell : KotlinPlugin(JvmPluginDescription.loadFromResource())
 {
@@ -24,6 +27,8 @@ object MShell : KotlinPlugin(JvmPluginDescription.loadFromResource())
 
     override fun onEnable()
     {
+        MShellPermissions.all
+
         ep.read()
         MainConfig.reload()
         MainCommand.register()
@@ -32,7 +37,7 @@ object MShell : KotlinPlugin(JvmPluginDescription.loadFromResource())
 
         // 订阅好友消息
         GlobalEventChannel.filter { it is BotEvent }.subscribeAlways<FriendMessageEvent> {
-            if(user.id !in MainConfig.admins)
+            if (!toCommandSender().hasPermission(MShellPermissions.all) )
                 return@subscribeAlways
 
             withCatch {

@@ -6,15 +6,19 @@ import net.mamoe.mirai.console.command.CompositeCommand
 import com.github.asforest.mshell.MShell
 import com.github.asforest.mshell.configuration.EnvPresets
 import com.github.asforest.mshell.exception.*
+import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.type.USER
+import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
+import net.mamoe.mirai.console.permission.PermitteeId.Companion.permitteeId
 
 object MainCommand : CompositeCommand(
     MShell,
     primaryName = "mshell",
     description = "MShell插件主指令",
-    secondaryNames = arrayOf("ms")
+    secondaryNames = arrayOf("ms"),
+    parentPermission = MShellPermissions.all
 ) {
     @SubCommand @Description("开启一个会话并将当前用户连接到这个会话")
     suspend fun CommandSender.open(
@@ -85,7 +89,7 @@ object MainCommand : CompositeCommand(
     @SubCommand @Description("显示资源消耗情况")
     suspend fun CommandSender.status()
     {
-        var output = " "
+        var output = ""
 
         val executor = SessionManager.scd.executor
         val active = executor.activeCount

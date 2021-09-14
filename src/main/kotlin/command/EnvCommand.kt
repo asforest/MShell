@@ -9,12 +9,16 @@ import com.github.asforest.mshell.configuration.EnvPresets
 import com.github.asforest.mshell.exception.BaseException
 import com.github.asforest.mshell.exception.PresetAlreadyExistedYetException
 import com.github.asforest.mshell.exception.PresetNotFoundException
+import com.github.asforest.mshell.permission.MShellPermissions
+import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
+import net.mamoe.mirai.console.permission.PermitteeId.Companion.permitteeId
 
 object EnvCommand : CompositeCommand(
     MShell,
     primaryName = "mshelle",
     description = "MShell插件配置指令",
-    secondaryNames = arrayOf("mse", "me")
+    secondaryNames = arrayOf("mse", "me"),
+    parentPermission = MShellPermissions.all
 ) {
     val ep: ConfigProxy<EnvPresets> get() = MShell.ep
 
@@ -165,11 +169,5 @@ object EnvCommand : CompositeCommand(
     suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)
     {
         try { block() } catch (e: BaseException) { sendMessage(e.message ?: e.stackTraceToString()) }
-    }
-
-    suspend inline fun CommandSender.withPermission(block: suspend CommandSender.() -> Unit)
-    {
-        if(user == null || user!!.id in MainConfig.admins)
-            block()
     }
 }
