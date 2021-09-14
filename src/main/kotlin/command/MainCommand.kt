@@ -1,15 +1,16 @@
 
 package com.github.asforest.mshell.command
 
-import net.mamoe.mirai.console.command.CommandSender
-import net.mamoe.mirai.console.command.CompositeCommand
 import com.github.asforest.mshell.MShell
-import com.github.asforest.mshell.configuration.EnvPresets
-import com.github.asforest.mshell.exception.*
+import com.github.asforest.mshell.exception.BaseException
+import com.github.asforest.mshell.exception.SessionNotFoundException
+import com.github.asforest.mshell.exception.UserNotConnectedYetException
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
-import com.github.asforest.mshell.type.USER
+import com.github.asforest.mshell.session.SessionUser
+import net.mamoe.mirai.console.command.CommandSender
+import net.mamoe.mirai.console.command.CompositeCommand
 
 object MainCommand : CompositeCommand(
     MShell,
@@ -23,7 +24,7 @@ object MainCommand : CompositeCommand(
         @Name("preset") preset: String? = null
     ) {
         withCatch {
-            SessionManager.openSession(preset).connect(user)
+            SessionManager.openSession(preset, SessionUser(user))
         }
     }
 
@@ -32,7 +33,7 @@ object MainCommand : CompositeCommand(
         @Name("text") vararg text: String
     ) {
         withCatch {
-            val session = SessionManager.getSessionByUserConnected(user)
+            val session = SessionManager.getSessionByUserConnected(SessionUser(user))
                 ?: throw throw UserNotConnectedYetException("You have not connected to a session yet")
             session.stdin.println(text.joinToString(" "))
         }
@@ -43,7 +44,7 @@ object MainCommand : CompositeCommand(
         @Name("text") vararg text: String
     ) {
         withCatch {
-            val session = SessionManager.getSessionByUserConnected(user)
+            val session = SessionManager.getSessionByUserConnected(SessionUser(user))
                 ?: throw throw UserNotConnectedYetException("You have not connected to a session yet")
             session.stdin.print(text.joinToString(" "))
         }
@@ -96,7 +97,7 @@ object MainCommand : CompositeCommand(
         @Name("pid") pid: Long
     ) {
         withCatch {
-            SessionManager.connect(user, pid)
+            SessionManager.connect(SessionUser(user), pid)
         }
     }
 
@@ -104,7 +105,7 @@ object MainCommand : CompositeCommand(
     suspend fun CommandSender.disconnect()
     {
         withCatch {
-            SessionManager.disconnect(user)
+            SessionManager.disconnect(SessionUser(user))
         }
     }
 
@@ -112,7 +113,6 @@ object MainCommand : CompositeCommand(
     suspend fun CommandSender.list()
     {
         var output = ""
-
         for ((index, session) in SessionManager.sessions.withIndex())
         {
             val pid = session.pid
@@ -125,7 +125,7 @@ object MainCommand : CompositeCommand(
     @SubCommand @Description("显示资源消耗情况")
     suspend fun CommandSender.status()
     {
-        var output = ""
+        var output = "ThreadPoolStatus:"
 
         val executor = SessionManager.scd.executor
         val active = executor.activeCount
@@ -133,16 +133,10 @@ object MainCommand : CompositeCommand(
         val poolSize = executor.poolSize
 
         output += "Active: $active\n"
-        output += "Queue: $queue\n"
+        output += "Queued: $queue\n"
         output += "PoolSize: $poolSize\n"
 
         sendMessage(output.ifEmpty { " " })
-    }
-
-    fun getPresetWithThrow(presetName: String): EnvPresets.Preset
-    {
-        return MShell.ep.ins.presets[presetName]
-            ?: throw PresetNotFoundException("The preset '$presetName' was not found")
     }
 
     fun getSessionByPidWithThrow(pid: Long): Session
@@ -155,6 +149,4 @@ object MainCommand : CompositeCommand(
     {
         try { block() } catch (e: BaseException) { sendMessage(e.message ?: e.stackTraceToString()) }
     }
-
-    val USER.name: String get() = if(this != null) "$nick($id)" else "<Console>"
 }

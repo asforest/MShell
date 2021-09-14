@@ -1,10 +1,8 @@
 package com.github.asforest.mshell.session
 
-import kotlinx.coroutines.*
 import com.github.asforest.mshell.configuration.MainConfig
-import com.github.asforest.mshell.event.EventDelegate
-import com.github.asforest.mshell.session.SessionManager.sendMessage2
-import com.github.asforest.mshell.type.USER
+import com.github.asforest.mshell.event.Event
+import kotlinx.coroutines.*
 import java.io.File
 import java.io.PrintStream
 import java.nio.charset.Charset
@@ -14,15 +12,16 @@ import kotlin.coroutines.suspendCoroutine
 
 class Session(
     val manager: SessionManager,
+    userToConnect: SessionUser?,
     command: String,
     workdir: String? =null,
     env: Map<String, String>? =null
 ) {
-    val onProcessExit = EventDelegate<Session, suspend () -> Unit>(this)
-    val onStdoutMessage = EventDelegate<Session, suspend (message: String) -> Unit>(this)
-    val onStdPipelineClose = EventDelegate<Session, suspend () -> Unit>(this)
-    val onUserConnect = EventDelegate<Session, suspend (user: USER) -> Unit>(this)
-    val onUserDisconnect = EventDelegate<Session, suspend (user: USER) -> Unit>(this)
+    val onProcessExit = Event<Session, suspend () -> Unit>(this)
+    val onStdoutMessage = Event<Session, suspend (message: String) -> Unit>(this)
+    val onStdPipelineClose = Event<Session, suspend () -> Unit>(this)
+    val onUserConnect = Event<Session, suspend (user: SessionUser) -> Unit>(this)
+    val onUserDisconnect = Event<Session, suspend (user: SessionUser) -> Unit>(this)
 
     val process: Process
     val stdin: PrintStream
@@ -49,14 +48,13 @@ class Session(
             .start()
         stdin = PrintStream(process.outputStream, true)
 
+        // 发送消息
+        runBlocking {
+            userToConnect?.sendMessage("Process created with pid($pid)")
+        }
+
         // 子进程存活监控协程
         job_main = startCoroutine {
-            // 等User连接上来，避免丢失对其输出的信息（如果有User连接的话）
-            delay(100)
-
-            // 启动消息
-            stdoutBuffer += "Process created with pid($pid)\n"
-
             // 启动其它协程
             job_stdoutGatheringMonitor?.start()
             job_stdoutPrinter?.start()
@@ -67,11 +65,11 @@ class Session(
                 it.resume(Unit)
             }
 
-            // 退出消息
-            usersConnected.forEach { it.sendMessage2("Process exited with pid(${pid})") }
-
             // 触发事件
             onProcessExit { it() }
+
+            // 退出消息
+            usersConnected.forEach { it.sendMessage("Process exited with pid(${pid})") }
 
             // 断开所有用户并从列表里移除
             manager.disconnectAll(this@Session)
@@ -136,12 +134,16 @@ class Session(
                 onStdoutMessage { it(text) }
 
                 // 发送消息
-                usersConnected.forEach { it.sendMessage2(text) }
+                usersConnected.forEach { it.sendMessage(text) }
             }
         }
 
         // 注册Session
         SessionManager.sessions += this
+
+        // 设置连接
+        if(userToConnect != null)
+            runBlocking { connect(userToConnect) }
 
         // 启动主协程
         job_main?.start()
@@ -158,13 +160,13 @@ class Session(
         return this
     }
 
-    suspend fun connect(user: USER): Session
+    suspend fun connect(user: SessionUser): Session
     {
         manager.connect(user, this)
         return this
     }
 
-    suspend fun disconnect(user: USER): Session
+    suspend fun disconnect(user: SessionUser): Session
     {
         manager.disconnect(user)
         return this
@@ -176,9 +178,9 @@ class Session(
         return this
     }
 
-    fun isUserConnected(user: USER): Boolean = manager.getSessionByUserConnected(user) == this
+    fun isUserConnected(user: SessionUser): Boolean = manager.getSessionByUserConnected(user) == this
 
     val isConnected: Boolean get() = usersConnected.isNotEmpty()
 
-    val usersConnected: List<USER> get() = manager.getUsersConnectedToSession(this)
+    val usersConnected: List<SessionUser> get() = manager.getUsersConnectedToSession(this)
 }

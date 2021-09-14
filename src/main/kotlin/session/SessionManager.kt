@@ -1,23 +1,18 @@
 
 package com.github.asforest.mshell.session
 
-import net.mamoe.mirai.console.command.ConsoleCommandSender
 import com.github.asforest.mshell.MShell
-import com.github.asforest.mshell.command.MainCommand
 import com.github.asforest.mshell.configuration.EnvPresets
 import com.github.asforest.mshell.exception.*
-import com.github.asforest.mshell.type.USER
-import net.mamoe.mirai.contact.User
-import java.io.File
 
 object SessionManager
 {
     val scd = SessionContinuationDispatcher()
     val sessions = mutableListOf<Session>()
-    val connections = mutableMapOf<USER, Session>()
-    val historicalConnections = mutableMapOf<User, Long>()
+    val connections = mutableMapOf<SessionUser, Session>()
+    val historicalConnections = mutableMapOf<SessionUser, Long>()
 
-    suspend fun ResumeOrCreate(user: User)
+    suspend fun ResumeOrCreate(user: SessionUser)
     {
         if(isUserConnected(user))
             throw UserAlreadyConnectedException("You have already connected to a session")
@@ -29,14 +24,14 @@ object SessionManager
                 connect(user, pid)
                 user.sendMessage("Reconnected to pid($pid)")
             } catch (e: SessionNotFoundException) {
-                historicalConnections[user] = openSession(null).connect(user).pid
+                historicalConnections[user] = openSession(null, user).pid
             }
         } else {
-            historicalConnections[user] = openSession(null).connect(user).pid
+            historicalConnections[user] = openSession(null, user).pid
         }
     }
 
-    fun openSession(preset: String? = null): Session
+    suspend fun openSession(preset: String? = null, user: SessionUser): Session
     {
         val ep = MShell.ep.ins
         val envPreset: EnvPresets.Preset
@@ -57,7 +52,7 @@ object SessionManager
         if(envPreset.shell == "")
             throw PresetIsIncompeleteException("The preset '$envPreset' is incomplete, the field 'shell' is not be set yet")
 
-        val session = Session(this, envPreset.shell, envPreset.cwd, envPreset.env)
+        val session = Session(this, user, envPreset.shell, envPreset.cwd, envPreset.env)
 
         // 自动执行exec
         if(envPreset.exec != "")
@@ -66,14 +61,14 @@ object SessionManager
         return session
     }
 
-    suspend fun connect(user: USER, pid: Long)
+    suspend fun connect(user: SessionUser, pid: Long)
     {
         val session = getSessionByPid(pid)
             ?: throw SessionNotFoundException("The session of pid($pid) was not be found")
         connect(user, session)
     }
 
-    suspend fun connect(user: USER, session: Session)
+    suspend fun connect(user: SessionUser, session: Session)
     {
         getSessionByUserConnected(user)?.also {
             if(it == session)
@@ -82,7 +77,7 @@ object SessionManager
         }
 
         // 记录链接历史
-        if(user != null)
+        if(!user.isConsole)
             historicalConnections[user] = session.pid
 
         // 注册连接(Connection)
@@ -91,23 +86,23 @@ object SessionManager
         // 分发事件
         session.onUserConnect { it(user) }
 
-        user.sendMessage2("Connected to pid(${session.pid})")
+        user.sendMessage("Connected to pid(${session.pid})")
     }
 
-    suspend fun disconnect(user: USER)
+    suspend fun disconnect(user: SessionUser)
     {
         if(!isUserConnected(user))
             throw UserNotConnectedYetException("You have not connected to a session yet")
 
         val session = getSessionByUserConnected(user)!!
 
+        user.sendMessage("Disconnected from pid(${session.pid})")
+
         // 分发事件
         session.onUserDisconnect { it(user) }
 
         // 注销连接(Connection)
         connections.remove(user)
-
-        user.sendMessage2("Disconnected from pid(${session.pid})")
     }
 
     suspend fun disconnectAll(session: Session)
@@ -120,7 +115,7 @@ object SessionManager
             // 注销连接(Connection)
             connections.remove(user)
 
-            user.sendMessage2("Disconnected from pid(${session.pid})")
+            user.sendMessage("Disconnected from pid(${session.pid})")
         }
     }
 
@@ -132,7 +127,7 @@ object SessionManager
         return null
     }
 
-    fun getSessionByUserConnected(user: USER): Session?
+    fun getSessionByUserConnected(user: SessionUser): Session?
     {
         for ((u, s) in connections)
             if(u == user)
@@ -140,19 +135,13 @@ object SessionManager
         return null
     }
 
-    fun isUserConnected(user: USER): Boolean
+    fun isUserConnected(user: SessionUser): Boolean
     {
         return user in connections.keys
     }
 
-    fun getUsersConnectedToSession(session: Session): List<USER>
+    fun getUsersConnectedToSession(session: Session): List<SessionUser>
     {
         return connections.filter { it.value == session }.map { it.key }
-    }
-
-    val USER.name: String get() = if(this != null) "$nick($id)" else "<Console>"
-
-    suspend fun USER.sendMessage2(msg: String) {
-        if(this != null) sendMessage(msg) else ConsoleCommandSender.sendMessage(msg)
     }
 }

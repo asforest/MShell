@@ -3,14 +3,12 @@ package com.github.asforest.mshell.command
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 import com.github.asforest.mshell.MShell
-import com.github.asforest.mshell.configuration.MainConfig
-import com.github.asforest.mshell.permission.GrantingsUtil
+import com.github.asforest.mshell.permission.PermissionUtil
 import com.github.asforest.mshell.permission.MShellPermissions
 import net.mamoe.mirai.console.permission.*
 import net.mamoe.mirai.console.permission.PermissionService.Companion.cancel
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.permission.PermissionService.Companion.permit
-import net.mamoe.mirai.console.permission.PermitteeId.Companion.permitteeId
 
 object AdminsCommand : CompositeCommand(
     MShell,
@@ -47,7 +45,7 @@ object AdminsCommand : CompositeCommand(
 
     @SubCommand @Description("列出所有管理员")
     suspend fun CommandSender.list() {
-        val f = GrantingsUtil.grantings.filterIsInstance<AbstractPermitteeId.ExactFriend>()
+        val f = PermissionUtil.grantings.filterIsInstance<AbstractPermitteeId.ExactFriend>()
         var output = ""
         for ((idx, p) in f.withIndex()) {
             output += "$idx: ${p.id}\n"

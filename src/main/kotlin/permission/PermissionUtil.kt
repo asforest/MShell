@@ -6,7 +6,7 @@ import net.mamoe.mirai.console.data.PluginDataExtensions
 import net.mamoe.mirai.console.permission.PermissionId
 import net.mamoe.mirai.console.permission.PermitteeId
 
-object GrantingsUtil
+object PermissionUtil
 {
     val grantings: MutableCollection<PermitteeId> by lazy {
         grantedPermissionsMap

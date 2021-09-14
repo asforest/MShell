@@ -1,6 +1,5 @@
 package com.github.asforest.mshell.session
 
-import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadPoolExecutor
 import kotlin.coroutines.AbstractCoroutineContextElement

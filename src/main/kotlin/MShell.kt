@@ -9,6 +9,7 @@ import com.github.asforest.mshell.configuration.MainConfig
 import com.github.asforest.mshell.exception.BaseException
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.SessionManager
+import com.github.asforest.mshell.session.SessionUser
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandSender.Companion.toCommandSender
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
@@ -40,6 +41,7 @@ object MShell : KotlinPlugin(JvmPluginDescription.loadFromResource())
                 return@subscribeAlways
 
             withCatch {
+                val user = SessionUser(user)
                 val pokePresent = message.filterIsInstance<PokeMessage>().isNotEmpty()
                 val session = SessionManager.getSessionByUserConnected(user)
 

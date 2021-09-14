@@ -1,6 +1,6 @@
 package com.github.asforest.mshell.event
 
-class EventDelegate<Context, Callback>(val context: Context)
+class Event<Context, Callback>(val context: Context)
     : Iterable<Callback> where Callback : Function<Unit>
 {
     val listeners = mutableListOf<Callback>()
