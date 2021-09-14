@@ -125,7 +125,7 @@ object MainCommand : CompositeCommand(
     @SubCommand @Description("显示资源消耗情况")
     suspend fun CommandSender.status()
     {
-        var output = "ThreadPoolStatus:"
+        var output = "ThreadPoolStatus:\n"
 
         val executor = SessionManager.scd.executor
         val active = executor.activeCount
