@@ -10,8 +10,6 @@ import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.type.USER
-import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
-import net.mamoe.mirai.console.permission.PermitteeId.Companion.permitteeId
 
 object MainCommand : CompositeCommand(
     MShell,
@@ -60,7 +58,7 @@ object MainCommand : CompositeCommand(
         @Name("pid") pid: Long
     ) {
         withCatch {
-            SessionManager.connectToSession(user, pid)
+            SessionManager.connect(user, pid)
         }
     }
 
@@ -68,7 +66,7 @@ object MainCommand : CompositeCommand(
     suspend fun CommandSender.disconnect()
     {
         withCatch {
-            SessionManager.disconnectFromSession(user)
+            SessionManager.disconnect(user)
         }
     }
 

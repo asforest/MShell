@@ -35,7 +35,7 @@ class Session(
         // 子进程存活监控协程
         job_main = startCoroutine {
             // 启动消息
-            stdoutBuffer += "Process created pid($pid)\n"
+            stdoutBuffer += "Process created with pid($pid)\n"
 
             // 启动其它协程
             job_stdoutGatheringMonitor?.start()
@@ -48,13 +48,13 @@ class Session(
             }
 
             // 退出消息
-            usersConnected.forEach { it.sendMessage2("Process exited pid(${pid})") }
+            usersConnected.forEach { it.sendMessage2("Process exited with pid(${pid})") }
 
             // 触发事件
             onProcessExit { it() }
 
             // 断开所有用户并从列表里移除
-            manager.disconnectAllUsers(this@Session)
+            manager.disconnectAll(this@Session)
             manager.sessions.remove(this@Session)
 
             // 停止其它协程
@@ -140,19 +140,19 @@ class Session(
 
     suspend fun connect(user: USER): Session
     {
-        manager.connectToSession(user, this)
+        manager.connect(user, this)
         return this
     }
 
     suspend fun disconnect(user: USER): Session
     {
-        manager.disconnectFromSession(user)
+        manager.disconnect(user)
         return this
     }
 
     suspend fun disconnectAll(): Session
     {
-        manager.disconnectAllUsers(this)
+        manager.disconnectAll(this)
         return this
     }
 

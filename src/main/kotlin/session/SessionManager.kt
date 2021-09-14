@@ -6,7 +6,6 @@ import com.github.asforest.mshell.MShell
 import com.github.asforest.mshell.command.MainCommand
 import com.github.asforest.mshell.configuration.EnvPresets
 import com.github.asforest.mshell.exception.*
-import com.github.asforest.mshell.session.SessionManager.sendMessage2
 import com.github.asforest.mshell.type.USER
 import java.io.File
 
@@ -30,7 +29,7 @@ object SessionManager
         val epName: String = if(preset == null) {
             val def = ep.defaultPreset
             if(def == "")
-                throw NoDefaultPresetException("The default preset had not set yet or it was invalid.")
+                throw NoDefaultPresetException("The default preset has not set yet or it was invalid.")
             def
         } else {
             if(preset !in ep.presets.keys)
@@ -40,7 +39,7 @@ object SessionManager
         envPreset = MainCommand.getPresetWithThrow(epName)
 
         if(envPreset.shell == "")
-            throw PresetIsIncompeleteException("The preset '$envPreset' is incomplete, the field 'shell' is not set yet")
+            throw PresetIsIncompeleteException("The preset '$envPreset' is incomplete, the field 'shell' is not be set yet")
 
         val session = createSession(envPreset.shell, envPreset.cwd, envPreset.env)
 
@@ -67,19 +66,19 @@ object SessionManager
         return Session(process, this).also { sessions += it }
     }
 
-    suspend fun connectToSession(user: USER, pid: Long)
+    suspend fun connect(user: USER, pid: Long)
     {
         val session = getSessionByPid(pid)
             ?: throw SessionNotFoundException("The session of pid($pid) was not be found")
-        connectToSession(user, session)
+        connect(user, session)
     }
 
-    suspend fun connectToSession(user: USER, session: Session)
+    suspend fun connect(user: USER, session: Session)
     {
         getSessionByUserConnected(user)?.also {
             if(it == session)
-                throw UserAlreadyConnectedException("The user ${user.name} had already connected with this session")
-            throw UserAlreadyConnectedException("The user ${user.name} had already connected with a other session ${it.pid}")
+                throw UserAlreadyConnectedException("You have has already connected to this session")
+            throw UserAlreadyConnectedException("You have already connected to a other session (${it.pid})")
         }
 
         // 记录链接历史
@@ -92,13 +91,13 @@ object SessionManager
         // 分发事件
         session.onUserConnect { it(user) }
 
-        user.sendMessage2("Connect ${user.name} to (${session.pid})")
+        user.sendMessage2("Connected to pid(${session.pid})")
     }
 
-    suspend fun disconnectFromSession(user: USER)
+    suspend fun disconnect(user: USER)
     {
         if(!isUserConnected(user))
-            throw UserNotConnectedYetException("The user ${user.name} has not connected with a session yet")
+            throw UserNotConnectedYetException("You have not connected to a session yet")
 
         val session = getSessionByUserConnected(user)!!
 
@@ -108,10 +107,10 @@ object SessionManager
         // 注销连接(Connection)
         connections.remove(user)
 
-        user.sendMessage2("Disconnect ${user.name} from (${session.pid})")
+        user.sendMessage2("Disconnected from pid(${session.pid})")
     }
 
-    suspend fun disconnectAllUsers(session: Session)
+    suspend fun disconnectAll(session: Session)
     {
         for(user in getUsersConnectedToSession(session))
         {
@@ -121,7 +120,7 @@ object SessionManager
             // 注销连接(Connection)
             connections.remove(user)
 
-            user.sendMessage2("Disconnect ${user.name} from (${session.pid})")
+            user.sendMessage2("Disconnected from pid(${session.pid})")
         }
     }
 
@@ -151,7 +150,6 @@ object SessionManager
         return connections.filter { it.value == session }.map { it.key }
     }
 
-//    val USER.name: String get() = if(user != null) "${user!!.nick}(${user!!.id})" else "<Console>"
     val USER.name: String get() = if(this != null) "$nick($id)" else "<Console>"
 
     suspend fun USER.sendMessage2(msg: String) {
