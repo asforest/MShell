@@ -48,7 +48,6 @@ object MainCommand : CompositeCommand(
     ) {
         withCatch {
             getSessionByPidWithThrow(pid).kill()
-            list()
         }
     }
 
