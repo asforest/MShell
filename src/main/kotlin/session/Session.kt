@@ -2,6 +2,7 @@ package com.github.asforest.mshell.session
 
 import com.github.asforest.mshell.configuration.MainConfig
 import com.github.asforest.mshell.event.Event
+import com.github.asforest.mshell.exception.UnsupportedCharsetException
 import kotlinx.coroutines.*
 import okhttp3.internal.wait
 import java.io.File
@@ -16,7 +17,8 @@ class Session(
     userToConnect: SessionUser?,
     command: String,
     workdir: String? =null,
-    env: Map<String, String>? =null
+    env: Map<String, String>? =null,
+    charset: String
 ) {
     val onProcessExit = Event<Session, suspend () -> Unit>(this)
     val onStdoutMessage = Event<Session, suspend (message: String) -> Unit>(this)
@@ -39,6 +41,8 @@ class Session(
         // 启动子进程
         val _workdir = File(if(workdir!=null && workdir!= "") workdir else System.getProperty("user.dir"))
         val _env = env ?: mapOf()
+        val _charset = if(Charset.isSupported(charset)) charset
+                       else throw UnsupportedCharsetException("The charset '$charset' is unsupported")
         process = ProcessBuilder()
             .command(command)
             .directory(_workdir)
@@ -47,7 +51,7 @@ class Session(
             .redirectInput(ProcessBuilder.Redirect.PIPE)
             .redirectOutput(ProcessBuilder.Redirect.PIPE)
             .start()
-        stdin = PrintStream(process.outputStream, true)
+        stdin = PrintStream(process.outputStream, true, _charset)
 
         // 发送消息
         runBlocking {
@@ -99,7 +103,7 @@ class Session(
                 if(len != -1 && process.isAlive)
                 {
                     synchronized(stdoutBuffer) {
-                        stdoutBuffer += String(buffer, 0, len, Charset.forName("gbk"))
+                        stdoutBuffer += String(buffer, 0, len, Charset.forName(_charset))
                     }
                     continuation_stdoutPrinter?.resume(Unit)
                     continuation_stdoutPrinter = null

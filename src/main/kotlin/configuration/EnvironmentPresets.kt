@@ -1,19 +1,9 @@
 package com.github.asforest.mshell.configuration
 
-class EnvPresets : ConfigProxy.ProxiableConfiguration
+class EnvironmentPresets : ConfigProxy.ProxiableConfiguration
 {
     var defaultPreset: String = ""
     var presets = mutableMapOf<String, Preset>()
-
-    class Preset
-    {
-        var shell: String = ""
-        var cwd: String = ""
-        var env: MutableMap<String, String> = mutableMapOf()
-        var exec: String = ""
-
-        override fun toString(): String = "shell($shell), cwd($cwd), env($env), exec($exec)"
-    }
 
     fun validate()
     {
@@ -31,3 +21,11 @@ class EnvPresets : ConfigProxy.ProxiableConfiguration
         validate()
     }
 }
+
+data class Preset(
+    var shell: String = "",
+    var charset: String = "",
+    var cwd: String = "",
+    var env: MutableMap<String, String> = mutableMapOf(),
+    var exec: String = ""
+)

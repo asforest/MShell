@@ -4,7 +4,7 @@ import com.github.asforest.mshell.command.AdminsCommand
 import com.github.asforest.mshell.command.EnvCommand
 import com.github.asforest.mshell.command.MainCommand
 import com.github.asforest.mshell.configuration.ConfigProxy
-import com.github.asforest.mshell.configuration.EnvPresets
+import com.github.asforest.mshell.configuration.EnvironmentPresets
 import com.github.asforest.mshell.configuration.MainConfig
 import com.github.asforest.mshell.exception.BaseException
 import com.github.asforest.mshell.permission.MShellPermissions
@@ -23,7 +23,7 @@ import net.mamoe.mirai.message.data.content
 
 object MShell : KotlinPlugin(JvmPluginDescription.loadFromResource())
 {
-    val ep = ConfigProxy(EnvPresets::class.java, "presets.yml")
+    val ep = ConfigProxy(EnvironmentPresets::class.java, "presets.yml")
 
     override fun onEnable()
     {

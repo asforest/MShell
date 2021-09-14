@@ -3,15 +3,12 @@ package com.github.asforest.mshell.command
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 import com.github.asforest.mshell.MShell
-import com.github.asforest.mshell.configuration.MainConfig
 import com.github.asforest.mshell.configuration.ConfigProxy
-import com.github.asforest.mshell.configuration.EnvPresets
-import com.github.asforest.mshell.exception.BaseException
-import com.github.asforest.mshell.exception.PresetAlreadyExistedYetException
-import com.github.asforest.mshell.exception.PresetNotFoundException
+import com.github.asforest.mshell.configuration.Preset
+import com.github.asforest.mshell.configuration.EnvironmentPresets
+import com.github.asforest.mshell.exception.*
 import com.github.asforest.mshell.permission.MShellPermissions
-import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
-import net.mamoe.mirai.console.permission.PermitteeId.Companion.permitteeId
+import java.nio.charset.Charset
 
 object EnvCommand : CompositeCommand(
     MShell,
@@ -20,18 +17,28 @@ object EnvCommand : CompositeCommand(
     secondaryNames = arrayOf("mse", "me"),
     parentPermission = MShellPermissions.all
 ) {
-    val ep: ConfigProxy<EnvPresets> get() = MShell.ep
+    val ep: ConfigProxy<EnvironmentPresets> get() = MShell.ep
 
     @SubCommand @Description("创建一个环境预设")
     suspend fun CommandSender.add(
-        @Name("preset") presetName: String
+        @Name("preset") presetName: String,
+        @Name("charset") charset: String,
+        @Name("shell") vararg shell: String
     ) {
         withCatch {
             if (presetName in ep.ins.presets.keys)
                 throw PresetAlreadyExistedYetException("The preset '$presetName' has already existed yet")
-            ep.ins.presets[presetName] = EnvPresets.Preset()
+            if(!Charset.isSupported(charset))
+                throw UnsupportedCharsetException("The charset '$charset' is unsupported")
+            if(shell.isEmpty())
+                throw MissingParamaterException("The paramater 'shell' is missing or empty")
+
+            ep.ins.presets[presetName] = Preset(shell.joinToString(" "), charset)
+
+            // 如果这是创建的第一个预设，就设置为默认预设
             if(ep.ins.defaultPreset == "")
                 ep.ins.defaultPreset = presetName
+
             ep.write()
             list(presetName)
         }
@@ -133,6 +140,28 @@ object EnvCommand : CompositeCommand(
         }
     }
 
+    @SubCommand @Description("设置环境的编码方式")
+    suspend fun CommandSender.charset(
+        @Name("preset") presetName: String,
+        @Name("charset") charset: String =""
+    ) {
+        withCatch {
+            val preset = getPresetWithThrow(presetName)
+
+            if(charset.isEmpty()) {
+                ep.ins.presets[presetName]!!.charset = ""
+            } else {
+                if(Charset.isSupported(charset))
+                    ep.ins.presets[presetName]!!.charset = charset
+                else
+                    throw UnsupportedCharsetException("The charset '$charset' is unsupported")
+            }
+            ep.write()
+
+            sendMessage(preset.toString())
+        }
+    }
+
     @SubCommand @Description("设置默认的环境预设方案")
     suspend fun CommandSender.def(
         @Name("preset") presetName: String? =null
@@ -160,7 +189,7 @@ object EnvCommand : CompositeCommand(
         }
     }
 
-    fun getPresetWithThrow(presetName: String): EnvPresets.Preset
+    fun getPresetWithThrow(presetName: String): Preset
     {
         return ep.ins.presets[presetName]
             ?: throw PresetNotFoundException("The preset '$presetName' was not found")

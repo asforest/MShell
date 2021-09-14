@@ -2,7 +2,7 @@
 package com.github.asforest.mshell.session
 
 import com.github.asforest.mshell.MShell
-import com.github.asforest.mshell.configuration.EnvPresets
+import com.github.asforest.mshell.configuration.Preset
 import com.github.asforest.mshell.exception.*
 
 object SessionManager
@@ -33,30 +33,30 @@ object SessionManager
 
     suspend fun openSession(preset: String? = null, user: SessionUser): Session
     {
-        val ep = MShell.ep.ins
-        val envPreset: EnvPresets.Preset
+        val epins = MShell.ep.ins
+        val ep: Preset
 
         // 加载环境预设
         val epName: String = if(preset == null) {
-            val def = ep.defaultPreset
+            val def = epins.defaultPreset
             if(def == "")
                 throw NoDefaultPresetException("The default preset has not set yet or it was invalid.")
             def
         } else {
-            if(preset !in ep.presets.keys)
+            if(preset !in epins.presets.keys)
                 throw PresetNotFoundException("The preset '$preset' was not found")
-            ep.defaultPreset
+            epins.defaultPreset
         }
-        envPreset = MShell.ep.ins.presets[epName] ?: throw PresetNotFoundException("The preset '$epName' was not found")
+        ep = MShell.ep.ins.presets[epName] ?: throw PresetNotFoundException("The preset '$epName' was not found")
 
-        if(envPreset.shell == "")
-            throw PresetIsIncompeleteException("The preset '$envPreset' is incomplete, the field 'shell' is not be set yet")
+        if(ep.shell == "")
+            throw PresetIsIncompeleteException("The preset '$ep' is incomplete, either the field 'shell' or the field 'charset' is not set yet")
 
-        val session = Session(this, user, envPreset.shell, envPreset.cwd, envPreset.env)
+        val session = Session(this, user, ep.shell, ep.cwd, ep.env, ep.charset)
 
         // 自动执行exec
-        if(envPreset.exec != "")
-            session.stdin.println(envPreset.exec)
+        if(ep.exec != "")
+            session.stdin.println(ep.exec)
 
         return session
     }
