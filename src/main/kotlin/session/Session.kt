@@ -3,6 +3,7 @@ package com.github.asforest.mshell.session
 import com.github.asforest.mshell.configuration.MainConfig
 import com.github.asforest.mshell.event.Event
 import kotlinx.coroutines.*
+import okhttp3.internal.wait
 import java.io.File
 import java.io.PrintStream
 import java.nio.charset.Charset
@@ -68,12 +69,17 @@ class Session(
             // 触发事件
             onProcessExit { it() }
 
+            // 等待stdpipeline关闭
+            job_stdoutGatheringMonitor?.join()
+
             // 退出消息
             usersConnected.forEach { it.sendMessage("Process exited with pid(${pid})") }
 
             // 断开所有用户并从列表里移除
             manager.disconnectAll(this@Session)
             manager.sessions.remove(this@Session)
+
+            delay(300)
 
             // 停止其它协程
             job_stdoutPrinter?.cancel()
@@ -100,12 +106,16 @@ class Session(
                 }
             }
 
+            // 让缓冲区里的消息发送完毕
+            job_stdoutPrinter?.join()
+
+            // 分发事件
             onStdPipelineClose { it() }
         }
 
         // stdout输出协程
         job_stdoutPrinter = startCoroutine {
-            while (true)
+            while (process.isAlive)
             {
                 if(stdoutBuffer.isEmpty())
                     suspendCoroutine<Unit> { continuation_stdoutPrinter = it }
