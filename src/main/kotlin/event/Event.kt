@@ -1,38 +1,49 @@
 package com.github.asforest.mshell.event
 
 class Event<Context, Callback>(val context: Context)
-    : Iterable<Callback> where Callback : Function<Unit>
+    : Iterable<Event.Listener<Callback>> where Callback : Function<Unit>
 {
-    val listeners = mutableListOf<Callback>()
+    val listeners = mutableListOf<Listener<Callback>>()
 
-    fun on(cb: Callback)
+    fun always(cb: Callback)
     {
-        this += cb
+        this += Listener(cb, ListenerType.ALWAYS)
     }
 
-    fun invoke( calling: (arg: Callback) -> Unit)
+    fun once(cb: Callback)
     {
-        listeners.forEach { calling(it) }
+        this += Listener(cb, ListenerType.ONCE)
     }
 
-    suspend fun invokeSuspend(calling: suspend (arg: Callback) -> Unit)
+    fun invokeSuspend(calling: (arg: Callback) -> Unit)
     {
-        listeners.forEach { calling(it) }
+        listeners.forEach { calling(it.callback) }
+        listeners.removeIf { it.type == ListenerType.ONCE }
     }
 
-    operator fun plusAssign(cb: Callback)
+    operator fun plusAssign(listener: Listener<Callback>)
     {
-        listeners += cb
+        listeners += listener
     }
 
-    suspend operator fun invoke(calling: suspend (arg: Callback) -> Unit)
+    operator fun invoke(calling: (arg: Callback) -> Unit)
     {
         invokeSuspend(calling)
     }
 
-    override fun iterator(): MutableIterator<Callback>
+    override fun iterator(): MutableIterator<Listener<Callback>>
     {
         return listeners.iterator()
+    }
+
+    data class Listener<Callback>(
+        val callback: Callback,
+        val type: ListenerType
+    )
+
+    enum class ListenerType
+    {
+        NEVER, ONCE, ALWAYS
     }
 }
 

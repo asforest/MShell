@@ -82,9 +82,6 @@ object SessionManager
         // 注册连接(Connection)
         connections[user] = session
 
-        // 分发事件
-        session.onUserConnect { it(user) }
-
         user.sendMessage("Connected to pid(${session.pid})")
     }
 
@@ -97,9 +94,6 @@ object SessionManager
 
         user.sendMessage("Disconnected from pid(${session.pid})")
 
-        // 分发事件
-        session.onUserDisconnect { it(user) }
-
         // 注销连接(Connection)
         connections.remove(user)
     }
@@ -108,9 +102,6 @@ object SessionManager
     {
         for(user in getUsersConnectedToSession(session))
         {
-            // 分发事件
-            session.onUserDisconnect { it(user) }
-
             // 注销连接(Connection)
             connections.remove(user)
 
@@ -128,8 +119,8 @@ object SessionManager
 
     fun getSessionByUserConnected(user: SessionUser): Session?
     {
-        for ((user, session) in connections)
-            if(user == user)
+        for ((u, session) in connections)
+            if(u == user)
                 return session
         return null
     }

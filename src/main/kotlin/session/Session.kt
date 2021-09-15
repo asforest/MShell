@@ -4,11 +4,9 @@ import com.github.asforest.mshell.configuration.MainConfig
 import com.github.asforest.mshell.event.Event
 import com.github.asforest.mshell.exception.UnsupportedCharsetException
 import kotlinx.coroutines.*
-import okhttp3.internal.wait
 import java.io.File
 import java.io.PrintStream
 import java.nio.charset.Charset
-import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -20,22 +18,18 @@ class Session(
     env: Map<String, String>? =null,
     charset: String
 ) {
-    val onProcessExit = Event<Session, suspend () -> Unit>(this)
-    val onStdoutMessage = Event<Session, suspend (message: String) -> Unit>(this)
-    val onStdPipelineClose = Event<Session, suspend () -> Unit>(this)
-    val onUserConnect = Event<Session, suspend (user: SessionUser) -> Unit>(this)
-    val onUserDisconnect = Event<Session, suspend (user: SessionUser) -> Unit>(this)
-
     val process: Process
     val stdin: PrintStream
     var stdoutBuffer = mutableListOf<String>()
     val pid: Long get() = process.pid()
 
-    var job_main: Job? = null
-    var job_stdoutGatheringMonitor: Job? = null
-    var job_stdoutPrinter: Job? = null
+    var co_main: Job? = null
+    var co_stdoutGathering: Job? = null
+    var co_stdoutForwarding: Job? = null
 
-    private var continuation_stdoutPrinter: Continuation<Unit>? = null
+    private var stdoutOpened = true
+    private val gatheringAndForwardingLock = Object()
+    private var onStdoutForwardResume = Event<Unit, () -> Unit>(Unit)
 
     init {
         // 启动子进程
@@ -43,14 +37,8 @@ class Session(
         val _env = env ?: mapOf()
         val _charset = if(Charset.isSupported(charset)) charset
                        else throw UnsupportedCharsetException("The charset '$charset' is unsupported")
-        process = ProcessBuilder()
-            .command(command)
-            .directory(_workdir)
-            .also { it.environment().putAll(_env) }
-            .redirectErrorStream(true)
-            .redirectInput(ProcessBuilder.Redirect.PIPE)
-            .redirectOutput(ProcessBuilder.Redirect.PIPE)
-            .start()
+
+        process = startProcess(command, _workdir, _env)
         stdin = PrintStream(process.outputStream, true, _charset)
 
         // 发送消息
@@ -58,23 +46,41 @@ class Session(
             userToConnect?.sendMessage("Process created with pid($pid)")
         }
 
-        // 子进程存活监控协程
-        job_main = startCoroutine {
+        // 主协程
+        co_main = coMain()
+
+        // stdout收集协程
+        co_stdoutGathering = coStdoutGathering(_charset)
+
+        // stdout输出协程
+        co_stdoutForwarding = coStdoutForwarder()
+
+        // 注册Session
+        SessionManager.sessions += this
+
+        // 设置连接
+        if(userToConnect != null)
+            runBlocking { connect(userToConnect) }
+
+        // 启动主协程
+        co_main?.start()
+    }
+
+    fun coMain(): Job
+    {
+        return startCoroutine {
             // 启动其它协程
-            job_stdoutGatheringMonitor?.start()
-            job_stdoutPrinter?.start()
+            co_stdoutGathering?.start()
+            co_stdoutForwarding?.start()
 
             // 监控进程存活
             suspendCoroutine<Unit> {
-                process.waitFor()
+                process.waitFor() // blocking
                 it.resume(Unit)
             }
 
-            // 触发事件
-            onProcessExit { it() }
-
-            // 等待stdpipeline关闭
-            job_stdoutGatheringMonitor?.join()
+            // 等待收集协程关闭
+            co_stdoutGathering?.join()
 
             // 退出消息
             usersConnected.forEach { it.sendMessage("Process exited with pid(${pid})") }
@@ -82,56 +88,58 @@ class Session(
             // 断开所有用户并从列表里移除
             manager.disconnectAll(this@Session)
             manager.sessions.remove(this@Session)
-
-            delay(300)
-
-            // 停止其它协程
-            job_stdoutPrinter?.cancel()
-            job_stdoutGatheringMonitor?.cancel()
         }
+    }
 
-        // stdout收集协程
-        job_stdoutGatheringMonitor = startCoroutine {
+    fun coStdoutGathering(charset: String): Job
+    {
+        return startCoroutine {
+            val __charset = Charset.forName(charset)
             var len = 0
             val buffer = ByteArray(4 * 1024)
-            while (len != -1 && process.isAlive) {
-                suspendCoroutine<Unit> { continuation ->
-                    process.inputStream.read(buffer).also { len = it } != -1
-                    continuation.resume(Unit)
+
+            while (true)
+            {
+                suspendCoroutine<Unit> {
+                    process.inputStream.read(buffer).apply { len = this } // blocking
+                    it.resume(Unit)
                 }
 
-                if(len != -1 && process.isAlive)
+                if(len != -1)
                 {
-                    synchronized(stdoutBuffer) {
-                        stdoutBuffer += String(buffer, 0, len, Charset.forName(_charset))
+                    synchronized(gatheringAndForwardingLock) {
+                        stdoutBuffer += String(buffer, 0, len, __charset)
                     }
-                    continuation_stdoutPrinter?.resume(Unit)
-                    continuation_stdoutPrinter = null
+                    onStdoutForwardResume { it() }
+                } else {
+                    stdoutOpened = false
+                    onStdoutForwardResume { it() }
+                    break
                 }
             }
 
             // 让缓冲区里的消息发送完毕
-            job_stdoutPrinter?.join()
-
-            // 分发事件
-            onStdPipelineClose { it() }
+            co_stdoutForwarding?.join()
         }
+    }
 
-        // stdout输出协程
-        job_stdoutPrinter = startCoroutine {
-            while (process.isAlive)
+    fun coStdoutForwarder(): Job
+    {
+        return startCoroutine {
+            val truncation = MainConfig.stdoutputTruncationThreshold
+            val batchingTimeout = MainConfig.stdoutputBatchingTimeoutInMs.toLong()
+
+            while (stdoutOpened)
             {
                 if(stdoutBuffer.isEmpty())
-                    suspendCoroutine<Unit> { continuation_stdoutPrinter = it }
+                    suspendCoroutine<Unit> { onStdoutForwardResume.once { it.resume(Unit) } }
 
-                val truncation = MainConfig.stdoutputTruncationThreshold
-                val batchingTimeout = MainConfig.stdoutputBatchingTimeoutInMs.toLong()
                 val buffered = StringBuffer()
 
                 while (buffered.length < truncation && stdoutBuffer.isNotEmpty())
                 {
                     val temp: MutableList<String>
-                    synchronized(stdoutBuffer) {
+                    synchronized(gatheringAndForwardingLock) {
                         temp = stdoutBuffer
                         stdoutBuffer = mutableListOf()
                     }
@@ -142,30 +150,28 @@ class Session(
                     delay(batchingTimeout)
                 }
 
-                val text = buffered.toString()
-
-                // 分发事件
-                onStdoutMessage { it(text) }
-
                 // 发送消息
-                usersConnected.forEach { it.sendMessage(text) }
+                usersConnected.forEach { it.sendMessage(buffered.toString()) }
             }
         }
-
-        // 注册Session
-        SessionManager.sessions += this
-
-        // 设置连接
-        if(userToConnect != null)
-            runBlocking { connect(userToConnect) }
-
-        // 启动主协程
-        job_main?.start()
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     private fun startCoroutine(block: suspend CoroutineScope.() -> Unit): Job
     {
         return GlobalScope.launch(manager.scd, CoroutineStart.LAZY, block)
+    }
+
+    private fun startProcess(command: String, workdir: File, env: Map<String, String>): Process
+    {
+        return ProcessBuilder()
+            .command(command)
+            .directory(workdir)
+            .also { it.environment().putAll(env) }
+            .redirectErrorStream(true)
+            .redirectInput(ProcessBuilder.Redirect.PIPE)
+            .redirectOutput(ProcessBuilder.Redirect.PIPE)
+            .start()
     }
 
     fun kill(): Session

@@ -27,7 +27,8 @@ data class SessionUser (
     }
 
     suspend fun User?.sendMessage(msg: String) {
-        if(this != null) sendMessage(msg) else ConsoleCommandSender.sendMessage(msg)
+        if(msg.isNotEmpty())
+            if(this != null) sendMessage(msg) else ConsoleCommandSender.sendMessage(msg)
     }
 
     suspend fun User?.sendMessage(msg: Message) {
