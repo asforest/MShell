@@ -38,14 +38,13 @@ object SessionManager
 
         // 加载环境预设
         val epName: String = if(preset == null) {
-            val def = epins.defaultPreset
-            if(def == "")
-                throw NoDefaultPresetException("The default preset has not set yet or it was invalid.")
-            def
+            if(epins.defaultPreset == "")
+                throw NoDefaultPresetException("The default preset has not be set yet or it was invalid.")
+            epins.defaultPreset
         } else {
             if(preset !in epins.presets.keys)
                 throw PresetNotFoundException("The preset '$preset' was not found")
-            epins.defaultPreset
+            preset
         }
         ep = MShell.ep.ins.presets[epName] ?: throw PresetNotFoundException("The preset '$epName' was not found")
 
