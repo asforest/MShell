@@ -106,19 +106,22 @@ object EnvCommand : CompositeCommand(
     @SubCommand @Description("设置环境的环境变量")
     suspend fun CommandSender.env(
         @Name("preset") presetName: String,
-        @Name("key") key: String,
+        @Name("key") key: String = "",
         @Name("value") vararg value: String
     ) {
         withCatch {
             val preset = getPresetWithThrow(presetName)
 
-            if(value.isEmpty())
-                ep.ins.presets[presetName]!!.env.remove(key)
-            else
-                ep.ins.presets[presetName]!!.env[key] = value.joinToString(" ")
-            ep.write()
+            if(key.isNotEmpty())
+            {
+                if(value.isEmpty())
+                    ep.ins.presets[presetName]!!.env.remove(key)
+                else
+                    ep.ins.presets[presetName]!!.env[key] = value.joinToString(" ")
+                ep.write()
+            }
 
-            sendMessage(preset.toString())
+            sendMessage(preset.env.toString())
         }
     }
 
