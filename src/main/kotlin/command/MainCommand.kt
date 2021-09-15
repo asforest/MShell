@@ -117,7 +117,8 @@ object MainCommand : CompositeCommand(
         {
             val pid = session.pid
             val usersConnected = session.usersConnected.map { u -> u.name}
-            output += "[$index] $pid: $usersConnected\n"
+            
+            output += "[$index] pid: $pid: $usersConnected\n"
         }
         sendMessage(output.ifEmpty { " " })
     }
