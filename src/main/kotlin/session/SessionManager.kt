@@ -129,15 +129,17 @@ object SessionManager
 
     fun getSessionByUserConnected(user: SessionUser): Session?
     {
-        for ((u, s) in connections)
-            if(u == user)
-                return s
+        for ((user, session) in connections)
+            if(user == user)
+                return session
         return null
     }
 
     fun isUserConnected(user: SessionUser): Boolean
     {
-        return user in connections.keys
+        // do not use like this (the behivor is not the same with getSessionByUserConnected)
+        // return user in connections.keys
+        return getSessionByUserConnected(user) != null
     }
 
     fun getUsersConnectedToSession(session: Session): List<SessionUser>
