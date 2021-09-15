@@ -3,8 +3,12 @@ package com.github.asforest.mshell.command
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 import com.github.asforest.mshell.MShell
+import com.github.asforest.mshell.exception.UserNotConnectedYetException
 import com.github.asforest.mshell.permission.PermissionUtil
 import com.github.asforest.mshell.permission.MShellPermissions
+import com.github.asforest.mshell.session.SessionManager
+import com.github.asforest.mshell.session.SessionUser
+import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.permission.*
 import net.mamoe.mirai.console.permission.PermissionService.Companion.cancel
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
@@ -36,6 +40,16 @@ object AdminsCommand : CompositeCommand(
         val permission = MShellPermissions.all
         if(permittee.hasPermission(permission))
         {
+            // 断开已建立的链接
+            for (bot in Bot.instances)
+            {
+                val user = bot.getFriend(qqnumber)
+                if(user != null)
+                    try {
+                        SessionManager.disconnect(SessionUser(user))
+                    } catch (e: UserNotConnectedYetException) { }
+            }
+
             permittee.cancel(permission, false)
             sendMessage("已移除($qqnumber)")
         } else {
