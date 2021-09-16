@@ -1,5 +1,5 @@
   
-name: Build
+name: Build Release
 
 on:
   push:
@@ -21,7 +21,7 @@ jobs:
       - name: Gradle Build
         uses: gradle/gradle-build-action@v1.5.1
         with:
-          arguments: clean buildPlugin
+          arguments: buildWithManifest
       
       - name: Publish Release
         uses: xresloader/upload-to-github-release@v1.3.0

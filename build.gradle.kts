@@ -1,3 +1,20 @@
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.io.File
+import net.mamoe.mirai.console.gradle.BuildMiraiPluginTask
+
+val gitTagName: String? get() {
+    val ref = System.getenv("GITHUB_REF") ?: ""
+    return Regex("(?<=refs/tags/).*").find(ref)?.value
+}
+
+val gitCommitSha: String? get() = System.getenv("GITHUB_SHA") ?: null
+
+val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z").format(Date()) as String
+
+group = "com.github.asforest"
+version = gitTagName ?: "0.0.0"
+
 plugins {
     val kotlinVersion = "1.5.10"
     kotlin("jvm") version kotlinVersion
@@ -6,22 +23,42 @@ plugins {
     id("net.mamoe.mirai-console") version "2.7.0"
 }
 
-group = "com.github.asforest"
-version = "0.0.1"
-
 repositories {
-    maven("https://maven.aliyun.com/repository/public")
+    if(System.getenv()["PluginDebugDir"] != null)
+        maven("https://maven.aliyun.com/repository/public")
     mavenCentral()
 }
 
 dependencies {
-//    implementation("org.yaml:snakeyaml:1.29")
     implementation("com.esotericsoftware.yamlbeans:yamlbeans:1.15")
 }
 
-// only for developing
-tasks.register("buildWithCopy", Copy::class) {
+tasks.register("buildWithManifest") {
     dependsOn(tasks.named("buildPlugin"))
-    from("build/mirai/MShell-0.0.1.mirai.jar")
-    into("D:/mirai/plugins")
+
+    tasks.named<BuildMiraiPluginTask>("buildPlugin").get().apply {
+        manifest {
+            attributes("Mirai-Plugin-Id" to "com.github.asforest.mshell")
+            attributes("Mirai-Plugin-Name" to "MShell")
+            attributes("Mirai-Plugin-Version" to archiveVersion.get())
+            attributes("Mirai-Plugin-Author" to "Asforest")
+            attributes("Git-Commit" to (gitCommitSha ?: ""))
+            attributes("Compile-Time" to timestamp)
+            attributes("Compile-Time-Ms" to System.currentTimeMillis())
+        }
+    }
+}
+
+tasks.register("developing", Copy::class) {
+    dependsOn(tasks.named("buildWithManifest"))
+
+    val archive = project.buildDir.path+File.separator+"mirai"+
+        File.separator+project.name+"-"+version+".mirai.jar"
+
+    val env = System.getenv()["PluginDebugDir"]
+        ?: throw RuntimeException("The environmental variable 'PluginDebugDir' is not set")
+    if(!File(env).run { !exists() || isDirectory })
+        throw RuntimeException("The 'PluginDebugDir' $env does not exist or is a file")
+
+    from(archive).into(env)
 }

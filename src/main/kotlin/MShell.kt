@@ -10,10 +10,10 @@ import com.github.asforest.mshell.exception.BaseException
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.session.SessionUser
+import com.github.asforest.mshell.util.MiraiUtil
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandSender.Companion.toCommandSender
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
-import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.events.BotEvent
@@ -21,7 +21,8 @@ import net.mamoe.mirai.event.events.FriendMessageEvent
 import net.mamoe.mirai.message.data.PokeMessage
 import net.mamoe.mirai.message.data.content
 
-object MShell : KotlinPlugin(JvmPluginDescription.loadFromResource())
+
+object MShell : KotlinPlugin(MiraiUtil.pluginDescription)
 {
     val ep = ConfigProxy(EnvironmentPresets::class.java, "presets.yml")
 
@@ -57,7 +58,6 @@ object MShell : KotlinPlugin(JvmPluginDescription.loadFromResource())
                     session?.stdin?.println(message.content)
                 }
             }
-
         }
 
 //        GlobalEventChannel.filter { it is BotEvent }.subscribeAlways<GroupMessageEvent> {
