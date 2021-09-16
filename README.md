@@ -1,6 +1,16 @@
 # MShell
 一个[Mirai](https://github.com/mamoe/mirai)机器人插件，用来把QQ聊天窗口变成Shell透传来远程控制电脑或者服务器
 
+可以利用QQ的聊天功能，远程开启一个Shell窗口，然后就可以做任何事情了
+
+可以用来日常简单维护一下文件什么的，或者打几个指令什么的
+
+适合内网的机器使用，这样就不用单独设置内网穿透了
+
+也可以借助Linux的screen命令来管理Minecraft后台（没有实测过，大概是可以的）
+
+因为关闭QQ聊天窗口不会断开与服务器Shell的连接，所以你可以写个Python程序，然后用MShell做个定时提醒什么的
+
 ![preview.png](https://i.loli.net/2021/09/15/Sq8yQR7tiTW3B6a.png)
 
 支持会话共享，多人之间可以分享控制权（请看下面的GIF演示）
