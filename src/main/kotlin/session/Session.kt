@@ -73,10 +73,9 @@ class Session(
             co_stdoutGathering?.start()
             co_stdoutForwarding?.start()
 
-            // 监控进程存活
+            // 监控进程退出
             suspendCoroutine<Unit> {
-                process.waitFor() // blocking
-                it.resume(Unit)
+                process.onExit().thenRun { it.resume(Unit) }
             }
 
             // 等待收集协程关闭
