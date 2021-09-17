@@ -3,13 +3,8 @@ import java.util.Date
 import java.io.File
 import net.mamoe.mirai.console.gradle.BuildMiraiPluginTask
 
-val gitTagName: String? get() {
-    val ref = System.getenv("GITHUB_REF") ?: ""
-    return Regex("(?<=refs/tags/).*").find(ref)?.value
-}
-
+val gitTagName: String? get() = Regex("(?<=refs/tags/).*").find(System.getenv("GITHUB_REF") ?: "")?.value
 val gitCommitSha: String? get() = System.getenv("GITHUB_SHA") ?: null
-
 val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z").format(Date()) as String
 
 group = "com.github.asforest"
@@ -38,7 +33,7 @@ tasks.register("buildWithManifest") {
 
     tasks.named<BuildMiraiPluginTask>("buildPlugin").get().apply {
         manifest {
-            attributes("Mirai-Plugin-Id" to "com.github.asforest.mshell")
+            attributes("Mirai-Plugin-Id" to "$group.mshell")
             attributes("Mirai-Plugin-Name" to "MShell")
             attributes("Mirai-Plugin-Version" to archiveVersion.get())
             attributes("Mirai-Plugin-Author" to "Asforest")
