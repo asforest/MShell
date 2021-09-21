@@ -22,11 +22,11 @@ class Session(
     val stdin: PrintStream
     var stdoutBuffer = mutableListOf<String>()
     val pid: Long get() = process.pid()
+    val isAlive: Boolean get() = stdoutOpened && process.isAlive
 
-    var co_main: Job? = null
-    var co_stdoutGathering: Job? = null
-    var co_stdoutForwarding: Job? = null
-
+    private var co_main: Job? = null
+    private var co_stdoutGathering: Job? = null
+    private var co_stdoutForwarding: Job? = null
     private var stdoutOpened = true
     private val gatheringAndForwardingLock = Object()
     private var onStdoutForwardResume = Event<Unit, () -> Unit>(Unit)
@@ -111,6 +111,7 @@ class Session(
                     }
                     onStdoutForwardResume { it() }
                 } else {
+                    process.inputStream.close()
                     stdoutOpened = false
                     onStdoutForwardResume { it() }
                     break
@@ -201,5 +202,7 @@ class Session(
 
     val isConnected: Boolean get() = usersConnected.isNotEmpty()
 
-    val usersConnected: List<SessionUser> get() = manager.getUsersConnectedToSession(this)
+    val usersConnected: Collection<SessionUser> get() = manager.getUsersConnectedToSession(this)
+
+    val connections: Collection<Connection> get() = manager.getConnections(this)
 }

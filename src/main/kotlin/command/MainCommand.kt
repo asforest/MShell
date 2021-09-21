@@ -140,6 +140,20 @@ object MainCommand : CompositeCommand(
         sendMessage(output.ifEmpty { " " })
     }
 
+    @SubCommand @Description("模拟戳一戳(窗口抖动)消息")
+    suspend fun CommandSender.poke()
+    {
+        val user = SessionUser(user)
+        val session = SessionManager.getSessionByUserConnected(user)
+
+        if(session != null)
+        {
+            session.disconnect(user)
+        } else {
+            SessionManager.ResumeOrCreate(user)
+        }
+    }
+
     fun getSessionByPidWithThrow(pid: Long): Session
     {
         return SessionManager.getSessionByPid(pid)

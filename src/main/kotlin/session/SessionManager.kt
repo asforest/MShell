@@ -1,4 +1,3 @@
-
 package com.github.asforest.mshell.session
 
 import com.github.asforest.mshell.MShell
@@ -9,28 +8,31 @@ object SessionManager
 {
     val scd = SessionContinuationDispatcher()
     val sessions = mutableListOf<Session>()
-    val connections = mutableMapOf<SessionUser, Session>()
-    val historicalConnections = mutableMapOf<SessionUser, Long>()
+    val connectionManager = ConnectionManager()
 
     suspend fun ResumeOrCreate(user: SessionUser)
     {
         if(isUserConnected(user))
             throw UserAlreadyConnectedException("You have already connected to a session")
 
-        if(user in historicalConnections.keys)
+        if(connectionManager.hasHistoricalConnection(user))
         {
-            try {
-                val pid = historicalConnections[user]!!
-                connect(user, pid)
-                user.sendMessage("Reconnected to pid($pid)")
-            } catch (e: SessionNotFoundException) {
-                historicalConnections[user] = openSession(null, user).pid
+            val conn = connectionManager.getHistoricalConnection(user)!!
+            if(conn.isValid)
+            {
+                // session依然是有效的，复用session创建一个新的Connection
+                connect(user, conn.session, isReconnection = true)
+            } else {
+                openSession(null, user)
             }
         } else {
-            historicalConnections[user] = openSession(null, user).pid
+            openSession(null, user)
         }
     }
 
+    /**
+     * 快速开启一个新的Session。如果不嫌麻烦，也可以手动new一个Session对象
+     */
     suspend fun openSession(preset: String? = null, user: SessionUser): Session
     {
         val epins = MShell.ep.ins
@@ -67,7 +69,7 @@ object SessionManager
         connect(user, session)
     }
 
-    suspend fun connect(user: SessionUser, session: Session)
+    suspend fun connect(user: SessionUser, session: Session, isReconnection: Boolean = false)
     {
         getSessionByUserConnected(user)?.also {
             if(it == session)
@@ -75,14 +77,9 @@ object SessionManager
             throw UserAlreadyConnectedException("You have already connected to a other session (${it.pid})")
         }
 
-        // 记录链接历史
-        if(!user.isConsole)
-            historicalConnections[user] = session.pid
+        connectionManager.createConnection(user, session)
 
-        // 注册连接(Connection)
-        connections[user] = session
-
-        user.sendMessage("Connected to pid(${session.pid})")
+        user.sendMessage((if(isReconnection) "Reconnected" else "Connected")+" to pid(${session.pid})")
     }
 
     suspend fun disconnect(user: SessionUser)
@@ -90,50 +87,44 @@ object SessionManager
         if(!isUserConnected(user))
             throw UserNotConnectedYetException("You have not connected to a session yet")
 
-        val session = getSessionByUserConnected(user)!!
+        val pid = connectionManager.closeConnection(user).sessionPid
 
-        user.sendMessage("Disconnected from pid(${session.pid})")
-
-        // 注销连接(Connection)
-        connections.remove(user)
+        user.sendMessage("Disconnected from pid($pid)")
     }
 
     suspend fun disconnectAll(session: Session)
     {
-        for(user in getUsersConnectedToSession(session))
-        {
-            // 注销连接(Connection)
-            connections.remove(user)
-
-            user.sendMessage("Disconnected from pid(${session.pid})")
+        connectionManager.closeConnections(session).forEach {
+            it.user.sendMessage("Disconnected from pid(${session.pid})")
         }
     }
 
     fun getSessionByPid(pid: Long): Session?
     {
         for (session in sessions)
-            if(session.pid == pid)
+            // 如果子进程退出，就不应该再通过pid能获取到了
+            if(session.isAlive && session.pid == pid)
                 return session
         return null
     }
 
     fun getSessionByUserConnected(user: SessionUser): Session?
     {
-        for ((u, session) in connections)
-            if(u == user)
-                return session
-        return null
+        return connectionManager.getConnection(user)?.session
     }
 
     fun isUserConnected(user: SessionUser): Boolean
     {
-        // do not use like this (the behivor is not the same with getSessionByUserConnected)
-        // return user in connections.keys
-        return getSessionByUserConnected(user) != null
+        return connectionManager.hasConnection(user)
     }
 
-    fun getUsersConnectedToSession(session: Session): List<SessionUser>
+    fun getUsersConnectedToSession(session: Session): Collection<SessionUser>
     {
-        return connections.filter { it.value == session }.map { it.key }
+        return getConnections(session).map { it.user }
+    }
+
+    fun getConnections(session: Session): Collection<Connection>
+    {
+        return connectionManager.getConnections(session)
     }
 }
