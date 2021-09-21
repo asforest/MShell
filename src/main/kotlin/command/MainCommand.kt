@@ -4,6 +4,7 @@ package com.github.asforest.mshell.command
 import com.github.asforest.mshell.MShell
 import com.github.asforest.mshell.exception.BaseException
 import com.github.asforest.mshell.exception.SessionNotFoundException
+import com.github.asforest.mshell.exception.UserAlreadyConnectedException
 import com.github.asforest.mshell.exception.UserNotConnectedYetException
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.Session
@@ -24,7 +25,10 @@ object MainCommand : CompositeCommand(
         @Name("preset") preset: String? = null
     ) {
         withCatch {
-            SessionManager.openSession(preset, SessionUser(user))
+            val user = SessionUser(user)
+            if(SessionManager.isUserConnected(user))
+                throw UserAlreadyConnectedException("You have already connected to a other session")
+            SessionManager.openSession(preset, user)
         }
     }
 
@@ -120,23 +124,6 @@ object MainCommand : CompositeCommand(
             
             output += "[$index] pid: $pid: $usersConnected\n"
         }
-        sendMessage(output.ifEmpty { " " })
-    }
-
-    @SubCommand @Description("显示资源消耗情况")
-    suspend fun CommandSender.status()
-    {
-        var output = "ThreadPoolStatus:\n"
-
-        val executor = SessionManager.scd.executor
-        val active = executor.activeCount
-        val queue = executor.queue.size
-        val poolSize = executor.poolSize
-
-        output += "Active: $active\n"
-        output += "Queued: $queue\n"
-        output += "PoolSize: $poolSize\n"
-
         sendMessage(output.ifEmpty { " " })
     }
 

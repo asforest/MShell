@@ -42,14 +42,9 @@ class ConnectionManager
         return connection
     }
 
-    fun closeConnections(session: Session): Collection<Connection>
+    fun closeConnections(session: Session)
     {
-        val connections = mutableSetOf<Connection>()
-        getConnections(session).forEach {
-            closeConnection(it)
-            connections += it
-        }
-        return connections
+        getConnections(session).forEach { closeConnection(it) }
     }
 
     fun closeConnection(connection: Connection)

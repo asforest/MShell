@@ -1,11 +1,9 @@
 package com.github.asforest.mshell.session
 
-import com.github.asforest.mshell.configuration.MainConfig
-import com.github.asforest.mshell.event.Event
 import com.github.asforest.mshell.exception.UnsupportedCharsetException
 import kotlinx.coroutines.*
 import java.io.File
-import java.io.PrintStream
+import java.io.PrintWriter
 import java.nio.charset.Charset
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -19,84 +17,29 @@ class Session(
     charset: String
 ) {
     val process: Process
-    val stdin: PrintStream
-    var stdoutBuffer = mutableListOf<String>()
+    val stdin: PrintWriter
     val pid: Long get() = process.pid()
     val isAlive: Boolean get() = stdoutOpened && process.isAlive
 
-    private var co_main: Job? = null
-    private var co_stdoutGathering: Job? = null
-    private var co_stdoutForwarding: Job? = null
+    private var coStdoutCollector: Job
     private var stdoutOpened = true
-    private val gatheringAndForwardingLock = Object()
-    private var onStdoutForwardResume = Event<Unit, () -> Unit>(Unit)
 
     init {
         // 启动子进程
         val _workdir = File(if(workdir!=null && workdir!= "") workdir else System.getProperty("user.dir"))
         val _env = env ?: mapOf()
-        val _charset = if(Charset.isSupported(charset)) charset
+        val _charset = if(Charset.isSupported(charset)) Charset.forName(charset)
                        else throw UnsupportedCharsetException("The charset '$charset' is unsupported")
 
         process = startProcess(command, _workdir, _env)
-        stdin = PrintStream(process.outputStream, true, _charset)
+        stdin = PrintWriter(process.outputStream, true, _charset)
 
-        // 发送消息
-        runBlocking {
-            userToConnect?.sendMessage("Process created with pid($pid)")
-        }
-
-        // 主协程
-        co_main = coMain()
+        userToConnect?.sendMessageBatchly("Process created with pid($pid)")
 
         // stdout收集协程
-        co_stdoutGathering = coStdoutGathering(_charset)
-
-        // stdout输出协程
-        co_stdoutForwarding = coStdoutForwarder()
-
-        // 注册Session
-        SessionManager.sessions += this
-
-        // 设置连接
-        if(userToConnect != null)
-            runBlocking { connect(userToConnect) }
-
-        // 启动主协程
-        co_main?.start()
-    }
-
-    fun coMain(): Job
-    {
-        return startCoroutine {
-            // 启动其它协程
-            co_stdoutGathering?.start()
-            co_stdoutForwarding?.start()
-
-            // 监控进程退出
-            suspendCoroutine<Unit> {
-                process.onExit().thenRun { it.resume(Unit) }
-            }
-
-            // 等待收集协程关闭
-            co_stdoutGathering?.join()
-
-            // 退出消息
-            usersConnected.forEach { it.sendMessage("Process exited with pid(${pid})") }
-
-            // 断开所有用户并从列表里移除
-            manager.disconnectAll(this@Session)
-            manager.sessions.remove(this@Session)
-        }
-    }
-
-    fun coStdoutGathering(charset: String): Job
-    {
-        return startCoroutine {
-            val __charset = Charset.forName(charset)
+        coStdoutCollector = GlobalScope.launch(Dispatchers.IO, CoroutineStart.LAZY) {
             var len = 0
             val buffer = ByteArray(4 * 1024)
-
             while (true)
             {
                 suspendCoroutine<Unit> {
@@ -104,62 +47,41 @@ class Session(
                     it.resume(Unit)
                 }
 
-                if(len != -1)
-                {
-                    synchronized(gatheringAndForwardingLock) {
-                        stdoutBuffer += String(buffer, 0, len, __charset)
-                    }
-                    onStdoutForwardResume { it() }
+                if(len != -1) {
+                    usersConnected.forEach { it.sendRawMessageBatchly(String(buffer, 0, len, _charset)) }
                 } else {
                     process.inputStream.close()
                     stdoutOpened = false
-                    onStdoutForwardResume { it() }
                     break
                 }
             }
-
-            // 让缓冲区里的消息发送完毕
-            co_stdoutForwarding?.join()
         }
-    }
 
-    fun coStdoutForwarder(): Job
-    {
-        return startCoroutine {
-            val truncation = MainConfig.stdoutputTruncationThreshold
-            val batchingTimeout = MainConfig.stdoutputBatchingTimeoutInMs.toLong()
+        // 注册Session
+        SessionManager.sessions += this
 
-            while (stdoutOpened)
-            {
-                if(stdoutBuffer.isEmpty())
-                    suspendCoroutine<Unit> { onStdoutForwardResume.once { it.resume(Unit) } }
+        // 设置连接
+        if(userToConnect != null)
+            connect(userToConnect)
 
-                val buffered = StringBuffer()
+        // 手动消息分批，用于将提示信息和下面的子程序输出显式分开来（拆分成两条消息）
+        userToConnect?.sendMessageTruncation()
 
-                while (buffered.length < truncation && stdoutBuffer.isNotEmpty())
-                {
-                    val temp: MutableList<String>
-                    synchronized(gatheringAndForwardingLock) {
-                        temp = stdoutBuffer
-                        stdoutBuffer = mutableListOf()
-                    }
+        // 启动stdout收集协程
+        coStdoutCollector.start()
 
-                    for(segment in temp)
-                        buffered.append(segment)
+        // 当进程退出
+        process.onExit().thenRun {
+            // 取消注册
+            manager.sessions.remove(this@Session)
 
-                    delay(batchingTimeout)
-                }
+            // 退出消息
+            sendMessageTruncation()
+            sendMessageBatchly("Process exited with pid(${pid})")
 
-                // 发送消息
-                usersConnected.forEach { it.sendMessage(buffered.toString()) }
-            }
+            // 断开所有用户并从列表里移除
+            manager.disconnectAll(this@Session)
         }
-    }
-
-    @OptIn(DelicateCoroutinesApi::class)
-    private fun startCoroutine(block: suspend CoroutineScope.() -> Unit): Job
-    {
-        return GlobalScope.launch(manager.scd, CoroutineStart.LAZY, block)
     }
 
     private fun startProcess(command: String, workdir: File, env: Map<String, String>): Process
@@ -180,22 +102,32 @@ class Session(
         return this
     }
 
-    suspend fun connect(user: SessionUser): Session
+    fun connect(user: SessionUser): Session
     {
         manager.connect(user, this)
         return this
     }
 
-    suspend fun disconnect(user: SessionUser): Session
+    fun disconnect(user: SessionUser): Session
     {
         manager.disconnect(user)
         return this
     }
 
-    suspend fun disconnectAll(): Session
+    fun disconnectAll(): Session
     {
         manager.disconnectAll(this)
         return this
+    }
+
+    fun sendMessageBatchly(msg: String, truncation: Boolean =false)
+    {
+        usersConnected.forEach { it.sendMessageBatchly(msg, truncation) }
+    }
+
+    fun sendMessageTruncation()
+    {
+        usersConnected.forEach { it.sendMessageTruncation() }
     }
 
     fun isUserConnected(user: SessionUser): Boolean = manager.getSessionByUserConnected(user) == this

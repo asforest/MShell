@@ -6,11 +6,18 @@ import com.github.asforest.mshell.exception.*
 
 object SessionManager
 {
-    val scd = SessionContinuationDispatcher()
+
+    /**
+     * 所有处于运行中的会话
+     */
     val sessions = mutableListOf<Session>()
+
+    /**
+     * 会话连接管理器
+     */
     val connectionManager = ConnectionManager()
 
-    suspend fun ResumeOrCreate(user: SessionUser)
+    fun ResumeOrCreate(user: SessionUser)
     {
         if(isUserConnected(user))
             throw UserAlreadyConnectedException("You have already connected to a session")
@@ -33,7 +40,7 @@ object SessionManager
     /**
      * 快速开启一个新的Session。如果不嫌麻烦，也可以手动new一个Session对象
      */
-    suspend fun openSession(preset: String? = null, user: SessionUser): Session
+    fun openSession(preset: String? = null, user: SessionUser): Session
     {
         val epins = MShell.ep.ins
         val ep: Preset
@@ -62,40 +69,41 @@ object SessionManager
         return session
     }
 
-    suspend fun connect(user: SessionUser, pid: Long)
+    fun connect(user: SessionUser, pid: Long)
     {
         val session = getSessionByPid(pid)
             ?: throw SessionNotFoundException("The session of pid($pid) was not be found")
         connect(user, session)
     }
 
-    suspend fun connect(user: SessionUser, session: Session, isReconnection: Boolean = false)
+    fun connect(user: SessionUser, session: Session, isReconnection: Boolean = false)
     {
         getSessionByUserConnected(user)?.also {
             if(it == session)
                 throw UserAlreadyConnectedException("You have has already connected to this session")
-            throw UserAlreadyConnectedException("You have already connected to a other session (${it.pid})")
+            throw UserAlreadyConnectedException("You have already connected to a other session pid(${it.pid})")
         }
 
         connectionManager.createConnection(user, session)
 
-        user.sendMessage((if(isReconnection) "Reconnected" else "Connected")+" to pid(${session.pid})")
+        user.sendMessageBatchly((if(isReconnection) "Reconnected" else "Connected")+" to pid(${session.pid})", true)
     }
 
-    suspend fun disconnect(user: SessionUser)
+    fun disconnect(user: SessionUser)
     {
         if(!isUserConnected(user))
             throw UserNotConnectedYetException("You have not connected to a session yet")
 
         val pid = connectionManager.closeConnection(user).sessionPid
 
-        user.sendMessage("Disconnected from pid($pid)")
+        user.sendMessageBatchly("Disconnected from pid($pid)", true)
     }
 
-    suspend fun disconnectAll(session: Session)
+    fun disconnectAll(session: Session)
     {
-        connectionManager.closeConnections(session).forEach {
-            it.user.sendMessage("Disconnected from pid(${session.pid})")
+        connectionManager.getConnections(session).forEach {
+            it.session.sendMessageBatchly("Disconnected from pid(${session.pid})", true)
+            connectionManager.closeConnection(it)
         }
     }
 
