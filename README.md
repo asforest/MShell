@@ -201,11 +201,8 @@ MShell提供了一个方便的方式来设置管理员和取消管理员，那�
 # 向目标会话的stdin里输出内容但不换行
 /mshell writeto2 <pid> <text>
 
-# 显示资源消耗情况
-# Active代表正在运行的线程，一般是  会话数x2
-# Queued代表正在等待的线程，一般是  0
-# PoolSize代表总线程数量，一般是  会话数x2 + 1
-/mshell status
+# 模拟戳一戳(窗口抖动)消息，主要给是电脑端调试使用，因为电脑端发送窗口抖动消息有较长的冷却时间
+/mshell poke
 ```
 
 ### 环境预设指令(/mshelle)
@@ -312,12 +309,12 @@ MShell提供了一个方便的方式来设置管理员和取消管理员，那�
 此文件一般不需要修改，各项属性保持默认就好
 
 ```yaml
-# stdout合批最大上限，单位为字符数（不是字节）
+# stdout合并最大上限，单位为字符数（不是字节）
 # 超过这个值后消息会被拆分成2条发出来
 stdoutputTruncationThreshold: 512
 
-# stdout合批等等时间，如果两个消息之间的间隔在300ms以下
-# 就会被合批成一条消息发出来
+# stdout合并等待时间，如果两个消息之间的间隔在300ms以下
+# 就会被合并成一条消息发出来
 # 如果消息太多以至于超过stdoutputTruncationThreshold的值
 # 还是会被拆分成两条发出来
 stdoutputBatchingTimeoutInMs: 300
