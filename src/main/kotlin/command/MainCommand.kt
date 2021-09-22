@@ -28,7 +28,7 @@ object MainCommand : CompositeCommand(
             val user = SessionUser(user)
             if(SessionManager.isUserConnected(user))
                 throw UserAlreadyConnectedException("You have already connected to a other session")
-            SessionManager.openSession(preset, user)
+            SessionManager.createSession(preset, user)
         }
     }
 
@@ -83,7 +83,7 @@ object MainCommand : CompositeCommand(
         @Name("pid") pid: Long
     ) {
         withCatch {
-            getSessionByPidWithThrow(pid).disconnect(null)
+            getSessionByPidWithThrow(pid).disconnectAll()
         }
     }
 

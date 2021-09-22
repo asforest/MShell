@@ -15,11 +15,17 @@ data class SessionUser (
 
     private val batchingWriter = BatchingWriter { msg -> sendMessageImmediately(msg) }
 
+    /**
+     * 分包发送消息，发送间隔较短的消息会被合并成一条
+     */
     fun sendMessageBatchly(message: String, truncation: Boolean =false)
     {
         sendRawMessageBatchly(message+"\n", truncation)
     }
 
+    /**
+     * 分包发送消息，但是末尾没有换行，发送间隔较短的消息会被合并成一条
+     */
     fun sendRawMessageBatchly(message: String, truncation: Boolean =false)
     {
         batchingWriter += message
@@ -27,6 +33,9 @@ data class SessionUser (
             sendMessageTruncation()
     }
 
+    /**
+     * 强制打断消息合并，显式拆分成2条消息发送
+     */
     fun sendMessageTruncation()
     {
         batchingWriter.flush()

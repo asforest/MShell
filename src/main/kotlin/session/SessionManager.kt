@@ -19,30 +19,12 @@ object SessionManager
      */
     val connectionManager = ConnectionManager()
 
-    fun reconnectOrCreate(user: SessionUser)
-    {
-        if(isUserConnected(user))
-            throw UserAlreadyConnectedException("You have already connected to a session")
-
-        if(connectionManager.hasHistoricalConnection(user))
-        {
-            val conn = connectionManager.getHistoricalConnection(user)!!
-            if(conn.isValid)
-            {
-                // session依然是有效的，复用session创建一个新的Connection
-                connect(user, conn.session, isReconnection = true)
-            } else {
-                openSession(null, user)
-            }
-        } else {
-            openSession(null, user)
-        }
-    }
-
     /**
      * 快速开启一个新的Session。如果不嫌麻烦，也可以手动new一个Session对象
+     * @param preset 环境预设
+     * @param user 会话启动后，要立即连接上来的用户
      */
-    fun openSession(preset: String? = null, user: SessionUser): Session
+    fun createSession(preset: String? = null, user: SessionUser): Session
     {
         val epins = MShell.ep.ins
         val ep: Preset
@@ -78,6 +60,35 @@ object SessionManager
         return session
     }
 
+    /**
+     * 尝试重连会话，如果无法重连，会创建一个新的会话
+     * @param user 要重连/新建会话的用户
+     */
+    fun reconnectOrCreate(user: SessionUser)
+    {
+        if(isUserConnected(user))
+            throw UserAlreadyConnectedException("You have already connected to a session")
+
+        if(connectionManager.hasHistoricalConnection(user))
+        {
+            val conn = connectionManager.getHistoricalConnection(user)!!
+            if(conn.isValid)
+            {
+                // session依然是有效的，复用session创建一个新的Connection
+                connect(user, conn.session, isReconnection = true)
+            } else {
+                createSession(null, user)
+            }
+        } else {
+            createSession(null, user)
+        }
+    }
+
+    /**
+     * 使一个用户通过pid连接到一个会话
+     * @param user 用户
+     * @param pid 子进程的pid
+     */
     fun connect(user: SessionUser, pid: Long)
     {
         val session = getSessionByPid(pid)
@@ -85,6 +96,12 @@ object SessionManager
         connect(user, session)
     }
 
+    /**
+     * 使一个用户连接到一个会话
+     * @param user 用户
+     * @param session 要连接到的会话
+     * @param isReconnection 此次连接是普通连接还是重新连接
+     */
     fun connect(user: SessionUser, session: Session, isReconnection: Boolean = false)
     {
         getSessionByUserConnected(user)?.also {
@@ -98,6 +115,10 @@ object SessionManager
         user.sendMessageBatchly((if(isReconnection) "Reconnected" else "Connected")+" to pid(${session.pid})", true)
     }
 
+    /**
+     * 使一个用户从连接到的会话上断开（每个用户同时只能连接到一个会话，因此只需要一个user参数就能完成断开操作）
+     * @param user 要断开的用户
+     */
     fun disconnect(user: SessionUser)
     {
         if(!isUserConnected(user))
@@ -108,6 +129,9 @@ object SessionManager
         user.sendMessageBatchly("Disconnected from pid($pid)", true)
     }
 
+    /**
+     * 使所有连接到指定会话上的用户全部断开连接
+     */
     fun disconnectAll(session: Session)
     {
         connectionManager.getConnections(session).forEach {

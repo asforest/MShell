@@ -96,15 +96,20 @@ class Session(
     }
 
     /**
-     * 断开某个用户或者所有用户的连接
-     * @param user 如果不为null则断开某一个用户的连接，否则只断开被指定的用户
+     * 断开某个用户与当前会话的连接
+     * @param user 要断开的用户
      */
-    fun disconnect(user: SessionUser?)
+    fun disconnect(user: SessionUser)
     {
-        if(user != null)
-            manager.disconnect(user)
-        else
-            manager.disconnectAll(this)
+        manager.disconnect(user)
+    }
+
+    /**
+     * 断开连接到当前会话上的所有用户
+     */
+    fun disconnectAll()
+    {
+        manager.disconnectAll(this)
     }
 
     fun sendMessageBatchly(msg: String, truncation: Boolean =false)
