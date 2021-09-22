@@ -49,10 +49,7 @@ class ConnectionManager
 
     fun closeConnection(connection: Connection)
     {
-        // 控制台不需要保留连接历史
-        if(!connection.user.isConsole)
-            historicalConnections += connection
-
+        historicalConnections += connection
         currentConnections -= connection
     }
 
