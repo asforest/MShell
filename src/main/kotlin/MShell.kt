@@ -52,7 +52,7 @@ object MShell : KotlinPlugin(MiraiUtil.pluginDescription)
                     {
                         session.disconnect(user)
                     } else {
-                        SessionManager.ResumeOrCreate(user)
+                        SessionManager.reconnectOrCreate(user)
                     }
                 } else {
                     session?.stdin?.println(message.content)

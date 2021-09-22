@@ -83,7 +83,7 @@ object MainCommand : CompositeCommand(
         @Name("pid") pid: Long
     ) {
         withCatch {
-            getSessionByPidWithThrow(pid).disconnectAll()
+            getSessionByPidWithThrow(pid).disconnect(null)
         }
     }
 
@@ -137,7 +137,7 @@ object MainCommand : CompositeCommand(
         {
             session.disconnect(user)
         } else {
-            SessionManager.ResumeOrCreate(user)
+            SessionManager.reconnectOrCreate(user)
         }
     }
 

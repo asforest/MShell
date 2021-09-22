@@ -1,6 +1,5 @@
 package com.github.asforest.mshell.session
 
-import com.github.asforest.mshell.exception.UnsupportedCharsetException
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.PrintWriter
@@ -12,27 +11,29 @@ class Session(
     val manager: SessionManager,
     userToConnect: SessionUser?,
     command: String,
-    workdir: String? =null,
-    env: Map<String, String>? =null,
-    charset: String
+    workdir: File,
+    env: Map<String, String>,
+    charset: Charset
 ) {
     val process: Process
     val stdin: PrintWriter
     val pid: Long get() = process.pid()
-    val isAlive: Boolean get() = stdoutOpened && process.isAlive
+    val isAlive: Boolean get() = stdoutOpeningFlag && process.isAlive
 
     private var coStdoutCollector: Job
-    private var stdoutOpened = true
+    private var stdoutOpeningFlag = true
 
     init {
         // 启动子进程
-        val _workdir = File(if(workdir!=null && workdir!= "") workdir else System.getProperty("user.dir"))
-        val _env = env ?: mapOf()
-        val _charset = if(Charset.isSupported(charset)) Charset.forName(charset)
-                       else throw UnsupportedCharsetException("The charset '$charset' is unsupported")
-
-        process = startProcess(command, _workdir, _env)
-        stdin = PrintWriter(process.outputStream, true, _charset)
+        process = ProcessBuilder()
+            .command(command)
+            .directory(workdir)
+            .also { it.environment().putAll(env) }
+            .redirectErrorStream(true)
+            .redirectInput(ProcessBuilder.Redirect.PIPE)
+            .redirectOutput(ProcessBuilder.Redirect.PIPE)
+            .start()
+        stdin = PrintWriter(process.outputStream, true, charset)
 
         userToConnect?.sendMessageBatchly("Process created with pid($pid)")
 
@@ -48,10 +49,10 @@ class Session(
                 }
 
                 if(len != -1) {
-                    usersConnected.forEach { it.sendRawMessageBatchly(String(buffer, 0, len, _charset)) }
+                    usersConnected.forEach { it.sendRawMessageBatchly(String(buffer, 0, len, charset)) }
                 } else {
                     process.inputStream.close()
-                    stdoutOpened = false
+                    stdoutOpeningFlag = false
                     break
                 }
             }
@@ -84,40 +85,26 @@ class Session(
         }
     }
 
-    private fun startProcess(command: String, workdir: File, env: Map<String, String>): Process
-    {
-        return ProcessBuilder()
-            .command(command)
-            .directory(workdir)
-            .also { it.environment().putAll(env) }
-            .redirectErrorStream(true)
-            .redirectInput(ProcessBuilder.Redirect.PIPE)
-            .redirectOutput(ProcessBuilder.Redirect.PIPE)
-            .start()
-    }
-
-    fun kill(): Session
+    fun kill()
     {
         process.destroy()
-        return this
     }
 
-    fun connect(user: SessionUser): Session
+    fun connect(user: SessionUser)
     {
         manager.connect(user, this)
-        return this
     }
 
-    fun disconnect(user: SessionUser): Session
+    /**
+     * 断开某个用户或者所有用户的连接
+     * @param user 如果不为null则断开某一个用户的连接，否则只断开被指定的用户
+     */
+    fun disconnect(user: SessionUser?)
     {
-        manager.disconnect(user)
-        return this
-    }
-
-    fun disconnectAll(): Session
-    {
-        manager.disconnectAll(this)
-        return this
+        if(user != null)
+            manager.disconnect(user)
+        else
+            manager.disconnectAll(this)
     }
 
     fun sendMessageBatchly(msg: String, truncation: Boolean =false)

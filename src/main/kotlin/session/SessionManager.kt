@@ -3,6 +3,8 @@ package com.github.asforest.mshell.session
 import com.github.asforest.mshell.MShell
 import com.github.asforest.mshell.configuration.Preset
 import com.github.asforest.mshell.exception.*
+import java.io.File
+import java.nio.charset.Charset
 
 object SessionManager
 {
@@ -17,7 +19,7 @@ object SessionManager
      */
     val connectionManager = ConnectionManager()
 
-    fun ResumeOrCreate(user: SessionUser)
+    fun reconnectOrCreate(user: SessionUser)
     {
         if(isUserConnected(user))
             throw UserAlreadyConnectedException("You have already connected to a session")
@@ -48,19 +50,26 @@ object SessionManager
         // 加载环境预设
         val epName: String = if(preset == null) {
             if(epins.defaultPreset == "")
-                throw NoDefaultPresetException("The default preset has not be set yet or it was invalid.")
+                throw NoDefaultPresetException("The default preset has not been set yet or it is invalid.")
             epins.defaultPreset
         } else {
             if(preset !in epins.presets.keys)
                 throw PresetNotFoundException("The preset '$preset' was not found")
             preset
         }
-        ep = MShell.ep.ins.presets[epName] ?: throw PresetNotFoundException("The preset '$epName' was not found")
+        ep = MShell.ep.ins.presets[epName] ?: throw PresetNotFoundException("The preset '$epName' is not found")
 
+        // 参数检查
         if(ep.shell == "")
             throw PresetIsIncompeleteException("The preset '$ep' is incomplete, either the field 'shell' or the field 'charset' is not set yet")
 
-        val session = Session(this, user, ep.shell, ep.cwd, ep.env, ep.charset)
+        val _command = ep.shell
+        val _workdir = File(if(ep.cwd!= "") ep.cwd else System.getProperty("user.dir"))
+        val _env = ep.env
+        val _charset = if(Charset.isSupported(ep.charset)) Charset.forName(ep.charset)
+            else throw UnsupportedCharsetException("The charset '${ep.charset}' is unsupported")
+
+        val session = Session(this, user, _command, _workdir, _env, _charset)
 
         // 自动执行exec
         if(ep.exec != "")
