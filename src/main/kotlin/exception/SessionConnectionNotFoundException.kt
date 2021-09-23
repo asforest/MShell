@@ -1,3 +1,4 @@
 package com.github.asforest.mshell.exception
 
-class SessionConnectionNotFoundException(message: String) : BaseException(message)
+class SessionConnectionNotFoundException(user: String)
+    : BaseException("The session connection with user($user) was not be found)")

@@ -32,24 +32,24 @@ object SessionManager
         // 加载环境预设
         val epName: String = if(preset == null) {
             if(epins.defaultPreset == "")
-                throw NoDefaultPresetException("默认环境预设未指定或者指向一个不存在的预设")
+                throw NoDefaultPresetException()
             epins.defaultPreset
         } else {
             if(preset !in epins.presets.keys)
-                throw PresetNotFoundException("找不到环境预设'$preset'")
+                throw PresetNotFoundException(preset)
             preset
         }
-        ep = MShell.ep.ins.presets[epName] ?: throw PresetNotFoundException("找不到环境预设'$epName'")
+        ep = MShell.ep.ins.presets[epName] ?: throw PresetNotFoundException(epName)
 
         // 参数检查
         if(ep.shell == "")
-            throw PresetIsIncompeleteException("环境预设还未配置完毕'$ep'，请检查并完善以下选项: shell, charset")
+            throw PresetIsIncompeleteException(epName)
 
         val _command = ep.shell
         val _workdir = File(if(ep.cwd!= "") ep.cwd else System.getProperty("user.dir"))
         val _env = ep.env
         val _charset = if(Charset.isSupported(ep.charset)) Charset.forName(ep.charset)
-            else throw UnsupportedCharsetException("不支持的字符集'${ep.charset}'")
+            else throw UnsupportedCharsetException(ep.charset)
 
         val session = Session(this, user, _command, _workdir, _env, _charset)
 
@@ -67,7 +67,7 @@ object SessionManager
     fun reconnectOrCreate(user: SessionUser)
     {
         if(isUserConnected(user))
-            throw UserAlreadyConnectedException("你已经连接到一个会话上了")
+            throw UserAlreadyConnectedException()
 
         if(connectionManager.hasHistoricalConnection(user))
         {
@@ -92,7 +92,7 @@ object SessionManager
     fun connect(user: SessionUser, pid: Long)
     {
         val session = getSessionByPid(pid)
-            ?: throw SessionNotFoundException("会话 pid($pid) 找不到")
+            ?: throw SessionNotFoundException(pid)
         connect(user, session)
     }
 
@@ -106,8 +106,8 @@ object SessionManager
     {
         getSessionByUserConnected(user)?.also {
             if(it == session)
-                throw UserAlreadyConnectedException("你已经连接到一个会话上了")
-            throw UserAlreadyConnectedException("你已经连接到另一个会话 pid(${it.pid} 上了")
+                throw UserAlreadyConnectedException()
+            throw UserAlreadyConnectedException(it.pid)
         }
 
         connectionManager.createConnection(user, session)
@@ -122,7 +122,7 @@ object SessionManager
     fun disconnect(user: SessionUser)
     {
         if(!isUserConnected(user))
-            throw UserDidnotConnectedYetException("你还未连接到一个会话上")
+            throw UserDidnotConnectedYetException()
 
         val pid = connectionManager.closeConnection(user).sessionPid
 

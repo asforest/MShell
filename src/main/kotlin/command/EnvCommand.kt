@@ -27,11 +27,11 @@ object EnvCommand : CompositeCommand(
     ) {
         withCatch {
             if (presetName in ep.ins.presets.keys)
-                throw PresetAlreadyExistedYetException("环境预设'$presetName'已经存在了")
+                throw PresetAlreadyExistedYetException(presetName)
             if(!Charset.isSupported(charset))
-                throw UnsupportedCharsetException("不支持的字符集'$charset'")
+                throw UnsupportedCharsetException(charset)
             if(shell.isEmpty())
-                throw MissingParamaterException("参数'shell'不能为空")
+                throw MissingParamaterException("shell")
 
             ep.ins.presets[presetName] = Preset(shell.joinToString(" "), charset)
 
@@ -164,7 +164,7 @@ object EnvCommand : CompositeCommand(
                 sendMessage("已清空${presetName}预设的charset选项")
             } else {
                 if(!Charset.isSupported(charset))
-                    throw UnsupportedCharsetException("不支持的字符集'$charset'")
+                    throw UnsupportedCharsetException(charset)
                 ep.ins.presets[presetName]!!.charset = charset
                 sendMessage("已更新${presetName}预设的charset: '$charset'")
             }
@@ -200,7 +200,7 @@ object EnvCommand : CompositeCommand(
     fun getPresetWithThrow(presetName: String): Preset
     {
         return ep.ins.presets[presetName]
-            ?: throw PresetNotFoundException("找不到环境预设'$presetName'")
+            ?: throw PresetNotFoundException(presetName)
     }
 
     suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)

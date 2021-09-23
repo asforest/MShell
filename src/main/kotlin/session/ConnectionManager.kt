@@ -37,7 +37,7 @@ class ConnectionManager
     fun closeConnection(user: SessionUser): Connection
     {
         val connection = getConnection(user) ?:
-            throw SessionConnectionNotFoundException("The session connection with user($user) was not be found")
+            throw SessionConnectionNotFoundException(user.toString())
         closeConnection(connection)
         return connection
     }
