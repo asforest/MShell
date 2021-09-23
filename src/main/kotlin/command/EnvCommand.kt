@@ -27,11 +27,11 @@ object EnvCommand : CompositeCommand(
     ) {
         withCatch {
             if (presetName in ep.ins.presets.keys)
-                throw PresetAlreadyExistedYetException("The preset '$presetName' has already existed yet")
+                throw PresetAlreadyExistedYetException("环境预设'$presetName'已经存在了")
             if(!Charset.isSupported(charset))
-                throw UnsupportedCharsetException("The charset '$charset' is unsupported")
+                throw UnsupportedCharsetException("不支持的字符集'$charset'")
             if(shell.isEmpty())
-                throw MissingParamaterException("The paramater 'shell' is missing or empty")
+                throw MissingParamaterException("参数'shell'不能为空")
 
             ep.ins.presets[presetName] = Preset(shell.joinToString(" "), charset)
 
@@ -52,7 +52,7 @@ object EnvCommand : CompositeCommand(
             getPresetWithThrow(presetName)
             ep.ins.presets.remove(presetName)
             ep.write()
-            list()
+            sendMessage("已删除环境预设'$presetName'")
         }
     }
 
@@ -64,46 +64,50 @@ object EnvCommand : CompositeCommand(
         ep.ins.presets.filter { presetName==null || presetName in it.key }.forEach {
             output += "${it.key}: ${it.value}\n"
         }
-        sendMessage(output.ifEmpty { " " })
+        sendMessage(output.ifEmpty { "还没有任何环境预设" })
     }
 
-    @SubCommand @Description("设置会话(子进程)的入口程序(一般是shell程序)")
+    @SubCommand @Description("设置会话的启动程序")
     suspend fun CommandSender.shell(
         @Name("preset")presetName: String,
         @Name("shell") vararg shell: String
     ) {
         withCatch {
             val preset = getPresetWithThrow(presetName)
-
             if(shell.isEmpty())
+            {
                 ep.ins.presets[presetName]!!.shell = ""
-            else
-                ep.ins.presets[presetName]!!.shell = shell.joinToString(" ")
+                sendMessage("已清空${presetName}预设的shell选项")
+            } else {
+                val s = shell.joinToString(" ")
+                ep.ins.presets[presetName]!!.shell = s
+                sendMessage("已更新${presetName}预设的shell: '$s'")
+            }
             ep.write()
-
-            sendMessage(preset.toString())
         }
     }
 
-    @SubCommand @Description("设置环境的工作目录")
+    @SubCommand @Description("设置会话的工作目录")
     suspend fun CommandSender.cwd(
         @Name("preset")presetName: String,
-        @Name("cwd") vararg cwd: String
+        @Name("dir") vararg dir: String
     ) {
         withCatch {
             val preset = getPresetWithThrow(presetName)
-
-            if(cwd.isEmpty())
+            if(dir.isEmpty())
+            {
                 ep.ins.presets[presetName]!!.cwd = ""
-            else
-                ep.ins.presets[presetName]!!.cwd = cwd.joinToString(" ")
+                sendMessage("已清空${presetName}预设的cwd选项")
+            } else {
+                val d = dir.joinToString(" ")
+                ep.ins.presets[presetName]!!.cwd = d
+                sendMessage("已更新${presetName}预设的cwd: '$d'")
+            }
             ep.write()
-
-            sendMessage(preset.toString())
         }
     }
 
-    @SubCommand @Description("设置环境的环境变量")
+    @SubCommand @Description("设置会话的环境变量")
     suspend fun CommandSender.env(
         @Name("preset") presetName: String,
         @Name("key") key: String = "",
@@ -111,57 +115,60 @@ object EnvCommand : CompositeCommand(
     ) {
         withCatch {
             val preset = getPresetWithThrow(presetName)
-
             if(key.isNotEmpty())
             {
                 if(value.isEmpty())
+                {
                     ep.ins.presets[presetName]!!.env.remove(key)
-                else
-                    ep.ins.presets[presetName]!!.env[key] = value.joinToString(" ")
+                    sendMessage("已移除${presetName}预设的环境变量: '$key'")
+                } else {
+                    val v = value.joinToString(" ")
+                    ep.ins.presets[presetName]!!.env[key] = v
+                    sendMessage("已更新${presetName}预设的环境变量'$key': '$v'")
+                }
                 ep.write()
             }
-
             sendMessage(preset.env.toString())
         }
     }
 
-    @SubCommand @Description("设置环境的初始化命令")
+    @SubCommand @Description("设置会话的初始化命令")
     suspend fun CommandSender.exec(
         @Name("preset") presetName: String,
         @Name("exec") vararg exec: String
     ) {
         withCatch {
             val preset = getPresetWithThrow(presetName)
-
             if(exec.isEmpty())
+            {
                 ep.ins.presets[presetName]!!.exec = ""
-            else
-                ep.ins.presets[presetName]!!.exec = exec.joinToString(" ")
+                sendMessage("已清空${presetName}预设的exec选项")
+            } else {
+                val e = exec.joinToString(" ")
+                ep.ins.presets[presetName]!!.exec = e
+                sendMessage("已更新${presetName}预设的exec: '$e'")
+            }
             ep.write()
-
-            sendMessage(preset.toString())
         }
     }
 
-    @SubCommand @Description("设置环境的编码方式")
+    @SubCommand @Description("设置会话标准输入输出使用的字符集")
     suspend fun CommandSender.charset(
         @Name("preset") presetName: String,
         @Name("charset") charset: String =""
     ) {
         withCatch {
             val preset = getPresetWithThrow(presetName)
-
             if(charset.isEmpty()) {
                 ep.ins.presets[presetName]!!.charset = ""
+                sendMessage("已清空${presetName}预设的charset选项")
             } else {
-                if(Charset.isSupported(charset))
-                    ep.ins.presets[presetName]!!.charset = charset
-                else
-                    throw UnsupportedCharsetException("The charset '$charset' is unsupported")
+                if(!Charset.isSupported(charset))
+                    throw UnsupportedCharsetException("不支持的字符集'$charset'")
+                ep.ins.presets[presetName]!!.charset = charset
+                sendMessage("已更新${presetName}预设的charset: '$charset'")
             }
             ep.write()
-
-            sendMessage(preset.toString())
         }
     }
 
@@ -170,16 +177,14 @@ object EnvCommand : CompositeCommand(
         @Name("preset") presetName: String? =null
     ) {
         withCatch {
-            if(presetName == null)
+            if(presetName != null)
             {
-                sendMessage("The default preset is <${ep.ins.defaultPreset}>")
-            } else {
                 val preset = getPresetWithThrow(presetName)
-
                 ep.ins.defaultPreset = presetName
                 ep.write()
-
-                sendMessage(preset.toString())
+                sendMessage("已更新默认环境预设: '$presetName'")
+            } else {
+                sendMessage("当前默认环境预设是: ${ep.ins.defaultPreset}")
             }
         }
     }
@@ -188,14 +193,14 @@ object EnvCommand : CompositeCommand(
     suspend fun CommandSender.reload() {
         withCatch {
             ep.read()
-            list()
+            sendMessage("环境预设配置文件重载完成")
         }
     }
 
     fun getPresetWithThrow(presetName: String): Preset
     {
         return ep.ins.presets[presetName]
-            ?: throw PresetNotFoundException("The preset '$presetName' was not found")
+            ?: throw PresetNotFoundException("找不到环境预设'$presetName'")
     }
 
     suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)

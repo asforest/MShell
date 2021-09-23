@@ -35,7 +35,7 @@ class Session(
             .start()
         stdin = PrintWriter(process.outputStream, true, charset)
 
-        userToConnect?.sendMessageBatchly("Process created with pid($pid)")
+        userToConnect?.sendMessageBatchly("会话已创建(pid: $pid)")
 
         // stdout收集协程
         coStdoutCollector = GlobalScope.launch(Dispatchers.IO, CoroutineStart.LAZY) {
@@ -78,7 +78,7 @@ class Session(
 
             // 退出消息
             sendMessageTruncation()
-            sendMessageBatchly("Process exited with pid(${pid})")
+            sendMessageBatchly("会话已结束(pid: $pid)")
 
             // 断开所有用户并从列表里移除
             manager.disconnectAll(this@Session)

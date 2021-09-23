@@ -27,7 +27,7 @@ object MainCommand : CompositeCommand(
         withCatch {
             val user = SessionUser(user)
             if(SessionManager.isUserConnected(user))
-                throw UserAlreadyConnectedException("You have already connected to a other session")
+                throw UserAlreadyConnectedException("你已经连接到了另一个会话上了")
             SessionManager.createSession(preset, user)
         }
     }
@@ -38,7 +38,7 @@ object MainCommand : CompositeCommand(
     ) {
         withCatch {
             val session = SessionManager.getSessionByUserConnected(SessionUser(user))
-                ?: throw throw UserNotConnectedYetException("You have not connected to a session yet")
+                ?: throw throw UserNotConnectedYetException("你还未连接到一个会话上")
             session.stdin.println(text.joinToString(" "))
         }
     }
@@ -49,7 +49,7 @@ object MainCommand : CompositeCommand(
     ) {
         withCatch {
             val session = SessionManager.getSessionByUserConnected(SessionUser(user))
-                ?: throw throw UserNotConnectedYetException("You have not connected to a session yet")
+                ?: throw throw UserNotConnectedYetException("你还未连接到一个会话上")
             session.stdin.print(text.joinToString(" "))
         }
     }
@@ -61,7 +61,7 @@ object MainCommand : CompositeCommand(
     ) {
         withCatch {
             val session = SessionManager.getSessionByPid(pid)
-                ?: throw SessionNotFoundException("The session of pid($pid) was not be found")
+                ?: throw SessionNotFoundException("会话 pid($pid) 找不到")
             session.stdin.println(text.joinToString(" "))
         }
     }
@@ -73,7 +73,7 @@ object MainCommand : CompositeCommand(
     ) {
         withCatch {
             val session = SessionManager.getSessionByPid(pid)
-                ?: throw SessionNotFoundException("The session of pid($pid) was not be found")
+                ?: throw SessionNotFoundException("会话 pid($pid) 找不到")
             session.stdin.print(text.joinToString(" "))
         }
     }
@@ -144,7 +144,7 @@ object MainCommand : CompositeCommand(
     fun getSessionByPidWithThrow(pid: Long): Session
     {
         return SessionManager.getSessionByPid(pid)
-            ?: throw SessionNotFoundException("The session of pid($pid) was not be found")
+            ?: throw SessionNotFoundException("会话 pid($pid) 找不到")
     }
 
     suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)
