@@ -33,7 +33,7 @@ object AdminsCommand : CompositeCommand(
             permitte.permit(permission)
             sendMessage("已添加管理员 $friend (当前共有${adminCount}位管理员)")
         } else {
-            sendMessage("管理员已存在 $friend ,不需要重复添加(当前共有${adminCount}位管理员)")
+            sendMessage("$friend 已是管理员，不需要重复添加(当前共有${adminCount}位管理员)")
         }
     }
 
@@ -58,7 +58,7 @@ object AdminsCommand : CompositeCommand(
             permittee.cancel(permission, false)
             sendMessage("已移除管理员 $friend (当前共有${adminCount}位管理员)")
         } else {
-            sendMessage("没有这个管理员 $friend ,不需要删除(当前共有${adminCount}位管理员)")
+            sendMessage("没有这个管理员 $friend 不需要删除(当前共有${adminCount}位管理员)")
         }
     }
 
@@ -67,7 +67,7 @@ object AdminsCommand : CompositeCommand(
         val f = PermissionUtil.grantings.filterIsInstance<AbstractPermitteeId.ExactFriend>()
         var output = ""
         for ((idx, p) in f.withIndex()) {
-            output += "$idx: ${p.id}\n"
+            output += "[$idx] ${p.id}\n"
         }
         sendMessage(output.ifEmpty { "还没有任何管理员" })
     }
@@ -77,10 +77,10 @@ object AdminsCommand : CompositeCommand(
         Bot.instances.forEach { bot ->
             val f = bot.getFriend(qqnumber)
             if(f != null)
-                return "$f.nick(${f.id})"
+                return "${f.nick}(${f.id})"
         }
         return qqnumber.toString()
     }
 
-    val adminCount = lazy { PermissionUtil.grantings.filterIsInstance<AbstractPermitteeId.ExactFriend>().size }
+    val adminCount by lazy { PermissionUtil.grantings.filterIsInstance<AbstractPermitteeId.ExactFriend>().size }
 }
