@@ -1,3 +1,4 @@
 package com.github.asforest.mshell.exception
 
-class SessionNotFoundException(message: String) : BaseException(message)
+class SessionNotFoundException(pid: Long)
+    : BaseException("会话 pid($pid) 找不到")

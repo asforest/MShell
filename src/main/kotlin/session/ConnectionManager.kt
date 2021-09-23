@@ -9,6 +9,9 @@ class ConnectionManager
 
     fun createConnection(user: SessionUser, session: Session): Connection
     {
+        // 移除上次的历史会话
+        historicalConnections.remove(getHistoricalConnection(user))
+
         val connection = Connection(user, session)
         currentConnections += connection
         return connection
@@ -37,7 +40,7 @@ class ConnectionManager
     fun closeConnection(user: SessionUser): Connection
     {
         val connection = getConnection(user) ?:
-            throw SessionConnectionNotFoundException("The session connection with user($user) was not be found")
+            throw SessionConnectionNotFoundException(user.toString())
         closeConnection(connection)
         return connection
     }

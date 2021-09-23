@@ -1,3 +1,4 @@
 package com.github.asforest.mshell.exception
 
-class PresetNotFoundException(message: String) : BaseException(message)
+class PresetNotFoundException(presetName: String)
+    : BaseException("找不到环境预设'$presetName'")

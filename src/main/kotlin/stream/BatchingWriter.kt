@@ -49,7 +49,7 @@ class BatchingWriter(
                 }
 
                 // 发送合批后的消息
-                val str = buffered.toString()
+                val str = buffered.toString().trim()
                 if(str.isNotEmpty())
                     onBatchedOutput(str)
             }
