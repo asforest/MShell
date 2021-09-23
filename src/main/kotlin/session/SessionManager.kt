@@ -41,14 +41,10 @@ object SessionManager
         }
         ep = MShell.ep.ins.presets[epName] ?: throw PresetNotFoundException(epName)
 
-        // 参数检查
-        if(ep.shell == "")
-            throw PresetIsIncompeleteException(epName)
-
-        val _command = ep.shell
+        val _command = if(ep.shell != "") ep.shell else throw PresetIsIncompeleteException(epName)
         val _workdir = File(if(ep.cwd!= "") ep.cwd else System.getProperty("user.dir"))
         val _env = ep.env
-        val _charset = if(Charset.isSupported(ep.charset)) Charset.forName(ep.charset)
+        val _charset = if(ep.charset.isNotEmpty() && Charset.isSupported(ep.charset)) Charset.forName(ep.charset)
             else throw UnsupportedCharsetException(ep.charset)
 
         val session = Session(this, user, _command, _workdir, _env, _charset)
