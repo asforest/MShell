@@ -122,7 +122,7 @@ object SessionManager
     fun disconnect(user: SessionUser)
     {
         if(!isUserConnected(user))
-            throw UserNotConnectedYetException("你还未连接到一个会话上")
+            throw UserDidnotConnectedYetException("你还未连接到一个会话上")
 
         val pid = connectionManager.closeConnection(user).sessionPid
 

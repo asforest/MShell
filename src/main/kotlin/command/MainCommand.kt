@@ -5,7 +5,7 @@ import com.github.asforest.mshell.MShell
 import com.github.asforest.mshell.exception.BaseException
 import com.github.asforest.mshell.exception.SessionNotFoundException
 import com.github.asforest.mshell.exception.UserAlreadyConnectedException
-import com.github.asforest.mshell.exception.UserNotConnectedYetException
+import com.github.asforest.mshell.exception.UserDidnotConnectedYetException
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
@@ -38,7 +38,7 @@ object MainCommand : CompositeCommand(
     ) {
         withCatch {
             val session = SessionManager.getSessionByUserConnected(SessionUser(user))
-                ?: throw throw UserNotConnectedYetException("你还未连接到一个会话上")
+                ?: throw throw UserDidnotConnectedYetException("你还未连接到一个会话上")
             session.stdin.println(text.joinToString(" "))
         }
     }
@@ -49,7 +49,7 @@ object MainCommand : CompositeCommand(
     ) {
         withCatch {
             val session = SessionManager.getSessionByUserConnected(SessionUser(user))
-                ?: throw throw UserNotConnectedYetException("你还未连接到一个会话上")
+                ?: throw throw UserDidnotConnectedYetException("你还未连接到一个会话上")
             session.stdin.print(text.joinToString(" "))
         }
     }

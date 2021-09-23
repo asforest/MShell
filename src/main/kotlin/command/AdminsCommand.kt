@@ -3,7 +3,7 @@ package com.github.asforest.mshell.command
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 import com.github.asforest.mshell.MShell
-import com.github.asforest.mshell.exception.UserNotConnectedYetException
+import com.github.asforest.mshell.exception.UserDidnotConnectedYetException
 import com.github.asforest.mshell.permission.PermissionUtil
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.SessionManager
@@ -13,7 +13,6 @@ import net.mamoe.mirai.console.permission.*
 import net.mamoe.mirai.console.permission.PermissionService.Companion.cancel
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.permission.PermissionService.Companion.permit
-import net.mamoe.mirai.contact.Friend
 
 object AdminsCommand : CompositeCommand(
     MShell,
@@ -54,7 +53,7 @@ object AdminsCommand : CompositeCommand(
                 if(user != null)
                     try {
                         SessionManager.disconnect(SessionUser(user))
-                    } catch (e: UserNotConnectedYetException) { }
+                    } catch (e: UserDidnotConnectedYetException) { }
             }
             permittee.cancel(permission, false)
             sendMessage("已移除管理员 $friend (当前共有${adminCount}位管理员)")
