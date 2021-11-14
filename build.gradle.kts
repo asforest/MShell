@@ -27,6 +27,11 @@ dependencies {
     implementation("com.esotericsoftware.yamlbeans:yamlbeans:1.15")
 }
 
+tasks.withType<JavaCompile> {
+    sourceCompatibility = "11"
+    targetCompatibility = "11"
+}
+
 tasks.register("buildWithManifest") {
     dependsOn(tasks.named("buildPlugin"))
 
