@@ -15,12 +15,11 @@ plugins {
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.serialization") version kotlinVersion
 
-    id("net.mamoe.mirai-console") version "2.7.0"
+    id("net.mamoe.mirai-console") version "2.8.0"
 }
 
 repositories {
-    if(System.getenv()["PluginDebugDir"] != null)
-        maven("https://maven.aliyun.com/repository/public")
+//    maven("https://maven.aliyun.com/repository/public")
     mavenCentral()
 }
 
