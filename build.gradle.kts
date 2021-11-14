@@ -37,10 +37,7 @@ tasks.register("buildWithManifest") {
 
     tasks.named<BuildMiraiPluginTask>("buildPlugin").get().apply {
         manifest {
-            attributes("Mirai-Plugin-Id" to "$group.mshell")
-            attributes("Mirai-Plugin-Name" to "MShell")
             attributes("Mirai-Plugin-Version" to archiveVersion.get())
-            attributes("Mirai-Plugin-Author" to "Asforest")
             attributes("Git-Commit" to (gitCommitSha ?: ""))
             attributes("Compile-Time" to timestamp)
             attributes("Compile-Time-Ms" to System.currentTimeMillis())
