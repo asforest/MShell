@@ -52,12 +52,14 @@ tasks.register("developing", Copy::class) {
     dependsOn(tasks.named("buildWithManifest"))
 
     val archive = project.buildDir.path+File.separator+"mirai"+
-        File.separator+project.name+"-"+version+".mirai.jar"
+            File.separator+project.name+"-"+version+".mirai.jar"
 
     val env = System.getenv()["PluginDebugDir"]
         ?: throw RuntimeException("The environmental variable 'PluginDebugDir' is not set")
     if(!File(env).run { !exists() || isDirectory })
         throw RuntimeException("The 'PluginDebugDir' $env does not exist or is a file")
 
-    from(archive).into(env)
+    from(archive).into(env).doLast {
+        Runtime.getRuntime().exec(env+File.separator+"cp.bat")
+    }
 }
