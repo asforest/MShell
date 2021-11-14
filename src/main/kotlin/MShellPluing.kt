@@ -22,7 +22,7 @@ import net.mamoe.mirai.message.data.PokeMessage
 import net.mamoe.mirai.message.data.content
 
 
-object MShell : KotlinPlugin(MiraiUtil.pluginDescription)
+object MShellPluing : KotlinPlugin(MiraiUtil.pluginDescription)
 {
     val ep = ConfigProxy(EnvironmentPresets::class.java, "presets.yml")
 

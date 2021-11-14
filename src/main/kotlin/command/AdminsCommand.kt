@@ -2,7 +2,7 @@ package com.github.asforest.mshell.command
 
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
-import com.github.asforest.mshell.MShell
+import com.github.asforest.mshell.MShellPluing
 import com.github.asforest.mshell.exception.UserDidnotConnectedYetException
 import com.github.asforest.mshell.permission.PermissionUtil
 import com.github.asforest.mshell.permission.MShellPermissions
@@ -15,7 +15,7 @@ import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermiss
 import net.mamoe.mirai.console.permission.PermissionService.Companion.permit
 
 object AdminsCommand : CompositeCommand(
-    MShell,
+    MShellPluing,
     primaryName = "mshella",
     description = "MShell插件管理员配置指令",
     secondaryNames = arrayOf("msa", "ma"),

@@ -1,7 +1,7 @@
 
 package com.github.asforest.mshell.command
 
-import com.github.asforest.mshell.MShell
+import com.github.asforest.mshell.MShellPluing
 import com.github.asforest.mshell.exception.BaseException
 import com.github.asforest.mshell.exception.SessionNotFoundException
 import com.github.asforest.mshell.exception.UserAlreadyConnectedException
@@ -14,7 +14,7 @@ import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 
 object MainCommand : CompositeCommand(
-    MShell,
+    MShellPluing,
     primaryName = "mshell",
     description = "MShell插件主指令",
     secondaryNames = arrayOf("ms"),

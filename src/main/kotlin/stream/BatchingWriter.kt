@@ -2,6 +2,7 @@ package com.github.asforest.mshell.stream
 
 import com.github.asforest.mshell.configuration.MainConfig
 import com.github.asforest.mshell.event.Event
+import com.github.asforest.mshell.util.AnsiEscapeUtil
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -49,7 +50,7 @@ class BatchingWriter(
                 }
 
                 // 发送合批后的消息
-                val str = buffered.toString().trim()
+                val str = buffered.toString().trim().replace(AnsiEscapeUtil.pattern, "")
                 if(str.isNotEmpty())
                     onBatchedOutput(str)
             }
