@@ -1,7 +1,5 @@
 package com.github.asforest.mshell.permission
 
-import com.github.asforest.mshell.MShell
-import io.ktor.utils.io.*
 import net.mamoe.mirai.console.data.PluginDataExtensions
 import net.mamoe.mirai.console.permission.PermissionId
 import net.mamoe.mirai.console.permission.PermitteeId

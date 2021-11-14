@@ -1,6 +1,6 @@
 package com.github.asforest.mshell.session
 
-import com.github.asforest.mshell.MShell
+import com.github.asforest.mshell.MShellPluing
 import com.github.asforest.mshell.configuration.Preset
 import com.github.asforest.mshell.exception.*
 import java.io.File
@@ -26,7 +26,7 @@ object SessionManager
      */
     fun createSession(preset: String? = null, user: SessionUser): Session
     {
-        val epins = MShell.ep.ins
+        val epins = MShellPluing.ep.ins
         val ep: Preset
 
         // 加载环境预设
@@ -39,7 +39,7 @@ object SessionManager
                 throw PresetNotFoundException(preset)
             preset
         }
-        ep = MShell.ep.ins.presets[epName] ?: throw PresetNotFoundException(epName)
+        ep = MShellPluing.ep.ins.presets[epName] ?: throw PresetNotFoundException(epName)
 
         val _command = if(ep.shell != "") ep.shell else throw PresetIsIncompeleteException(epName)
         val _workdir = File(if(ep.cwd!= "") ep.cwd else System.getProperty("user.dir"))

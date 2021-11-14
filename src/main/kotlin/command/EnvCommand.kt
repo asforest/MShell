@@ -2,7 +2,7 @@ package com.github.asforest.mshell.command
 
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
-import com.github.asforest.mshell.MShell
+import com.github.asforest.mshell.MShellPluing
 import com.github.asforest.mshell.configuration.ConfigProxy
 import com.github.asforest.mshell.configuration.Preset
 import com.github.asforest.mshell.configuration.EnvironmentPresets
@@ -11,13 +11,13 @@ import com.github.asforest.mshell.permission.MShellPermissions
 import java.nio.charset.Charset
 
 object EnvCommand : CompositeCommand(
-    MShell,
+    MShellPluing,
     primaryName = "mshelle",
     description = "MShell插件配置指令",
     secondaryNames = arrayOf("mse", "me"),
     parentPermission = MShellPermissions.all
 ) {
-    val ep: ConfigProxy<EnvironmentPresets> get() = MShell.ep
+    val ep: ConfigProxy<EnvironmentPresets> get() = MShellPluing.ep
 
     @SubCommand @Description("创建一个环境预设")
     suspend fun CommandSender.add(
