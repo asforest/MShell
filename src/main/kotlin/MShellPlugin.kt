@@ -55,8 +55,6 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
             if (!sender.asFriend().asCommandSender().hasPermission(MShellPermissions.all))
                 return@subscribeAlways
 
-            println("其实是有权限的")
-
             withCatch {
                 handleMessage(message, GroupUser(group))
             }
