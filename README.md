@@ -12,19 +12,19 @@
 
 支持群聊会话，不再仅限于一对一的控制（2.0版本新增）
 
-![preview](doc/assets/preview.png)
+![preview](docs/assets/preview.png)
 
 Gif图功能演示：
 
-![demonstrate](README.assets/demonstrate.gif)
+![demonstrate](docs/assets/demonstrate.gif)
 
 支持会话共享，多人之间可以分享控制权（请看下面的GIF演示)
 
-![shared](README.assets/shared.gif)
+![shared](docs/assets/shared.gif)
 
 群聊会话Gif图演示：（此功能为2.0版本新增）
 
-![group-session](README.assets/group-session.gif)
+![group-session](docs/assets/group-session.gif)
 
 ## 使用前说明
 
