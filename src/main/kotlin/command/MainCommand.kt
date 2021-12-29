@@ -2,6 +2,7 @@
 package com.github.asforest.mshell.command
 
 import com.github.asforest.mshell.MShellPlugin
+import com.github.asforest.mshell.configuration.MainConfig
 import com.github.asforest.mshell.exception.external.BaseExternalException
 import com.github.asforest.mshell.exception.external.NoSuchSessionException
 import com.github.asforest.mshell.exception.external.SessionUserAlreadyConnectedException
@@ -17,6 +18,7 @@ import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.getGroupOrNull
 import net.mamoe.mirai.console.command.isConsole
+import net.mamoe.mirai.console.plugin.jvm.reloadPluginConfig
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 
 @ConsoleExperimentalApi
@@ -151,6 +153,13 @@ object MainCommand : CompositeCommand(
         } else {
             SessionManager.reconnectOrCreate(user)
         }
+    }
+
+    @SubCommand @Description("重新加载config.yml配置文件")
+    suspend fun CommandSender.reload()
+    {
+        MShellPlugin.reloadPluginConfig(MainConfig)
+        sendMessage("config.yml配置文件重载完成")
     }
 
     fun getSessionByPidWithThrow(pid: Long): Session
