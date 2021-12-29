@@ -7,6 +7,7 @@ import com.github.asforest.mshell.configuration.ConfigProxy
 import com.github.asforest.mshell.configuration.EnvironmentPresets
 import com.github.asforest.mshell.configuration.MainConfig
 import com.github.asforest.mshell.exception.BaseException
+import com.github.asforest.mshell.exception.external.BaseExternalException
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.session.SessionUser
@@ -22,7 +23,7 @@ import net.mamoe.mirai.message.data.PokeMessage
 import net.mamoe.mirai.message.data.content
 
 
-object MShellPluing : KotlinPlugin(MiraiUtil.pluginDescription)
+object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
 {
     val ep = ConfigProxy(EnvironmentPresets::class.java, "presets.yml")
 
@@ -59,25 +60,11 @@ object MShellPluing : KotlinPlugin(MiraiUtil.pluginDescription)
                 }
             }
         }
-
-//        GlobalEventChannel.filter { it is BotEvent }.subscribeAlways<GroupMessageEvent> {
-//            val user = this.sender
-//            if(user.id !in Admins.admins)
-//                return@subscribeAlways
-//
-//            val facePresent = message.filterIsInstance<Face>().isNotEmpty()
-//            val session = SessionManager.getSessionByUserConnected(user)
-//
-//            if(facePresent)
-//            {
-//
-//            }
-//        }
     }
 
     suspend inline fun FriendMessageEvent.withCatch(block: FriendMessageEvent.() -> Unit)
     {
-        try { block() } catch (e: BaseException) { user.sendMessage(e.message ?: e.stackTraceToString()) }
+        try { block() } catch (e: BaseExternalException) { user.sendMessage(e.message ?: e.stackTraceToString()) }
     }
 
 }

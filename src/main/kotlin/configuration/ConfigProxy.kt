@@ -2,7 +2,7 @@ package com.github.asforest.mshell.configuration
 
 import com.esotericsoftware.yamlbeans.YamlReader
 import com.esotericsoftware.yamlbeans.YamlWriter
-import com.github.asforest.mshell.MShellPluing
+import com.github.asforest.mshell.MShellPlugin
 import com.github.asforest.mshell.util.FileObj
 import java.io.ByteArrayOutputStream
 import java.io.PrintWriter
@@ -10,7 +10,7 @@ import java.io.PrintWriter
 class ConfigProxy<T> where T : ConfigProxy.ProxiableConfiguration
 {
     val filename: String
-    val pluginDataFolder: FileObj = FileObj(MShellPluing.configFolder)
+    val pluginDataFolder: FileObj = FileObj(MShellPlugin.configFolder)
     val configFile: FileObj
     var ins: T
 

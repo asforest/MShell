@@ -1,11 +1,11 @@
 
 package com.github.asforest.mshell.command
 
-import com.github.asforest.mshell.MShellPluing
-import com.github.asforest.mshell.exception.BaseException
-import com.github.asforest.mshell.exception.SessionNotFoundException
-import com.github.asforest.mshell.exception.UserAlreadyConnectedException
-import com.github.asforest.mshell.exception.UserDidnotConnectedYetException
+import com.github.asforest.mshell.MShellPlugin
+import com.github.asforest.mshell.exception.external.BaseExternalException
+import com.github.asforest.mshell.exception.external.NoSuchSessionException
+import com.github.asforest.mshell.exception.external.UserAlreadyConnectedException
+import com.github.asforest.mshell.exception.external.UserDidnotConnectedYetException
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
@@ -14,7 +14,7 @@ import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 
 object MainCommand : CompositeCommand(
-    MShellPluing,
+    MShellPlugin,
     primaryName = "mshell",
     description = "MShell插件主指令",
     secondaryNames = arrayOf("ms"),
@@ -26,7 +26,7 @@ object MainCommand : CompositeCommand(
     ) {
         withCatch {
             val user = SessionUser(user)
-            if(SessionManager.isUserConnected(user))
+            if(SessionManager.hasUserConnectedToAnySession(user))
                 throw UserAlreadyConnectedException()
             SessionManager.createSession(preset, user)
         }
@@ -61,7 +61,7 @@ object MainCommand : CompositeCommand(
     ) {
         withCatch {
             val session = SessionManager.getSessionByPid(pid)
-                ?: throw SessionNotFoundException(pid)
+                ?: throw NoSuchSessionException(pid)
             session.stdin.println(text.joinToString(" "))
         }
     }
@@ -73,7 +73,7 @@ object MainCommand : CompositeCommand(
     ) {
         withCatch {
             val session = SessionManager.getSessionByPid(pid)
-                ?: throw SessionNotFoundException(pid)
+                ?: throw NoSuchSessionException(pid)
             session.stdin.print(text.joinToString(" "))
         }
     }
@@ -93,6 +93,7 @@ object MainCommand : CompositeCommand(
     ) {
         withCatch {
             getSessionByPidWithThrow(pid).kill()
+            sendMessage("进程已终止($pid)")
         }
     }
 
@@ -101,7 +102,7 @@ object MainCommand : CompositeCommand(
         @Name("pid") pid: Long
     ) {
         withCatch {
-            SessionManager.connect(SessionUser(user), pid)
+            SessionManager.connect(SessionUser(user), pid, )
         }
     }
 
@@ -117,7 +118,7 @@ object MainCommand : CompositeCommand(
     suspend fun CommandSender.list()
     {
         var output = ""
-        for ((index, session) in SessionManager.sessions.withIndex())
+        for ((index, session) in SessionManager.getAllSessions().withIndex())
         {
             val pid = session.pid
             val usersConnected = session.usersConnected.map { u -> u.name}
@@ -144,11 +145,11 @@ object MainCommand : CompositeCommand(
     fun getSessionByPidWithThrow(pid: Long): Session
     {
         return SessionManager.getSessionByPid(pid)
-            ?: throw SessionNotFoundException(pid)
+            ?: throw NoSuchSessionException(pid)
     }
 
     suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)
     {
-        try { block() } catch (e: BaseException) { sendMessage(e.message ?: e.stackTraceToString()) }
+        try { block() } catch (e: BaseExternalException) { sendMessage(e.message ?: e.stackTraceToString()) }
     }
 }

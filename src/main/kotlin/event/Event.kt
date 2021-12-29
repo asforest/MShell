@@ -1,37 +1,42 @@
 package com.github.asforest.mshell.event
 
-class Event<Context, Callback>(val context: Context)
-    : Iterable<Event.Listener<Callback>> where Callback : Function<Unit>
+class Event<TContext, TCallback>(val context: TContext)
+    : Iterable<Event.Listener<TCallback>> where TCallback : Function<Unit>
 {
-    val listeners = mutableListOf<Listener<Callback>>()
+    val listeners = mutableListOf<Listener<TCallback>>()
 
-    fun always(cb: Callback)
+    fun always(cb: TCallback)
     {
         this += Listener(cb, ListenerType.ALWAYS)
     }
 
-    fun once(cb: Callback)
+    fun once(cb: TCallback)
     {
         this += Listener(cb, ListenerType.ONCE)
     }
 
-    fun invokeSuspend(calling: (arg: Callback) -> Unit)
+    fun invokeSuspend(calling: (arg: TCallback) -> Unit)
     {
         listeners.forEach { calling(it.callback) }
         listeners.removeIf { it.type == ListenerType.ONCE }
     }
 
-    operator fun plusAssign(listener: Listener<Callback>)
+    operator fun plusAssign(listener: Listener<TCallback>)
     {
         listeners += listener
     }
 
-    operator fun invoke(calling: (arg: Callback) -> Unit)
+    operator fun minusAssign(listener: Listener<TCallback>)
+    {
+        listeners -= listener
+    }
+
+    operator fun invoke(calling: (arg: TCallback) -> Unit)
     {
         invokeSuspend(calling)
     }
 
-    override fun iterator(): MutableIterator<Listener<Callback>>
+    override fun iterator(): MutableIterator<Listener<TCallback>>
     {
         return listeners.iterator()
     }

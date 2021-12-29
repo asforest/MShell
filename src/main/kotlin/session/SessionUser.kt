@@ -1,7 +1,6 @@
 package com.github.asforest.mshell.session
 
 import com.github.asforest.mshell.stream.BatchingWriter
-import com.github.asforest.mshell.util.FunctionUtil
 import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.contact.User
 
@@ -34,7 +33,7 @@ data class SessionUser (
     }
 
     /**
-     * 强制打断消息合并，显式拆分成2条消息发送
+     * 强制打断消息合并，拆分成2条消息发送
      */
     fun sendMessageTruncation()
     {
@@ -54,7 +53,15 @@ data class SessionUser (
 
     override fun equals(other: Any?): Boolean
     {
-        return FunctionUtil.SessionUserEquals(this, other)
+        if (other == null || other !is SessionUser)
+            return false
+
+        return id == other.id
     }
 
+    override fun hashCode(): Int
+    {
+        val i = id.hashCode()
+        return (i shl 5) - i
+    }
 }

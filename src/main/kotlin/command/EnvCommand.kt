@@ -2,22 +2,23 @@ package com.github.asforest.mshell.command
 
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
-import com.github.asforest.mshell.MShellPluing
+import com.github.asforest.mshell.MShellPlugin
 import com.github.asforest.mshell.configuration.ConfigProxy
 import com.github.asforest.mshell.configuration.Preset
 import com.github.asforest.mshell.configuration.EnvironmentPresets
 import com.github.asforest.mshell.exception.*
+import com.github.asforest.mshell.exception.external.*
 import com.github.asforest.mshell.permission.MShellPermissions
 import java.nio.charset.Charset
 
 object EnvCommand : CompositeCommand(
-    MShellPluing,
+    MShellPlugin,
     primaryName = "mshelle",
     description = "MShell插件配置指令",
     secondaryNames = arrayOf("mse", "me"),
     parentPermission = MShellPermissions.all
 ) {
-    val ep: ConfigProxy<EnvironmentPresets> get() = MShellPluing.ep
+    val ep: ConfigProxy<EnvironmentPresets> get() = MShellPlugin.ep
 
     @SubCommand @Description("创建一个环境预设")
     suspend fun CommandSender.add(
@@ -27,7 +28,7 @@ object EnvCommand : CompositeCommand(
     ) {
         withCatch {
             if (presetName in ep.ins.presets.keys)
-                throw PresetAlreadyExistedYetException(presetName)
+                throw PresetAlreadyExistedYetException("环境预设'$presetName'已经存在了")
             if(!Charset.isSupported(charset))
                 throw UnsupportedCharsetException(charset)
             if(shell.isEmpty())
@@ -199,12 +200,11 @@ object EnvCommand : CompositeCommand(
 
     fun getPresetWithThrow(presetName: String): Preset
     {
-        return ep.ins.presets[presetName]
-            ?: throw PresetNotFoundException(presetName)
+        return ep.ins.presets[presetName] ?: throw PresetNotFoundException(presetName)
     }
 
     suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)
     {
-        try { block() } catch (e: BaseException) { sendMessage(e.message ?: e.stackTraceToString()) }
+        try { block() } catch (e: BaseExternalException) { sendMessage(e.message ?: e.stackTraceToString()) }
     }
 }

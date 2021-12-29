@@ -57,6 +57,8 @@ tasks.register("developing", Copy::class) {
         throw RuntimeException("The 'PluginDebugDir' $env does not exist or is a file")
 
     from(archive).into(env).doLast {
-        Runtime.getRuntime().exec(env+File.separator+"cp.bat")
+        val cps = env+File.separator+"cp.bat"
+        if(File(cps).exists())
+            Runtime.getRuntime().exec(cps)
     }
 }

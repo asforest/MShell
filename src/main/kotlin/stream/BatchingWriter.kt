@@ -24,8 +24,8 @@ class BatchingWriter(
 
     init {
         coBatching = GlobalScope.launch {
-            val truncation = MainConfig.stdoutputTruncationThreshold
-            val batchingTimeout = MainConfig.stdoutputBatchingTimeoutInMs.toLong()
+            val truncation = MainConfig.stdoutTruncationInBytes
+            val batchingTimeout = MainConfig.stdoutBatchingIntevalInMs.toLong()
 
             while(true)
             {

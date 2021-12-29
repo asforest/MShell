@@ -1,3 +1,4 @@
 package com.github.asforest.mshell.exception
 
-class ManifestNotReadableException(message: String) : BaseException(message)
+class ManifestNotReadableException
+    : BaseException("This plugin has not been packaged yet")

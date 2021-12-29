@@ -24,7 +24,7 @@ object ManifestUtil
     val originManifest: Attributes get()
     {
         if(!EnvUtil.isPackaged)
-            throw ManifestNotReadableException("This plugin has not been packaged yet")
+            throw ManifestNotReadableException()
 
         JarFile(EnvUtil.jarFile.path).use { jar ->
             jar.getInputStream(jar.getJarEntry("META-INF/MANIFEST.MF")).use {
