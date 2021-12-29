@@ -56,7 +56,22 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
                         SessionManager.reconnectOrCreate(user)
                     }
                 } else {
-                    session?.stdin?.println(message.content)
+                    val message = message.content
+
+                    if(session != null)
+                    {
+                        val inputPrefix = MainConfig.explicitInputPrefix
+
+                        if(inputPrefix.isNotEmpty() && // 以inputPrefix开头且有内容
+                            message.startsWith(inputPrefix) &&
+                            message.length > inputPrefix.length)
+                        {
+                            val content = message.substring(inputPrefix.length)
+                            session.stdin.println(content)
+                        } else {
+                            session.stdin.println(message)
+                        }
+                    }
                 }
             }
         }
