@@ -4,15 +4,22 @@ package com.github.asforest.mshell.command
 import com.github.asforest.mshell.MShellPlugin
 import com.github.asforest.mshell.exception.external.BaseExternalException
 import com.github.asforest.mshell.exception.external.NoSuchSessionException
-import com.github.asforest.mshell.exception.external.UserAlreadyConnectedException
-import com.github.asforest.mshell.exception.external.UserDidnotConnectedYetException
+import com.github.asforest.mshell.exception.external.SessionUserAlreadyConnectedException
+import com.github.asforest.mshell.exception.external.UserDidNotConnectedYetException
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.session.SessionUser
+import com.github.asforest.mshell.session.user.ConsoleUser
+import com.github.asforest.mshell.session.user.FriendUser
+import com.github.asforest.mshell.session.user.GroupUser
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
+import net.mamoe.mirai.console.command.getGroupOrNull
+import net.mamoe.mirai.console.command.isConsole
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 
+@ConsoleExperimentalApi
 object MainCommand : CompositeCommand(
     MShellPlugin,
     primaryName = "mshell",
@@ -25,9 +32,12 @@ object MainCommand : CompositeCommand(
         @Name("preset") preset: String? = null
     ) {
         withCatch {
-            val user = SessionUser(user)
-            if(SessionManager.hasUserConnectedToAnySession(user))
-                throw UserAlreadyConnectedException()
+            val user = getSessionUser(this)
+
+            SessionManager.getSessionByUserConnected(user)?.also {
+                throw SessionUserAlreadyConnectedException(it.pid)
+            }
+
             SessionManager.createSession(preset, user)
         }
     }
@@ -37,8 +47,9 @@ object MainCommand : CompositeCommand(
         @Name("text") vararg text: String
     ) {
         withCatch {
-            val session = SessionManager.getSessionByUserConnected(SessionUser(user))
-                ?: throw throw UserDidnotConnectedYetException()
+            val sessionUser = getSessionUser(this)
+            val session = SessionManager.getSessionByUserConnected(sessionUser)
+                ?: throw UserDidNotConnectedYetException()
             session.stdin.println(text.joinToString(" "))
         }
     }
@@ -48,8 +59,8 @@ object MainCommand : CompositeCommand(
         @Name("text") vararg text: String
     ) {
         withCatch {
-            val session = SessionManager.getSessionByUserConnected(SessionUser(user))
-                ?: throw throw UserDidnotConnectedYetException()
+            val session = SessionManager.getSessionByUserConnected(getSessionUser(this))
+                ?: throw throw UserDidNotConnectedYetException()
             session.stdin.print(text.joinToString(" "))
         }
     }
@@ -102,7 +113,7 @@ object MainCommand : CompositeCommand(
         @Name("pid") pid: Long
     ) {
         withCatch {
-            SessionManager.connect(SessionUser(user), pid, )
+            SessionManager.connect(getSessionUser(this), pid, )
         }
     }
 
@@ -110,7 +121,7 @@ object MainCommand : CompositeCommand(
     suspend fun CommandSender.disconnect()
     {
         withCatch {
-            SessionManager.disconnect(SessionUser(user))
+            SessionManager.disconnect(getSessionUser(this))
         }
     }
 
@@ -121,7 +132,7 @@ object MainCommand : CompositeCommand(
         for ((index, session) in SessionManager.getAllSessions().withIndex())
         {
             val pid = session.pid
-            val usersConnected = session.usersConnected.map { u -> u.name}
+            val usersConnected = session.usersConnected
             
             output += "[$index] pid: $pid: $usersConnected\n"
         }
@@ -131,7 +142,7 @@ object MainCommand : CompositeCommand(
     @SubCommand @Description("模拟戳一戳(窗口抖动)消息")
     suspend fun CommandSender.poke()
     {
-        val user = SessionUser(user)
+        val user = getSessionUser(this)
         val session = SessionManager.getSessionByUserConnected(user)
 
         if(session != null)
@@ -144,8 +155,24 @@ object MainCommand : CompositeCommand(
 
     fun getSessionByPidWithThrow(pid: Long): Session
     {
-        return SessionManager.getSessionByPid(pid)
-            ?: throw NoSuchSessionException(pid)
+        return SessionManager.getSessionByPid(pid) ?: throw NoSuchSessionException(pid)
+    }
+
+    /**
+     * 根据指令发送人获取对应类型的SessionUser
+     */
+    private fun getSessionUser(commandSender: CommandSender): SessionUser
+    {
+        val group = commandSender.getGroupOrNull()
+
+        // 目前Mirai好像无法在群聊里执行指令，那么永远不会进入此if分支
+        if (group != null)
+            return GroupUser(group)
+
+        if (commandSender.isConsole())
+            return ConsoleUser()
+
+        return FriendUser(commandSender.user!!)
     }
 
     suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)

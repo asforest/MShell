@@ -54,7 +54,7 @@ class Session(
                 if(len != -1) { // 有消息时
                     val message = String(buffer, 0, len, charset);
                     // 发送给所有连接上的用户
-                    usersConnected.forEach { it.sendRawMessageBatchly(message) }
+                    usersConnected.forEach { it.sendMessage(message) }
 
                     // 保留遗言
                     lwm.append(message)
@@ -103,14 +103,21 @@ class Session(
         manager.disconnectAll(this)
     }
 
-    fun sendMessageBatchly(msg: String, truncation: Boolean =false)
+    /**
+     * 向所有连接到当前Session上的用户广播消息
+     * @param message 要发送的消息
+     */
+    fun broadcastMessageBatchly(message: String)
     {
-        usersConnected.forEach { it.sendMessageBatchly(msg, truncation) }
+        usersConnected.forEach { it.sendMessage(message) }
     }
 
-    fun sendMessageTruncation()
+    /**
+     * 强制打断消息合并，拆分成2条消息发送
+     */
+    fun broadcaseMessageTruncation()
     {
-        usersConnected.forEach { it.sendMessageTruncation() }
+        usersConnected.forEach { it.sendTruncation() }
     }
 
     fun isUserConnected(user: SessionUser): Boolean = manager.getSessionByUserConnected(user) == this

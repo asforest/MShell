@@ -5,7 +5,7 @@ import com.github.asforest.mshell.configuration.MainConfig
 import com.github.asforest.mshell.configuration.Preset
 import com.github.asforest.mshell.exception.*
 import com.github.asforest.mshell.exception.external.*
-import kotlinx.coroutines.runBlocking
+import com.github.asforest.mshell.session.user.GroupUser
 import java.io.File
 import java.nio.charset.Charset
 import java.text.SimpleDateFormat
@@ -22,8 +22,16 @@ object SessionManager
      * @param preset 环境预设
      * @param user 会话启动后，要立即连接上来的用户
      */
-    fun createSession(preset: String? = null, user: SessionUser?): Session
+    fun createSession(preset: String?, user: SessionUser?): Session
     {
+        // user不能连接到任何会话，否则会抛异常
+        user?.also { getSessionByUserConnected(user)?.also { session ->
+            if(user is GroupUser)
+                throw SessionUserAlreadyConnectedException(user.group.id, session.pid)
+            else
+                throw SessionUserAlreadyConnectedException(session.pid)
+        } }
+
         val epins = MShellPlugin.ep.ins
         val ep: Preset
 
@@ -53,9 +61,9 @@ object SessionManager
         // 用户自动连接
         if(user != null)
         {
-            user.sendMessageBatchly("会话已创建(pid: ${session.pid})")
+            user.sendMessage("会话已创建(pid: ${session.pid})\n")
             session.connect(user)
-            user.sendMessageTruncation()
+            user.sendTruncation()
         }
 
         session.start()
@@ -92,8 +100,8 @@ object SessionManager
             throw SessionNotRegisteredException(session)
 
         // 发送退出消息
-        session.sendMessageTruncation()
-        session.sendMessageBatchly("会话已结束(pid: ${session.pid})")
+        session.broadcaseMessageTruncation()
+        session.broadcastMessageBatchly("会话已结束(pid: ${session.pid})\n")
 
         // 关掉所有连接
         session.manager.disconnectAll(session)
@@ -116,8 +124,9 @@ object SessionManager
      */
     fun reconnectOrCreate(user: SessionUser)
     {
-        if(hasUserConnectedToAnySession(user))
-            throw UserAlreadyConnectedException()
+        getSessionByUserConnected(user)?.also {
+            throw SessionUserAlreadyConnectedException(it.pid)
+        }
 
         val cm = getConnectionManager(user, true)
         val connection = cm?.getConnection(user, includeOffline = true)
@@ -134,10 +143,11 @@ object SessionManager
      * @param user 用户
      * @param pid 子进程的pid
      */
-    fun connect(user: SessionUser, pid: Long)
+    fun connect(user: SessionUser, pid: Long): Session
     {
         val session = getSessionByPid(pid) ?: throw NoSuchSessionException(pid)
         connect(user, session)
+        return session
     }
 
     /**
@@ -149,9 +159,7 @@ object SessionManager
     {
         // 安全检查
         getSessionByUserConnected(user)?.also {
-            if(it == session)
-                throw UserAlreadyConnectedException()
-            throw UserAlreadyConnectedException(it.pid)
+            throw SessionUserAlreadyConnectedException(it.pid)
         }
 
         val connectionManager = getConnectionManager(session) ?: throw SessionNotRegisteredException(session)
@@ -169,25 +177,33 @@ object SessionManager
                 last = msg.time
             }
             sb.append("\n==========最后输出(${SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(last)})==========\n")
-            user.sendMessageTruncation()
 
-            runBlocking { user.sendMessageImmediately(sb.toString()) }
+            user.sendTruncation()
+            user.sendMessage(sb.toString())
+            user.sendTruncation()
         }
 
 //        for (s in session.lwm.lastwillBuffer.withIndex())
 //            println("${s.index}: ${s.value.time} : ${s.value.message} [${s.value.message.length}]")
 
-        user.sendMessageBatchly((if(isReconnection) "已重连" else "已连接")+"到会话(pid: ${session.pid})", true)
+//        user.sendTruncation()
+        user.sendMessage((if(isReconnection) "已重连" else "已连接")+"到会话(pid: ${session.pid})\n")
+        user.sendTruncation()
     }
 
     /**
      * 使一个用户从所连接的会话上断开
      * @param user 要断开的用户
      */
-    fun disconnect(user: SessionUser)
+    fun disconnect(user: SessionUser): Session
     {
         if(!hasUserConnectedToAnySession(user))
-            throw UserDidnotConnectedYetException()
+        {
+            if(user is GroupUser)
+                throw UserDidNotConnectedYetException(user)
+            else
+                throw UserDidNotConnectedYetException()
+        }
 
         // 关闭连接
         val cm = getConnectionManager(user, includeOffine = false)!!
@@ -195,7 +211,11 @@ object SessionManager
         cm.closeConnection(user)
 
         // 发送消息
-        user.sendMessageBatchly("已从会话断开(pid: ${cm.session.pid})", true)
+        user.sendTruncation()
+        user.sendMessage("已从会话断开(pid: ${cm.session.pid})\n")
+        user.sendTruncation()
+
+        return cm.session
     }
 
     /**
@@ -205,10 +225,9 @@ object SessionManager
     {
         val cm = getConnectionManager(session) ?: throw SessionNotRegisteredException(session)
 
-        cm.getConnections(false).forEach {
-            it.session.sendMessageBatchly("已从会话断开(pid: ${session.pid})", true)
-            cm.closeConnection(it)
-        }
+        session.broadcastMessageBatchly("已从会话断开(pid: ${session.pid})")
+        session.broadcaseMessageTruncation()
+        cm.closeAllConnections()
     }
 
     /**

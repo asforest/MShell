@@ -42,7 +42,7 @@ class ConnectionManager (
     /**
      * 关闭一个会话的所有的连接
      */
-    fun closeConnections()
+    fun closeAllConnections()
     {
         getConnections(includeOffline = false).forEach { closeConnection(it) }
     }

@@ -3,12 +3,11 @@ package com.github.asforest.mshell.command
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.exception.external.UserDidnotConnectedYetException
-import com.github.asforest.mshell.permission.PermissionUtil
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.SessionManager
-import com.github.asforest.mshell.session.SessionUser
+import com.github.asforest.mshell.session.user.FriendUser
 import net.mamoe.mirai.Bot
+import net.mamoe.mirai.console.data.PluginDataExtensions
 import net.mamoe.mirai.console.permission.*
 import net.mamoe.mirai.console.permission.PermissionService.Companion.cancel
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
@@ -49,11 +48,9 @@ object AdminsCommand : CompositeCommand(
             // 断开已建立的链接
             for (bot in Bot.instances)
             {
-                val user = bot.getFriend(qqnumber)
-                if(user != null)
-                    try {
-                        SessionManager.disconnect(SessionUser(user))
-                    } catch (e: UserDidnotConnectedYetException) { }
+                val user = bot.getFriend(qqnumber)?.run { FriendUser(this) }
+                if(user != null && SessionManager.hasUserConnectedToAnySession(user))
+                    SessionManager.disconnect(user)
             }
             permittee.cancel(permission, false)
             sendMessage("已移除管理员 $friend (当前共有${adminCount}位管理员)")
@@ -64,7 +61,7 @@ object AdminsCommand : CompositeCommand(
 
     @SubCommand @Description("列出所有管理员")
     suspend fun CommandSender.list() {
-        val f = PermissionUtil.grantings.filterIsInstance<AbstractPermitteeId.ExactFriend>()
+        val f = grantings.filterIsInstance<AbstractPermitteeId.ExactFriend>()
         var output = ""
         for ((idx, p) in f.withIndex()) {
             output += "[$idx] ${p.id}\n"
@@ -82,5 +79,21 @@ object AdminsCommand : CompositeCommand(
         return qqnumber.toString()
     }
 
-    val adminCount by lazy { PermissionUtil.grantings.filterIsInstance<AbstractPermitteeId.ExactFriend>().size }
+    private val adminCount by lazy { grantings.filterIsInstance<AbstractPermitteeId.ExactFriend>().size }
+
+    private val grantings: MutableCollection<PermitteeId> by lazy {
+        grantedPermissionsMap
+            .filter { it.key == MShellPermissions.all.id }
+            .firstNotNullOfOrNull { it.value } ?: mutableListOf()
+    }
+
+    private val grantedPermissionsMap: PluginDataExtensions.NotNullMutableMap<PermissionId, MutableCollection<PermitteeId>> by lazy {
+        val clazz = Class.forName("net.mamoe.mirai.console.internal.permission.BuiltInPermissionService")
+        val ins = clazz.getDeclaredField("INSTANCE").get(null)
+        val config = clazz.getDeclaredField("config").also { it.isAccessible = true }.get(ins)
+        val grantedPermissionsMap: PluginDataExtensions.NotNullMutableMap<PermissionId, MutableCollection<PermitteeId>> =
+            config.javaClass.getDeclaredMethod("getGrantedPermissionMap").also { it.isAccessible = true }.invoke(config)
+                    as PluginDataExtensions.NotNullMutableMap<PermissionId, MutableCollection<PermitteeId>>
+        grantedPermissionsMap
+    }
 }
