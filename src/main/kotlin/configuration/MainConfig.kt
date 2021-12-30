@@ -8,5 +8,5 @@ object MainConfig : AutoSavePluginConfig ("config")
     var stdoutTruncationInBytes: Int by value(2048)
     var stdoutBatchingIntevalInMs: Int by value(300)
     var lastwillCapacityInBytes: Int by value(2048)
-    var explicitInputPrefix: String by value("")
+    var sessionInputPrefix: String by value("")
 }

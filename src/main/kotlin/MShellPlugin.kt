@@ -89,14 +89,15 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
 
             if(session != null)
             {
-                val inputPrefix = MainConfig.explicitInputPrefix
+                val inputPrefix = MainConfig.sessionInputPrefix
 
-                if(inputPrefix.isNotEmpty() && // 以inputPrefix开头且有内容
-                    message.startsWith(inputPrefix) &&
-                    message.length > inputPrefix.length)
+                if(inputPrefix.isNotEmpty())
                 {
-                    val content = message.substring(inputPrefix.length)
-                    session.stdin.println(content)
+                    if(message.startsWith(inputPrefix) && message.length > inputPrefix.length)
+                    {
+                        val content = message.substring(inputPrefix.length)
+                        session.stdin.println(content)
+                    }
                 } else {
                     session.stdin.println(message)
                 }
