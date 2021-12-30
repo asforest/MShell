@@ -1,8 +1,7 @@
 package com.github.asforest.mshell.session
 
-import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.configuration.MainConfig
-import com.github.asforest.mshell.configuration.Preset
+import com.github.asforest.mshell.configuration.EnvPresets
+import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.exception.*
 import com.github.asforest.mshell.exception.external.*
 import com.github.asforest.mshell.session.user.GroupUser
@@ -32,27 +31,27 @@ object SessionManager
                 throw SessionUserAlreadyConnectedException(session.pid)
         } }
 
-        val epins = MShellPlugin.ep.ins
-        val ep: Preset
+        val envPresets = EnvPresets
+        val ep: EnvPresets.Preset
 
         // 加载环境预设
         val epName: String = if(preset == null) {
-            if(epins.defaultPreset == "")
+            if(envPresets.defaultPreset == "")
                 throw NoDefaultPresetException("默认环境预设未指定或者指向一个不存在的预设")
-            epins.defaultPreset
+            envPresets.defaultPreset
         } else {
-            if(preset !in epins.presets.keys)
+            if(preset !in envPresets.presets.keys)
                 throw PresetNotFoundException(preset)
             preset
         }
-        ep = MShellPlugin.ep.ins.presets[epName] ?: throw PresetNotFoundException(epName)
+        ep = envPresets.presets[epName] ?: throw PresetNotFoundException(epName)
 
         val _command = if(ep.shell != "") ep.shell else throw PresetIsIncompeleteException("环境预设还未配置完毕'$epName'，请检查并完善以下选项: shell, charset")
-        val _workdir = File(if(ep.cwd!= "") ep.cwd else System.getProperty("user.dir"))
+        val _workdir = File(if(ep.workdir!= "") ep.workdir else System.getProperty("user.dir"))
         val _env = ep.env
         val _charset = if(ep.charset.isNotEmpty() && Charset.isSupported(ep.charset)) Charset.forName(ep.charset)
             else throw UnsupportedCharsetException(ep.charset)
-        val _lastwilllines = MainConfig.lastwillCapacityInBytes
+        val _lastwilllines = MShellConfig.lastwillCapacity
 
         val session = Session(this, _command, _workdir, _env, _charset, _lastwilllines)
 

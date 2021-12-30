@@ -1,14 +1,11 @@
 package com.github.asforest.mshell.command
 
-import net.mamoe.mirai.console.command.CommandSender
-import net.mamoe.mirai.console.command.CompositeCommand
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.configuration.ConfigProxy
-import com.github.asforest.mshell.configuration.Preset
-import com.github.asforest.mshell.configuration.EnvironmentPresets
-import com.github.asforest.mshell.exception.*
+import com.github.asforest.mshell.configuration.EnvPresets
 import com.github.asforest.mshell.exception.external.*
 import com.github.asforest.mshell.permission.MShellPermissions
+import net.mamoe.mirai.console.command.CommandSender
+import net.mamoe.mirai.console.command.CompositeCommand
 import java.nio.charset.Charset
 
 object EnvCommand : CompositeCommand(
@@ -18,7 +15,7 @@ object EnvCommand : CompositeCommand(
     secondaryNames = arrayOf("mse", "me"),
     parentPermission = MShellPermissions.all
 ) {
-    val ep: ConfigProxy<EnvironmentPresets> get() = MShellPlugin.ep
+    val ep: EnvPresets get() = EnvPresets
 
     @SubCommand @Description("创建一个环境预设")
     suspend fun CommandSender.add(
@@ -27,18 +24,18 @@ object EnvCommand : CompositeCommand(
         @Name("shell") vararg shell: String
     ) {
         withCatch {
-            if (presetName in ep.ins.presets.keys)
+            if (presetName in ep.presets.keys)
                 throw PresetAlreadyExistedYetException("环境预设'$presetName'已经存在了")
             if(!Charset.isSupported(charset))
                 throw UnsupportedCharsetException(charset)
             if(shell.isEmpty())
                 throw MissingParamaterException("shell")
 
-            ep.ins.presets[presetName] = Preset(shell.joinToString(" "), charset)
+            ep.presets[presetName] = EnvPresets.Preset(shell.joinToString(" "), charset)
 
             // 如果这是创建的第一个预设，就设置为默认预设
-            if(ep.ins.defaultPreset == "")
-                ep.ins.defaultPreset = presetName
+            if(ep.defaultPreset == "")
+                ep.defaultPreset = presetName
 
             ep.write()
             list(presetName)
@@ -51,7 +48,7 @@ object EnvCommand : CompositeCommand(
     ) {
         withCatch {
             getPresetWithThrow(presetName)
-            ep.ins.presets.remove(presetName)
+            ep.presets.remove(presetName)
             ep.write()
             sendMessage("已删除环境预设'$presetName'")
         }
@@ -62,7 +59,7 @@ object EnvCommand : CompositeCommand(
         @Name("preset") presetName: String? = null
     ) {
         var output = ""
-        ep.ins.presets.filter { presetName==null || presetName in it.key }.forEach {
+        ep.presets.filter { presetName==null || presetName in it.key }.forEach {
             output += "${it.key}: ${it.value}\n"
         }
         sendMessage(output.ifEmpty { "还没有任何环境预设" })
@@ -77,11 +74,11 @@ object EnvCommand : CompositeCommand(
             val preset = getPresetWithThrow(presetName)
             if(shell.isEmpty())
             {
-                ep.ins.presets[presetName]!!.shell = ""
+                ep.presets[presetName]!!.shell = ""
                 sendMessage("已清空${presetName}预设的shell选项")
             } else {
                 val s = shell.joinToString(" ")
-                ep.ins.presets[presetName]!!.shell = s
+                ep.presets[presetName]!!.shell = s
                 sendMessage("已更新${presetName}预设的shell: '$s'")
             }
             ep.write()
@@ -97,11 +94,11 @@ object EnvCommand : CompositeCommand(
             val preset = getPresetWithThrow(presetName)
             if(dir.isEmpty())
             {
-                ep.ins.presets[presetName]!!.cwd = ""
+                ep.presets[presetName]!!.workdir = ""
                 sendMessage("已清空${presetName}预设的cwd选项")
             } else {
                 val d = dir.joinToString(" ")
-                ep.ins.presets[presetName]!!.cwd = d
+                ep.presets[presetName]!!.workdir = d
                 sendMessage("已更新${presetName}预设的cwd: '$d'")
             }
             ep.write()
@@ -120,11 +117,11 @@ object EnvCommand : CompositeCommand(
             {
                 if(value.isEmpty())
                 {
-                    ep.ins.presets[presetName]!!.env.remove(key)
+                    ep.presets[presetName]!!.env.remove(key)
                     sendMessage("已移除${presetName}预设的环境变量: '$key'")
                 } else {
                     val v = value.joinToString(" ")
-                    ep.ins.presets[presetName]!!.env[key] = v
+                    ep.presets[presetName]!!.env[key] = v
                     sendMessage("已更新${presetName}预设的环境变量'$key': '$v'")
                 }
                 ep.write()
@@ -142,11 +139,11 @@ object EnvCommand : CompositeCommand(
             val preset = getPresetWithThrow(presetName)
             if(exec.isEmpty())
             {
-                ep.ins.presets[presetName]!!.exec = ""
+                ep.presets[presetName]!!.exec = ""
                 sendMessage("已清空${presetName}预设的exec选项")
             } else {
                 val e = exec.joinToString(" ")
-                ep.ins.presets[presetName]!!.exec = e
+                ep.presets[presetName]!!.exec = e
                 sendMessage("已更新${presetName}预设的exec: '$e'")
             }
             ep.write()
@@ -161,12 +158,12 @@ object EnvCommand : CompositeCommand(
         withCatch {
             val preset = getPresetWithThrow(presetName)
             if(charset.isEmpty()) {
-                ep.ins.presets[presetName]!!.charset = ""
+                ep.presets[presetName]!!.charset = ""
                 sendMessage("已清空${presetName}预设的charset选项")
             } else {
                 if(!Charset.isSupported(charset))
                     throw UnsupportedCharsetException(charset)
-                ep.ins.presets[presetName]!!.charset = charset
+                ep.presets[presetName]!!.charset = charset
                 sendMessage("已更新${presetName}预设的charset: '$charset'")
             }
             ep.write()
@@ -181,11 +178,11 @@ object EnvCommand : CompositeCommand(
             if(presetName != null)
             {
                 val preset = getPresetWithThrow(presetName)
-                ep.ins.defaultPreset = presetName
+                ep.defaultPreset = presetName
                 ep.write()
                 sendMessage("已更新默认环境预设: '$presetName'")
             } else {
-                sendMessage("当前默认环境预设是: ${ep.ins.defaultPreset}")
+                sendMessage("当前默认环境预设是: ${ep.defaultPreset}")
             }
         }
     }
@@ -198,9 +195,9 @@ object EnvCommand : CompositeCommand(
         }
     }
 
-    fun getPresetWithThrow(presetName: String): Preset
+    fun getPresetWithThrow(presetName: String): EnvPresets.Preset
     {
-        return ep.ins.presets[presetName] ?: throw PresetNotFoundException(presetName)
+        return ep.presets[presetName] ?: throw PresetNotFoundException(presetName)
     }
 
     suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)

@@ -1,6 +1,6 @@
 package com.github.asforest.mshell.stream
 
-import com.github.asforest.mshell.configuration.MainConfig
+import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.event.Event
 import com.github.asforest.mshell.util.AnsiEscapeUtil
 import kotlinx.coroutines.GlobalScope
@@ -24,8 +24,8 @@ class BatchingWriter(
 
     init {
         coBatching = GlobalScope.launch {
-            val truncation = MainConfig.stdoutTruncationInBytes
-            val batchingTimeout = MainConfig.stdoutBatchingIntevalInMs.toLong()
+            val truncation = MShellConfig.truncationThreshold
+            val batchingTimeout = MShellConfig.batchingInteval.toLong()
 
             while(true)
             {

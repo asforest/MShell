@@ -4,9 +4,8 @@ import com.github.asforest.mshell.command.AdminsCommand
 import com.github.asforest.mshell.command.EnvCommand
 import com.github.asforest.mshell.command.GroupCommand
 import com.github.asforest.mshell.command.MainCommand
-import com.github.asforest.mshell.configuration.ConfigProxy
-import com.github.asforest.mshell.configuration.EnvironmentPresets
-import com.github.asforest.mshell.configuration.MainConfig
+import com.github.asforest.mshell.configuration.EnvPresets
+import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.exception.external.BaseExternalException
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.SessionManager
@@ -32,14 +31,12 @@ import net.mamoe.mirai.message.data.content
 
 object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
 {
-    val ep = ConfigProxy(EnvironmentPresets::class.java, "presets.yml")
-
     override fun onEnable()
     {
         MShellPermissions.all
 
-        ep.read()
-        MainConfig.reload()
+        MShellConfig.read(saveDefault = true)
+        EnvPresets.read()
         MainCommand.register()
         EnvCommand.register()
         AdminsCommand.register()
@@ -89,7 +86,7 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
 
             if(session != null)
             {
-                val inputPrefix = MainConfig.sessionInputPrefix
+                val inputPrefix = MShellConfig.sessionInputPrefix
 
                 if(inputPrefix.isNotEmpty())
                 {

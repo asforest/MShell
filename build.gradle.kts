@@ -24,7 +24,8 @@ repositories {
 }
 
 dependencies {
-    implementation("com.esotericsoftware.yamlbeans:yamlbeans:1.15")
+//    implementation("com.esotericsoftware.yamlbeans:yamlbeans:1.15")
+    implementation("org.yaml:snakeyaml:1.30")
 }
 
 tasks.withType<JavaCompile> {
