@@ -1,21 +1,22 @@
 package com.github.asforest.mshell.command
 
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.configuration.EnvPresets
+import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.exception.external.*
+import com.github.asforest.mshell.model.EnvironmentalPreset
 import com.github.asforest.mshell.permission.MShellPermissions
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 import java.nio.charset.Charset
 
-object EnvCommand : CompositeCommand(
+object PresetCommand : CompositeCommand(
     MShellPlugin,
-    primaryName = "mshelle",
-    description = "MShell插件配置指令",
-    secondaryNames = arrayOf("mse", "me"),
+    primaryName = "mshellp",
+    description = "MShell插件环境预设管理指令",
+    secondaryNames = arrayOf("msp", "mp", "mse", "me"),
     parentPermission = MShellPermissions.all
 ) {
-    val ep: EnvPresets get() = EnvPresets
+    val ep: PresetsConfig get() = PresetsConfig
 
     @SubCommand @Description("创建一个环境预设")
     suspend fun CommandSender.add(
@@ -31,7 +32,11 @@ object EnvCommand : CompositeCommand(
             if(shell.isEmpty())
                 throw MissingParamaterException("shell")
 
-            ep.presets[presetName] = EnvPresets.Preset(shell.joinToString(" "), charset)
+            ep.presets[presetName] = EnvironmentalPreset(
+                name = name,
+                shell = shell.joinToString(" "),
+                charset = charset,
+            )
 
             // 如果这是创建的第一个预设，就设置为默认预设
             if(ep.defaultPreset == "")
@@ -195,7 +200,7 @@ object EnvCommand : CompositeCommand(
         }
     }
 
-    fun getPresetWithThrow(presetName: String): EnvPresets.Preset
+    fun getPresetWithThrow(presetName: String): EnvironmentalPreset
     {
         return ep.presets[presetName] ?: throw PresetNotFoundException(presetName)
     }

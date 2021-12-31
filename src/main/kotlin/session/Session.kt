@@ -2,6 +2,9 @@ package com.github.asforest.mshell.session
 
 import com.github.asforest.mshell.event.Event
 import com.github.asforest.mshell.exception.SessionNotRegisteredException
+import com.github.asforest.mshell.exception.external.PresetIsIncompeleteException
+import com.github.asforest.mshell.exception.external.UnsupportedCharsetException
+import com.github.asforest.mshell.model.EnvironmentalPreset
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.PrintWriter
@@ -11,17 +14,13 @@ import kotlin.coroutines.suspendCoroutine
 
 class Session(
     val manager: SessionManager,
-    val command: String,
-    val workdir: File,
-    val env: Map<String, String>,
-    val charset: Charset,
+    val preset: EnvironmentalPreset,
     val lastwillMessageLines: Int
 ) {
     val process: Process
     val stdin: PrintWriter
     val pid: Long get() = process.pid()
     val lwm = SessionLastwillMessage(lastwillMessageLines)
-//    val isAlive: Boolean get() = stdoutOpeningFlag && process.isAlive
 
     private var coStdoutCollector: Job
     private var stdoutOpeningFlag = true
@@ -29,6 +28,11 @@ class Session(
     val onProcessEnd = Event<Session, Session.() -> Unit>(this)
 
     init {
+        val command = if(preset.shell != "") preset.shell else throw PresetIsIncompeleteException("环境预设还未配置完毕'${preset.name}'，请检查并完善以下选项: shell, charset")
+        val workdir = File(if(preset.workdir!= "") preset.workdir else System.getProperty("user.dir"))
+        val env = preset.env
+        val charset = if(preset.charset.isNotEmpty() && Charset.isSupported(preset.charset)) Charset.forName(preset.charset) else throw UnsupportedCharsetException(preset.charset)
+
         // 启动子进程
         process = ProcessBuilder()
             .command(command)

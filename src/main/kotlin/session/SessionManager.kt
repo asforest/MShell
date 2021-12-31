@@ -1,12 +1,11 @@
 package com.github.asforest.mshell.session
 
-import com.github.asforest.mshell.configuration.EnvPresets
+import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.exception.*
 import com.github.asforest.mshell.exception.external.*
+import com.github.asforest.mshell.model.EnvironmentalPreset
 import com.github.asforest.mshell.session.user.GroupUser
-import java.io.File
-import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 
 object SessionManager
@@ -31,30 +30,9 @@ object SessionManager
                 throw SessionUserAlreadyConnectedException(session.pid)
         } }
 
-        val envPresets = EnvPresets
-        val ep: EnvPresets.Preset
-
-        // 加载环境预设
-        val epName: String = if(preset == null) {
-            if(envPresets.defaultPreset == "")
-                throw NoDefaultPresetException("默认环境预设未指定或者指向一个不存在的预设")
-            envPresets.defaultPreset
-        } else {
-            if(preset !in envPresets.presets.keys)
-                throw PresetNotFoundException(preset)
-            preset
-        }
-        ep = envPresets.presets[epName] ?: throw PresetNotFoundException(epName)
-
-        val _command = if(ep.shell != "") ep.shell else throw PresetIsIncompeleteException("环境预设还未配置完毕'$epName'，请检查并完善以下选项: shell, charset")
-        val _workdir = File(if(ep.workdir!= "") ep.workdir else System.getProperty("user.dir"))
-        val _env = ep.env
-        val _charset = if(ep.charset.isNotEmpty() && Charset.isSupported(ep.charset)) Charset.forName(ep.charset)
-            else throw UnsupportedCharsetException(ep.charset)
-        val _lastwilllines = MShellConfig.lastwillCapacity
-
-        val session = Session(this, _command, _workdir, _env, _charset, _lastwilllines)
-
+        // 创建会话
+        val presetObj = useDefaultPreset(preset)
+        val session = Session(this, presetObj, MShellConfig.lastwillCapacity)
         registerSession(session)
 
         // 用户自动连接
@@ -68,8 +46,8 @@ object SessionManager
         session.start()
 
         // 自动执行exec
-        if(ep.exec != "")
-            session.stdin.println(ep.exec)
+        if(presetObj.exec != "")
+            session.stdin.println(presetObj.exec)
 
         return session
     }
@@ -193,6 +171,7 @@ object SessionManager
     /**
      * 使一个用户从所连接的会话上断开
      * @param user 要断开的用户
+     * @return 连接到的Session
      */
     fun disconnect(user: SessionUser): Session
     {
@@ -215,6 +194,16 @@ object SessionManager
         user.sendTruncation()
 
         return cm.session
+    }
+
+    /**
+     * 尝试将一个用户从所连接的会话上断开，如果用户没有连接到任何会话，则不做任何事情
+     * @param user 要断开的用户
+     */
+    fun tryToDisconnect(user: SessionUser)
+    {
+        if(hasUserConnectedToAnySession(user))
+            disconnect(user)
     }
 
     /**
@@ -294,5 +283,21 @@ object SessionManager
     fun getAllSessions(): MutableSet<Session>
     {
         return sessions.keys
+    }
+
+    fun useDefaultPreset(preset: String?): EnvironmentalPreset
+    {
+        // 加载环境预设
+        val presetName: String = if(preset == null) {
+            if(PresetsConfig.defaultPreset == "")
+                throw NoDefaultPresetException("默认环境预设未指定或者指向一个不存在的预设")
+            PresetsConfig.defaultPreset
+        } else {
+            if(preset !in PresetsConfig.presets.keys)
+                throw PresetNotFoundException(preset)
+            preset
+        }
+
+        return PresetsConfig.presets[presetName] ?: throw PresetNotFoundException(presetName)
     }
 }

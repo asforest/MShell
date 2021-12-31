@@ -4,7 +4,7 @@ import net.mamoe.mirai.console.plugin.jvm.JvmPluginDescription
 
 object MiraiUtil
 {
-    private val MF: Map<String, String> = ManifestUtil.manifest
+    private val MF: Map<String, String> = EnvUtil.manifest
 
     val version: String get() = MF["Mirai-Plugin-Version"] ?: "0.0.0"
 

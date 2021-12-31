@@ -1,17 +1,16 @@
 package com.github.asforest.mshell
 
-import com.github.asforest.mshell.command.AdminsCommand
-import com.github.asforest.mshell.command.EnvCommand
-import com.github.asforest.mshell.command.GroupCommand
-import com.github.asforest.mshell.command.MainCommand
-import com.github.asforest.mshell.configuration.EnvPresets
+import com.github.asforest.mshell.command.*
+import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.configuration.MShellConfig
+import com.github.asforest.mshell.configuration.PermissionsConfig
 import com.github.asforest.mshell.exception.external.BaseExternalException
 import com.github.asforest.mshell.permission.MShellPermissions
+import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
+import com.github.asforest.mshell.session.SessionUser
 import com.github.asforest.mshell.session.user.FriendUser
 import com.github.asforest.mshell.session.user.GroupUser
-import com.github.asforest.mshell.session.SessionUser
 import com.github.asforest.mshell.util.MiraiUtil
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandSender.Companion.asCommandSender
@@ -26,6 +25,7 @@ import net.mamoe.mirai.event.events.FriendMessageEvent
 import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.message.data.PokeMessage
+import net.mamoe.mirai.message.data.anyIsInstance
 import net.mamoe.mirai.message.data.content
 
 
@@ -33,14 +33,17 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
 {
     override fun onEnable()
     {
-        MShellPermissions.all
-
+        // 加载配置文件
         MShellConfig.read(saveDefault = true)
-        EnvPresets.read()
+        PresetsConfig.read()
+        PermissionsConfig.read(saveDefault = true)
+
+        // 注册指令
         MainCommand.register()
-        EnvCommand.register()
-        AdminsCommand.register()
+        PresetCommand.register()
+        AdminCommand.register()
         GroupCommand.register()
+        UserCommand.register()
 
         val botEvents = GlobalEventChannel.filter { it is BotEvent }
 
@@ -49,11 +52,17 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
             if(sender !is NormalMember || !sender.isFriend)
                 return@subscribeAlways
 
-            if (!sender.asFriend().asCommandSender().hasPermission(MShellPermissions.all))
-                return@subscribeAlways
-
-            withCatch {
-                handleMessage(message, GroupUser(group))
+            if (sender.asFriend().asCommandSender().hasPermission(MShellPermissions.all))
+            {
+                withCatch { handleMessage(message, GroupUser(group)) }
+            } else {
+                // 当做普通用户处理
+                val session = SessionManager.getSessionByUserConnected(GroupUser(group))
+                if(session != null)
+                {
+                    if (PermissionsConfig.testGrant(session.preset.name, sender.id))
+                        handleSessionInput(message, session)
+                }
             }
         }
 
@@ -62,15 +71,13 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
             if (!sender.asCommandSender().hasPermission(MShellPermissions.all))
                 return@subscribeAlways
 
-            withCatch {
-                handleMessage(message, FriendUser(user))
-            }
+            withCatch { handleMessage(message, FriendUser(user)) }
         }
     }
 
     fun handleMessage(message: MessageChain, user: SessionUser)
     {
-        val pokePresent = message.filterIsInstance<PokeMessage>().isNotEmpty()
+        val pokePresent = message.anyIsInstance<PokeMessage>()
         val session = SessionManager.getSessionByUserConnected(user)
 
         if(pokePresent)
@@ -82,23 +89,22 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
                 SessionManager.reconnectOrCreate(user)
             }
         } else {
-            val message = message.content
-
             if(session != null)
-            {
-                val inputPrefix = MShellConfig.sessionInputPrefix
+                handleSessionInput(message, session)
+        }
+    }
 
-                if(inputPrefix.isNotEmpty())
-                {
-                    if(message.startsWith(inputPrefix) && message.length > inputPrefix.length)
-                    {
-                        val content = message.substring(inputPrefix.length)
-                        session.stdin.println(content)
-                    }
-                } else {
-                    session.stdin.println(message)
-                }
-            }
+    fun handleSessionInput(message: MessageChain, session: Session)
+    {
+        val messageText = message.content
+        val inputPrefix = MShellConfig.sessionInputPrefix
+
+        if(inputPrefix.isNotEmpty())
+        {
+            if(messageText.startsWith(inputPrefix) && messageText.length > inputPrefix.length)
+                session.stdin.println(messageText.substring(inputPrefix.length))
+        } else {
+            session.stdin.println(messageText)
         }
     }
 
