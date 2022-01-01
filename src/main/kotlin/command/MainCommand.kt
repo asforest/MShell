@@ -155,6 +155,24 @@ object MainCommand : CompositeCommand(
         sendMessage("config.yml配置文件重载完成")
     }
 
+    @SubCommand @Description("debug")
+    suspend fun CommandSender.d()
+    {
+        val v = MShellPermissions.permissionMap
+//                .filter { it.key.namespace == MShellPlugin.id && it.key.name.startsWith(Prefix) }
+//                .mapKeys { it.key.name.substring(Prefix.length) }
+//                .mapValues {
+//                    it.value.map {
+//                        it.asString()
+//                    } }
+                .entries
+        for ((k, v) in v)
+        {
+            println(k.javaClass.name)
+            println(v.first().javaClass.name)
+        }
+    }
+
     fun getSessionByPidWithThrow(pid: Long): Session
     {
         return SessionManager.getSessionByPid(pid) ?: throw NoSuchSessionException(pid)

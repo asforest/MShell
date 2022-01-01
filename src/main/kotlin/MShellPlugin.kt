@@ -3,9 +3,9 @@ package com.github.asforest.mshell
 import com.github.asforest.mshell.command.*
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.configuration.MShellConfig
-import com.github.asforest.mshell.configuration.PermissionsConfig
 import com.github.asforest.mshell.exception.external.BaseExternalException
 import com.github.asforest.mshell.permission.MShellPermissions
+import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.session.SessionUser
@@ -36,13 +36,18 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
         // 加载配置文件
         MShellConfig.read(saveDefault = true)
         PresetsConfig.read()
-        PermissionsConfig.read(saveDefault = true)
+
+        // 注册权限
+        MShellPermissions.all
+        MShellPermissions.use
+        PresetGrants.registerAllPresetPermissions()
 
         // 注册指令
         MainCommand.register()
         PresetCommand.register()
         AuthCommand.register()
         GroupCommand.register()
+        UserCommand.register()
 
         val botEvents = GlobalEventChannel.filter { it is BotEvent }
 
@@ -59,7 +64,8 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
                 val session = SessionManager.getSessionByUserConnected(GroupUser(group))
                 if(session != null)
                 {
-                    if (PermissionsConfig.testGrant(session.preset.name, sender.id))
+
+                    if (PresetGrants.testGrant(session.preset.name, sender.id))
                         handleSessionInput(message, session)
                 }
             }

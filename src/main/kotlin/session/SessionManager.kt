@@ -19,6 +19,7 @@ object SessionManager
      * 快速开启一个新的Session并完成注册。如果不嫌麻烦，也可以手动new一个Session对象，然后自己注册
      * @param preset 环境预设
      * @param user 会话启动后，要立即连接上来的用户
+     * @return 创建的Session，也可能是复用的Session
      */
     fun createSession(preset: String?, user: SessionUser?): Session
     {
@@ -30,24 +31,40 @@ object SessionManager
                 throw SessionUserAlreadyConnectedException(session.pid)
         } }
 
-        // 创建会话
         val presetObj = useDefaultPreset(preset)
-        val session = Session(this, presetObj, MShellConfig.lastwillCapacity)
-        registerSession(session)
+        var session: Session
+        var created: Boolean
+
+        // 单实例
+        val hasSecondIns = sessions.keys.any { it.preset == presetObj }
+        if(!presetObj.singleInstance || !hasSecondIns)
+        {
+            // 创建会话
+            session = Session(this, presetObj, MShellConfig.lastwillCapacity)
+            registerSession(session)
+
+            session.start()
+
+            // 自动执行exec
+            if(presetObj.exec != "")
+                session.stdin.println(presetObj.exec)
+
+            created = true
+        } else {
+            // 复用会话
+            session = sessions.keys.first { it.preset == presetObj }
+
+            created = false
+        }
 
         // 用户自动连接
         if(user != null)
         {
-            user.sendMessage("会话已创建(pid: ${session.pid})\n")
+            if(created)
+                user.sendMessage("会话已创建(pid: ${session.pid})\n")
             session.connect(user)
             user.sendTruncation()
         }
-
-        session.start()
-
-        // 自动执行exec
-        if(presetObj.exec != "")
-            session.stdin.println(presetObj.exec)
 
         return session
     }

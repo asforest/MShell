@@ -44,21 +44,23 @@ object PresetsConfig : YamlConfig("presets.yml")
             charset = fromMap["charset"] as String,
             workdir = fromMap["workdir"] as String,
             env = fromMap["env"] as HashMap<String, String>,
-            exec = fromMap["exec"] as String
+            exec = fromMap["exec"] as String,
+            singleInstance = fromMap["single-instance"] as Boolean
         )
     }
 
-    private fun preset2map(preset: EnvironmentalPreset): Pair<String, HashMap<String, Any>>
+    private fun preset2map(preset: EnvironmentalPreset): HashMap<String, Any>
     {
-        val map = HashMap<String, Any>()
+        val map = LinkedHashMap<String, Any>()
 
         map["shell"] = preset.shell
         map["charset"] = preset.charset
         map["workdir"] = preset.workdir
         map["env"] = preset.env
         map["exec"] = preset.exec
+        map["single-instance"] = preset.singleInstance
 
-        return Pair(preset.name, map)
+        return map
     }
 }
 

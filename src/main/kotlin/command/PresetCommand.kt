@@ -177,6 +177,24 @@ object PresetCommand : CompositeCommand(
         }
     }
 
+    @SubCommand @Description("设置会话单实例约束")
+    suspend fun CommandSender.singleins(
+        @Name("preset") preset: String,
+        @Name("singleinstance") singleins: Boolean
+    ) {
+        withCatch {
+            val _preset = getPresetWithThrow(preset)
+            _preset.singleInstance = singleins
+
+            if(singleins)
+                sendMessage("已启用${preset}预设的单实例约束")
+             else
+                sendMessage("已禁用${preset}预设的单实例约束")
+
+            ep.write()
+        }
+    }
+
     @SubCommand @Description("设置默认的环境预设方案")
     suspend fun CommandSender.def(
         @Name("preset") presetName: String? =null

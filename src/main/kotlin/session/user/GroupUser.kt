@@ -15,7 +15,7 @@ class GroupUser(
 
     override fun toString(): String
     {
-        return "${group.id}<${group.name}>"
+        return "${group.name}<${group.id}>"
     }
 
     override fun equals(other: Any?): Boolean

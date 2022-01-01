@@ -1,9 +1,9 @@
 package com.github.asforest.mshell.command
 
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.configuration.PermissionsConfig
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.permission.MShellPermissions
+import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.session.user.FriendUser
 import com.github.asforest.mshell.util.MShellUtils.getFriendNick
@@ -14,13 +14,14 @@ import net.mamoe.mirai.console.permission.*
 import net.mamoe.mirai.console.permission.PermissionService.Companion.cancel
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.permission.PermissionService.Companion.permit
+import net.mamoe.mirai.console.plugin.id
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 
 @ConsoleExperimentalApi
 object AuthCommand : CompositeCommand(
     MShellPlugin,
     primaryName = "mshella",
-    description = "MShell插件管理员配置指令（仅能用于内置权限管理模块）",
+    description = "MShell插件管理员配置指令",
     secondaryNames = arrayOf("msa", "ma"),
     parentPermission = MShellPermissions.all
 ) {
@@ -71,8 +72,8 @@ object AuthCommand : CompositeCommand(
         sendMessage(output.ifEmpty { "还没有任何管理员" })
     }
 
-    @SubCommand @Description("添加使用者")
-    suspend fun CommandSender.add(
+    @SubCommand @Description("添加预设授权用户")
+    suspend fun CommandSender.adduser(
         @Name("preset") preset: String,
         @Name("qq") qqnumber: Long
     ) {
@@ -84,7 +85,7 @@ object AuthCommand : CompositeCommand(
 
         val friend = getFriendNick(qqnumber)
 
-        if(PermissionsConfig.addGrant(preset, qqnumber))
+        if(PresetGrants.addGrant(preset, qqnumber))
         {
             sendMessage("已添加预设授权用户${friend}，当前共有${getUsersCountOfPreset(preset)}位预设授权用户")
         } else {
@@ -92,8 +93,8 @@ object AuthCommand : CompositeCommand(
         }
     }
 
-    @SubCommand @Description("移除使用者")
-    suspend fun CommandSender.remove(
+    @SubCommand @Description("移除预设授权用户")
+    suspend fun CommandSender.removeuser(
         @Name("preset") preset: String,
         @Name("qq") qqnumber: Long
     ) {
@@ -105,7 +106,7 @@ object AuthCommand : CompositeCommand(
 
         val friend = getFriendNick(qqnumber)
 
-        if(PermissionsConfig.removeGrant(preset, qqnumber))
+        if(PresetGrants.removeGrant(preset, qqnumber))
         {
             sendMessage("已移除预设授权用户${friend}，当前共有${getUsersCountOfPreset(preset)}位预设授权用户")
         } else {
@@ -113,8 +114,8 @@ object AuthCommand : CompositeCommand(
         }
     }
 
-    @SubCommand @Description("列出所有使用者")
-    suspend fun CommandSender.list(
+    @SubCommand @Description("列出所有预设授权用户")
+    suspend fun CommandSender.listuser(
         @Name("preset") preset: String? = null
     ) {
         if(preset != null && preset !in PresetsConfig.presets)
@@ -124,13 +125,26 @@ object AuthCommand : CompositeCommand(
         }
 
         var output = ""
-        for ((idx, kvp,) in PermissionsConfig.getAllPersetGrantings(preset).entries.withIndex())
-            output += "[$idx] ${kvp.key}: ${kvp.value.map { getFriendNick(it) }}\n"
+        if(preset == null)
+        {
+            for ((idx, kvp) in PresetGrants.allPresetGrantings.entries.withIndex())
+            {
+                val _preset = kvp.key.name.substring(PresetGrants.Prefix.length)
+                val friends = kvp.value.filterIsInstance<AbstractPermitteeId.ExactFriend>()
+                    .map { getFriendNick(it.id) }
+                output += "[$idx] $_preset: $friends\n"
+            }
+        } else {
+            val friends = PresetGrants[preset]!!.filterIsInstance<AbstractPermitteeId.ExactFriend>()
+                .map { getFriendNick(it.id) }
 
-        sendMessage(output.ifEmpty { "还没有任何使用者或者预设不存在" })
+            output += "$preset: $friends\n"
+        }
+
+        sendMessage(output.ifEmpty { "还没有任何预设授权用户" })
     }
 
-    fun CommandSender.getFriendUser(qqnumber: Long): FriendUser?
+    private fun CommandSender.getFriendUser(qqnumber: Long): FriendUser?
     {
         val _bot = bot
         if(_bot != null)
@@ -145,13 +159,18 @@ object AuthCommand : CompositeCommand(
         return null
     }
 
-    fun getUsersCountOfPreset(preset: String) = PermissionsConfig.getUserCountOfPreset(preset)
+    /**
+     * 获取预设授权用户的数量
+     */
+    private fun getUsersCountOfPreset(preset: String) = PresetGrants[preset]?.size ?: 0
 
+    /**
+     * 获取管理员的数量
+     */
     private val adminCount get() = grantings.filterIsInstance<AbstractPermitteeId.ExactFriend>().size
 
     private val grantings: MutableCollection<PermitteeId> get() =
         MShellPermissions.permissionMap
             .filter { it.key == MShellPermissions.all.id }
             .firstNotNullOfOrNull { it.value } ?: mutableListOf()
-
 }
