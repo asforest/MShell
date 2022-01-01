@@ -7,8 +7,10 @@ import com.github.asforest.mshell.model.EnvironmentalPreset
 import com.github.asforest.mshell.permission.MShellPermissions
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import java.nio.charset.Charset
 
+@ConsoleExperimentalApi
 object PresetCommand : CompositeCommand(
     MShellPlugin,
     primaryName = "mshellp",

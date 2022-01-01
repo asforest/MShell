@@ -2,7 +2,7 @@ package com.github.asforest.mshell.configuration
 
 import java.lang.ClassCastException
 
-object PermissionsConfig : YamlConfig("group-permissions.yml")
+object PermissionsConfig : YamlConfig("permissions.yml")
 {
     private var presetGranting = mutableMapOf<String, ArrayList<Long>>()
 

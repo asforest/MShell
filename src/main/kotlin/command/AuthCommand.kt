@@ -14,7 +14,9 @@ import net.mamoe.mirai.console.permission.*
 import net.mamoe.mirai.console.permission.PermissionService.Companion.cancel
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.permission.PermissionService.Companion.permit
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 
+@ConsoleExperimentalApi
 object AuthCommand : CompositeCommand(
     MShellPlugin,
     primaryName = "mshella",
