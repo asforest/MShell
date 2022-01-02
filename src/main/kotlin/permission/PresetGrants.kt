@@ -50,9 +50,12 @@ object PresetGrants : Map<String, Collection<PermitteeId>>
             .any { it.key.namespace == MShellPlugin.id && it.key.name.startsWith(Prefix) }
     }
 
+    /**
+     * 添加一个用户的preset的使用权
+     */
     fun addGrant(preset: String, qqnumber: Long): Boolean
     {
-        if(testGrant(preset, qqnumber))
+        if(isGranted(preset, qqnumber))
             return false
 
         val permission = if(preset !in this)
@@ -70,18 +73,12 @@ object PresetGrants : Map<String, Collection<PermitteeId>>
         return true
     }
 
-    private val use get() = MShellPermissions.use
-
-    fun testGrant(preset: String, qqnumber: Long): Boolean
-    {
-        val grants = this[preset] ?: return false
-        val permittee = AbstractPermitteeId.ExactFriend(qqnumber)
-        return grants.contains(permittee) && use.testPermission(permittee)
-    }
-
+    /**
+     * 移除一个用户的preset的使用权
+     */
     fun removeGrant(preset: String, qqnumber: Long): Boolean
     {
-        if(!testGrant(preset, qqnumber))
+        if(!isGranted(preset, qqnumber))
             return false
 
         val permission = preset2permission(preset)
@@ -94,6 +91,46 @@ object PresetGrants : Map<String, Collection<PermitteeId>>
 
         return true
     }
+
+    /**
+     * 测试是否拥有一个preset的使用权（管理员永远返回true）
+     */
+    fun testGrant(preset: String, qqnumber: Long): Boolean
+    {
+        val permittee = AbstractPermitteeId.ExactFriend(qqnumber)
+
+        // 管理员总算有权限
+        if(MShellPermissions.all.testPermission(permittee))
+            return true
+
+        return isGranted(preset, qqnumber)
+    }
+
+    /**
+     * 测试是否拥有一个preset的使用权（管理员也一视同仁，不会有特权）
+     */
+    fun isGranted(preset: String, qqnumber: Long): Boolean
+    {
+        val grants = this[preset] ?: return false
+        val permittee = AbstractPermitteeId.ExactFriend(qqnumber)
+        return grants.contains(permittee) && use.testPermission(permittee)
+    }
+
+    /**
+     * 测试是否拥有任意一个preset的使用权（管理员也一视同仁，不会有特权）
+     */
+    fun isGranted(qqnumber: Long): Boolean
+    {
+        val permittee = AbstractPermitteeId.ExactFriend(qqnumber)
+
+        return MShellPermissions.permissionMap
+            .any {
+                if(it.key.namespace == MShellPlugin.id && it.key.name.startsWith(Prefix))
+                    return it.value.contains(permittee)
+                return false
+            }
+    }
+
 
     /**
      * 注册所有preset.yml里面有的preset使用权限
@@ -131,6 +168,8 @@ object PresetGrants : Map<String, Collection<PermitteeId>>
                 permittee.permit(use)
         }
     }
+
+    private val use get() = MShellPermissions.use
 
     private fun registerPermission(pid: PermissionId): Permission
     {

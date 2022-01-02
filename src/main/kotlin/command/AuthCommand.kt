@@ -14,7 +14,6 @@ import net.mamoe.mirai.console.permission.*
 import net.mamoe.mirai.console.permission.PermissionService.Companion.cancel
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.permission.PermissionService.Companion.permit
-import net.mamoe.mirai.console.plugin.id
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 
 @ConsoleExperimentalApi
@@ -87,7 +86,7 @@ object AuthCommand : CompositeCommand(
 
         if(PresetGrants.addGrant(preset, qqnumber))
         {
-            sendMessage("已添加预设授权用户${friend}，当前共有${getUsersCountOfPreset(preset)}位预设授权用户")
+            sendMessage("已添加预设授权用户${friend}，当前共有${getUsersCount(preset)}位预设授权用户")
         } else {
             sendMessage("预设授权用户添加失败，${friend}已是${preset}预设的授权用户")
         }
@@ -108,7 +107,7 @@ object AuthCommand : CompositeCommand(
 
         if(PresetGrants.removeGrant(preset, qqnumber))
         {
-            sendMessage("已移除预设授权用户${friend}，当前共有${getUsersCountOfPreset(preset)}位预设授权用户")
+            sendMessage("已移除预设授权用户${friend}，当前共有${getUsersCount(preset)}位预设授权用户")
         } else {
             sendMessage("预设授权用户移除失败，${friend}不是${preset}预设的授权用户")
         }
@@ -162,7 +161,7 @@ object AuthCommand : CompositeCommand(
     /**
      * 获取预设授权用户的数量
      */
-    private fun getUsersCountOfPreset(preset: String) = PresetGrants[preset]?.size ?: 0
+    private fun getUsersCount(preset: String) = PresetGrants[preset]?.size ?: 0
 
     /**
      * 获取管理员的数量

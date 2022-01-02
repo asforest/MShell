@@ -5,6 +5,8 @@ import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.exception.*
 import com.github.asforest.mshell.exception.external.*
 import com.github.asforest.mshell.model.EnvironmentalPreset
+import com.github.asforest.mshell.permission.PresetGrants
+import com.github.asforest.mshell.session.user.FriendUser
 import com.github.asforest.mshell.session.user.GroupUser
 import java.text.SimpleDateFormat
 
@@ -61,7 +63,7 @@ object SessionManager
         if(user != null)
         {
             if(created)
-                user.sendMessage("会话已创建(pid: ${session.pid})\n")
+                user.sendMessage("会话已创建(pid: ${session.pid})，环境预设(${session.preset.name})\n")
             session.connect(user)
             user.sendTruncation()
         }
@@ -95,7 +97,7 @@ object SessionManager
 
         // 发送退出消息
         session.broadcaseMessageTruncation()
-        session.broadcastMessageBatchly("会话已结束(pid: ${session.pid})\n")
+        session.broadcastMessageBatchly("会话已结束(pid: ${session.pid})，环境预设(${session.preset.name})\n")
 
         // 关掉所有连接
         session.manager.disconnectAll(session)
@@ -115,8 +117,9 @@ object SessionManager
     /**
      * 尝试重连会话，如果无法重连，会创建一个新的会话
      * @param user 要重连/新建会话的用户
+     * @param preset 可选的预设
      */
-    fun reconnectOrCreate(user: SessionUser)
+    fun reconnectOrCreate(user: SessionUser, preset: String? = null)
     {
         getSessionByUserConnected(user)?.also {
             throw SessionUserAlreadyConnectedException(it.pid)
@@ -128,7 +131,7 @@ object SessionManager
         {
             connect(user, connection.session)
         } else {
-            createSession(null, user)
+            createSession(preset, user)
         }
     }
 
@@ -177,11 +180,7 @@ object SessionManager
             user.sendTruncation()
         }
 
-//        for (s in session.lwm.lastwillBuffer.withIndex())
-//            println("${s.index}: ${s.value.time} : ${s.value.message} [${s.value.message.length}]")
-
-//        user.sendTruncation()
-        user.sendMessage((if(isReconnection) "已重连" else "已连接")+"到会话(pid: ${session.pid})\n")
+        user.sendMessage((if(isReconnection) "已重连" else "已连接")+"到会话(pid: ${session.pid})，环境预设(${session.preset.name})\n")
         user.sendTruncation()
     }
 
@@ -202,12 +201,13 @@ object SessionManager
 
         // 关闭连接
         val cm = getConnectionManager(user, includeOffine = false)!!
+        val session = getSessionByUserConnected(user)!!
 
         cm.closeConnection(user)
 
         // 发送消息
         user.sendTruncation()
-        user.sendMessage("已从会话断开(pid: ${cm.session.pid})\n")
+        user.sendMessage("已从会话断开(pid: ${cm.session.pid})，环境预设(${session.preset.name})\n")
         user.sendTruncation()
 
         return cm.session
@@ -230,7 +230,7 @@ object SessionManager
     {
         val cm = getConnectionManager(session) ?: throw SessionNotRegisteredException(session)
 
-        session.broadcastMessageBatchly("已从会话断开(pid: ${session.pid})")
+        session.broadcastMessageBatchly("已从会话断开(pid: ${session.pid})，环境预设(${session.preset.name})")
         session.broadcaseMessageTruncation()
         cm.closeAllConnections()
     }
@@ -302,10 +302,13 @@ object SessionManager
         return sessions.keys
     }
 
+    /**
+     * 使用默认环境预设
+     */
     fun useDefaultPreset(preset: String?): EnvironmentalPreset
     {
         // 加载环境预设
-        val presetName: String = if(preset == null) {
+        val name: String = if(preset == null) {
             if(PresetsConfig.defaultPreset == "")
                 throw NoDefaultPresetException("默认环境预设未指定或者指向一个不存在的预设")
             PresetsConfig.defaultPreset
@@ -315,6 +318,19 @@ object SessionManager
             preset
         }
 
-        return PresetsConfig.presets[presetName] ?: throw PresetNotFoundException(presetName)
+        return PresetsConfig.presets[name] ?: throw PresetNotFoundException(name)
+    }
+
+    fun authenticate(fuser: FriendUser, preset: String?): Boolean
+    {
+        if(preset != null)
+        {
+            if(PresetGrants.testGrant(preset, fuser.user.id))
+                return true
+        }
+
+
+
+        return false
     }
 }

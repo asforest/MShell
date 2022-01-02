@@ -38,7 +38,7 @@ object MainCommand : CompositeCommand(
     }
 
     @SubCommand @Description("向当前连接的会话stdin里输出内容并换行")
-    suspend fun CommandSender.write(
+    suspend fun CommandSender.input(
         @Name("text") vararg text: String
     ) {
         withCatch {
@@ -50,7 +50,7 @@ object MainCommand : CompositeCommand(
     }
 
     @SubCommand @Description("向当前连接的会话stdin里输出内容但不换行")
-    suspend fun CommandSender.write2(
+    suspend fun CommandSender.write(
         @Name("text") vararg text: String
     ) {
         withCatch {
@@ -61,7 +61,7 @@ object MainCommand : CompositeCommand(
     }
 
     @SubCommand @Description("向目标会话的stdin里输出内容并换行")
-    suspend fun CommandSender.writeto(
+    suspend fun CommandSender.inputto(
         @Name("pid") pid: Long,
         @Name("text") vararg text: String
     ) {
@@ -73,7 +73,7 @@ object MainCommand : CompositeCommand(
     }
 
     @SubCommand @Description("向目标会话的stdin里输出内容但不换行")
-    suspend fun CommandSender.writeto2(
+    suspend fun CommandSender.writeto(
         @Name("pid") pid: Long,
         @Name("text") vararg text: String
     ) {
@@ -129,9 +129,9 @@ object MainCommand : CompositeCommand(
             val pid = session.pid
             val usersConnected = session.usersConnected
             
-            output += "[$index] pid: $pid: $usersConnected\n"
+            output += "[$index] ${session.preset.name} | $pid: $usersConnected\n"
         }
-        sendMessage(output.ifEmpty { " " })
+        sendMessage(output.ifEmpty { "当前没有运行中的会话" })
     }
 
     @SubCommand @Description("模拟戳一戳(窗口抖动)消息")
@@ -155,30 +155,12 @@ object MainCommand : CompositeCommand(
         sendMessage("config.yml配置文件重载完成")
     }
 
-    @SubCommand @Description("debug")
-    suspend fun CommandSender.d()
-    {
-        val v = MShellPermissions.permissionMap
-//                .filter { it.key.namespace == MShellPlugin.id && it.key.name.startsWith(Prefix) }
-//                .mapKeys { it.key.name.substring(Prefix.length) }
-//                .mapValues {
-//                    it.value.map {
-//                        it.asString()
-//                    } }
-                .entries
-        for ((k, v) in v)
-        {
-            println(k.javaClass.name)
-            println(v.first().javaClass.name)
-        }
-    }
-
-    fun getSessionByPidWithThrow(pid: Long): Session
+    private fun getSessionByPidWithThrow(pid: Long): Session
     {
         return SessionManager.getSessionByPid(pid) ?: throw NoSuchSessionException(pid)
     }
 
-    suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)
+    private suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)
     {
         try { block() } catch (e: BaseExternalException) { sendMessage(e.message ?: e.stackTraceToString()) }
     }

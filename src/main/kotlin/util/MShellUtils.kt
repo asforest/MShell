@@ -27,9 +27,9 @@ object MShellUtils
         }
 
         if(qqnumber == 0L)
-            return "(Anyone)"
+            return "0(Anyone)"
 
-        return "($qqnumber)"
+        return "UnknownUser($qqnumber)"
     }
 
     fun CommandSender.getFriendNick(qqnumber: Long): String

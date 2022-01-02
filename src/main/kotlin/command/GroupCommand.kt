@@ -1,7 +1,6 @@
 package com.github.asforest.mshell.command
 
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.command.MainCommand.withCatch
 import com.github.asforest.mshell.exception.external.*
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.SessionManager
@@ -27,7 +26,7 @@ object GroupCommand : CompositeCommand(
     ) {
         withCatch {
             if(isConsole())
-                throw NotAllowedToUseInConsoleException("/mshellg open")
+                throw UsingInConsoleNotAllowedException("/mshellg open")
 
             val groupUser = getSessionUser(groupId)
 
@@ -44,7 +43,7 @@ object GroupCommand : CompositeCommand(
     ) {
         withCatch {
             if(isConsole())
-                throw NotAllowedToUseInConsoleException("/mshellg open")
+                throw UsingInConsoleNotAllowedException("/mshellg open")
 
             val groupUser = getSessionUser(groupId)
             val session = SessionManager.connect(groupUser, pid)
@@ -59,7 +58,7 @@ object GroupCommand : CompositeCommand(
     ) {
         withCatch {
             if(isConsole())
-                throw NotAllowedToUseInConsoleException("/mshellg disconnect")
+                throw UsingInConsoleNotAllowedException("/mshellg disconnect")
 
             val groupUser = getSessionUser(groupId)
             val session = SessionManager.disconnect(groupUser)
@@ -92,5 +91,10 @@ object GroupCommand : CompositeCommand(
             throw QQGroupNotFoundException(groupId)
 
         return GroupUser(groupMatched)
+    }
+
+    private suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)
+    {
+        try { block() } catch (e: BaseExternalException) { sendMessage(e.message ?: e.stackTraceToString()) }
     }
 }

@@ -1,9 +1,11 @@
 package com.github.asforest.mshell
 
+import com.github.asforest.mshell.authentication.Authentication
 import com.github.asforest.mshell.command.*
-import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.configuration.MShellConfig
+import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.exception.external.BaseExternalException
+import com.github.asforest.mshell.model.EnvironmentalPreset
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.Session
@@ -16,6 +18,7 @@ import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandSender.Companion.asCommandSender
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.NormalMember
 import net.mamoe.mirai.contact.asFriend
 import net.mamoe.mirai.contact.isFriend
@@ -28,7 +31,7 @@ import net.mamoe.mirai.message.data.PokeMessage
 import net.mamoe.mirai.message.data.anyIsInstance
 import net.mamoe.mirai.message.data.content
 
-
+@ConsoleExperimentalApi
 object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
 {
     override fun onEnable()
@@ -53,46 +56,61 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
 
         // 订阅群聊消息
         botEvents.subscribeAlways<GroupMessageEvent> {
-            if(sender !is NormalMember || !sender.isFriend)
-                return@subscribeAlways
+            withCatch {
+                if(sender !is NormalMember || !sender.isFriend)
+                    return@subscribeAlways
 
-            if (sender.asFriend().asCommandSender().hasPermission(MShellPermissions.all))
-            {
-                withCatch { handleMessage(message, GroupUser(group)) }
-            } else {
-                // 当做普通用户处理
-                val session = SessionManager.getSessionByUserConnected(GroupUser(group))
-                if(session != null)
+                if (sender.asFriend().asCommandSender().hasPermission(MShellPermissions.all))
                 {
-
-                    if (PresetGrants.testGrant(session.preset.name, sender.id))
+                    val session = SessionManager.getSessionByUserConnected(GroupUser(group))
+                    if(session != null)
                         handleSessionInput(message, session)
+                } else {
+                    // 当做普通用户处理
+                    val session = SessionManager.getSessionByUserConnected(GroupUser(group))
+                    if(session != null)
+                    {
+                        // 授权用户
+                        val presetName = session.preset.name
+                        if (PresetGrants.testGrant(presetName, sender.id) || PresetGrants.testGrant(presetName, 0)) // 0: anyone
+                            handleSessionInput(message, session)
+                    }
                 }
             }
         }
 
         // 订阅好友消息
         botEvents.subscribeAlways<FriendMessageEvent> {
-            if (!sender.asCommandSender().hasPermission(MShellPermissions.all))
-                return@subscribeAlways
+            withCatch {
+                val fuser = FriendUser(user)
+                if (sender.asCommandSender().hasPermission(MShellPermissions.all))
+                {
+                    val session = SessionManager.getSessionByUserConnected(fuser)
 
-            withCatch { handleMessage(message, FriendUser(user)) }
+                    handleMessage(message, session, fuser)
+                } else if (PresetGrants.isGranted(fuser.user.id)) { // 处理授权用户
+                    val session = SessionManager.getSessionByUserConnected(fuser)
+                    val preset = Authentication.useDefaultPreset(null, fuser.user.id)
+                    handleMessage(message, session, fuser, preset)
+                }
+            }
         }
     }
 
-    fun handleMessage(message: MessageChain, user: SessionUser)
-    {
+    fun handleMessage(
+        message: MessageChain,
+        session: Session?,
+        user: SessionUser,
+        preset: EnvironmentalPreset? = null
+    ) {
         val pokePresent = message.anyIsInstance<PokeMessage>()
-        val session = SessionManager.getSessionByUserConnected(user)
 
         if(pokePresent)
         {
             if(session != null)
-            {
                 session.disconnect(user)
-            } else {
-                SessionManager.reconnectOrCreate(user)
-            }
+             else
+                SessionManager.reconnectOrCreate(user, preset?.name)
         } else {
             if(session != null)
                 handleSessionInput(message, session)
