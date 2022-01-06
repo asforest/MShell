@@ -150,8 +150,8 @@ object PresetGrants : Map<String, Collection<PermitteeId>>
         // 删除多余的use权限
         val users = MShellPermissions.permissionMap
             .filterKeys { it == use.id }
-            .firstNotNullOf { it }
-            .value
+            .firstNotNullOfOrNull { it }
+            ?.value ?: mutableListOf()
         val tobeCanceled = mutableListOf<PermitteeId>()
         for (user in users)
         {
