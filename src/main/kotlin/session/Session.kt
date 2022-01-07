@@ -25,6 +25,7 @@ class Session(
     private var coStdoutCollector: Job
     private var stdoutOpeningFlag = true
 
+    var processDied = false
     val onProcessEnd = Event<Session, Session.() -> Unit>(this)
 
     init {
@@ -71,7 +72,7 @@ class Session(
         }
 
         // 当进程退出
-        process.onExit().thenRun { onProcessEnd { it() }  }
+        process.onExit().thenRun { callProcessExit() }
     }
 
     fun start()
@@ -82,7 +83,9 @@ class Session(
 
     fun kill()
     {
+        disconnectAll()
         process.destroy()
+        process.onExit().thenRun { callProcessExit() }
     }
 
     fun connect(user: SessionUser)
@@ -131,6 +134,15 @@ class Session(
     val usersConnected: Collection<SessionUser> get() = manager.getUsersConnectedTo(this)
 
     val connections: Collection<Connection> get() = manager.getConnectionManager(this)?.getConnections(false) ?: throw SessionNotRegisteredException(this)
+
+    private fun callProcessExit()
+    {
+        if(!processDied)
+        {
+            onProcessEnd { it() }
+            processDied = true
+        }
+    }
 
     override fun equals(other: Any?): Boolean
     {
