@@ -39,6 +39,7 @@ object UserCommand : CompositeCommand(
 
     @SubCommand @Description("向当前连接的会话stdin里输出内容但不换行")
     suspend fun CommandSender.write(
+        @Name("end-with-newline") newline: Boolean,
         @Name("text") vararg text: String
     ) {
         withCatch {
@@ -46,7 +47,7 @@ object UserCommand : CompositeCommand(
 
             val session = SessionManager.getSessionByUserConnected(MShellUtils.getSessionUser(this))
                 ?: throw throw UserDidNotConnectedYetException()
-            session.stdin.print(if(text.isEmpty()) "\n" else text.joinToString(" "))
+            session.stdin.print(text.joinToString(" ") + (if(newline) "\n" else ""))
         }
     }
 

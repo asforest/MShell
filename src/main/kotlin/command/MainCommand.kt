@@ -40,12 +40,13 @@ object MainCommand : CompositeCommand(
     @SubCommand @Description("向目标会话的stdin里输出内容")
     suspend fun CommandSender.write(
         @Name("pid") pid: Long,
+        @Name("end-with-newline") newline: Boolean,
         @Name("text") vararg text: String
     ) {
         withCatch {
-            val session = SessionManager.getSessionByUserConnected(MShellUtils.getSessionUser(this))
-                ?: throw throw UserDidNotConnectedYetException()
-            session.stdin.print(if(text.isEmpty()) "\n" else text.joinToString(" "))
+            val session = SessionManager.getSessionByPid(pid)
+                ?: throw NoSuchSessionException(pid)
+            session.stdin.print(text.joinToString(" ") + (if(newline) "\n" else ""))
         }
     }
 
