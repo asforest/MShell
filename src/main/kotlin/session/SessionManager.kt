@@ -1,12 +1,11 @@
 package com.github.asforest.mshell.session
 
-import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.configuration.MShellConfig
-import com.github.asforest.mshell.exception.*
+import com.github.asforest.mshell.configuration.PresetsConfig
+import com.github.asforest.mshell.exception.SessionAlreadyRegisteredException
+import com.github.asforest.mshell.exception.SessionNotRegisteredException
 import com.github.asforest.mshell.exception.external.*
 import com.github.asforest.mshell.model.EnvironmentalPreset
-import com.github.asforest.mshell.permission.PresetGrants
-import com.github.asforest.mshell.session.user.FriendUser
 import com.github.asforest.mshell.session.user.GroupUser
 import java.text.SimpleDateFormat
 
@@ -320,18 +319,5 @@ object SessionManager
         }
 
         return PresetsConfig.presets[name] ?: throw PresetNotFoundException(name)
-    }
-
-    fun authenticate(fuser: FriendUser, preset: String?): Boolean
-    {
-        if(preset != null)
-        {
-            if(PresetGrants.testGrant(preset, fuser.user.id))
-                return true
-        }
-
-
-
-        return false
     }
 }
