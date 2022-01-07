@@ -286,7 +286,7 @@ MShell的消息合并机制是这样：一个消息到达时，会有一个等�
 授权用户可用的指令有这些：
 
 1. `/mshellu open [preset]`：创建并连接到一个会话，具体用法同主指令`/mshell`对应子指令
-2. `/mshellu write`：向当前连接的会话里输入内容但不换行，具体用法同主指令`/mshell`对应子指令
+2. `/mshellu write <pid> <newline> [text]`：向当前连接的会话里输入内容但不换行，具体用法同主指令`/mshell`对应子指令
 3. `/mshellu kill <pid>`强制结束一个会话，具体用法同主指令`/mshell`对应子指令
 4. `/mshellu connect <pid>`：连接到一个会话，具体用法同主指令`/mshell`对应子指令
 5. `/mshellu list`：显示所有会话，具体用法同主指令`/mshell`对应子指令
@@ -318,29 +318,21 @@ MShell的消息合并机制是这样：一个消息到达时，会有一个等�
 
 一般情况下如果没有指令冲突，可以给这个选项留空来禁用
 
-### 2.控制台用户
+### 2.用指令发送消息
 
-除了普通QQ用户可以连接/创建会话，Mirai控制台也是可以连接/创建会话的，想不到吧。
+你可以使用命令强制往一个会话里输入文字，即使你没有连接到那个会话上也是可以的。
 
-但是Mirai控制台使用起来不太方便，一般只是特殊情况下才会使用
+只需要使用`/ms write <pid> <newline> [text]`就可以了。`<newline>`参数的取值只能是`true/false`，表示是否在`[text]`后面跟上一个换行符`\n`，一般情况下都是`true`。`[text]`参数就是你要发送的消息
+
+如果仅仅想发送一个换行符，可以使用`/ms write <pid> true`，即把`[text]`参数省略
+
+### 3.控制台用户
+
+除了普通QQ用户可以连接/创建会话以外，Mirai控制台也可以做到。但Mirai控制台使用起来终究不是特别方便，一般只是特殊情况下才会使用
 
 具体使用方式和普通用户一样，使用`/ms open [preset]`来创建，`/ms connect [pid]`来连接等等
 
-输入控制台的每一个消息，都会被当做指令处理，也就是说没法直接给控制台绑定的会话发送消息，只能使用指令进行发送。
-
-可以使用上面的`/ms inputto <pid> <text>`指令或者`/ms writeto <pid> <text>`指令进行发送，如果你不想输入`pid`的话，也可以使用`/ms input <text>`和`/ms write <text>`进行发送，这两个是控制台的专属指令，可以给控制台当前连接的会话发送消息，如果没有连接的话，那就只能使用`/ms input/write <pid> <text>`以手动指定pid的方式发送消息了
-
-### 3.使用指令发送消息
-
-在之前的例子中，我们连接到了一个会话后，可以直接在聊天窗口里发送对应信息给会话，那么有没有办法在不连接时就往会话里发送消息呢，也是有办法的，我们可以利用指令去手动发送指令
-
-比如使用指令`/ms inputto <pid> <text>`，就可以把`text`发送到`pid`对应的会话中啦
-
-还有一个与之相似的指令`/ms writeto <pid> <text>`，这个指令的用法和上面的一样，唯一的不同就是`inputto`会在`<text>`的末尾自动跟上一个换行符，相当于按了下回车。但`writeto` 不会自动附加换行，而是原封不动地发送到`pid`对应的会话中
-
-一般情况下操作shell时(`cmd.exe`、`bash`、`sh`、`zsh`)，用`inputto`就很好，特殊情况下可以使用不带换行的`writeto`
-
-如果想仅发送一个回车怎么办呢，直接使用`/ms inputto <pid>`就好，注意后面没有`<text>`，这样发出去就是单个回车了
+当连接上以后，要使用`/ms write <pid> <true/false> <text>`来往会话里进行输入，具体参数的用法请参考**用指令发送消息**章节
 
 ##  指令参考
 
@@ -371,19 +363,9 @@ MShell的消息合并机制是这样：一个消息到达时，会有一个等�
 # 否则使用指定的环境预设
 /mshell open [preset]
 
-# 向当前连接的会话stdin里输出内容并换行
-# 如果text被省略，那么就只发送一个换行
-/mshell input [text]
-
-# 向当前连接的会话stdin里输出内容但不换行
-/mshell write <text>
-
-# 向目标会话的stdin里输出内容并换行
-# 如果text被省略，那么就只发送一个换行
-/mshell inputto <pid> [text]
-
-# 向目标会话的stdin里输出内容但不换行
-/mshell writeto <pid> <text>
+# 向目标会话stdin里输出内容（但不换行）
+# newline只能是true/false，表示text的末尾是否跟上一个换行符\n
+/mshell write <pid> <newline> [text]
 
 # 模拟戳一戳(窗口抖动)消息，主要给是电脑端调试使用，因为电脑端发送窗口抖动消息有较长的冷却时间
 /mshell poke
@@ -442,11 +424,17 @@ MShell的消息合并机制是这样：一个消息到达时，会有一个等�
 # 对于同一个环境预设来说，永远只会有一个会话对象
 /mshelle singleins <preset> <true/false>
 
+# 设置会话PTY的宽度，默认为256
+/mshelle columns <preset> <columns>
+
+# 设置会话PTY的高度，默认为64
+/mshelle rows <preset> <rows>
+
 # 列出所有环境预设配置
 # 列出当前都有哪些环境预设方案
 # 如果preset被省略，会显示所有环境预设方案
 # 如果preset没被省略，会显示预设名中包含preset的所有方案（可以理解为搜索）
-/mshelle list [preset] 
+/mshelle list [preset]
 
 # 从配置文件重新加载环境预设方案
 # 如果你手动改了配置文件presets.yml，可以使用这个指令来强制重载
@@ -500,7 +488,7 @@ MShell的消息合并机制是这样：一个消息到达时，会有一个等�
 
 # 向当前连接的会话里输入内容但不换行
 # 具体用法同主指令/mshell对应子指令
-/mshellu write
+/mshellu write <newline> [text]
 
 # 强制结束一个会话，但只能强制结束有对应权限的会话
 # 具体用法同主指令/mshell对应子指令
