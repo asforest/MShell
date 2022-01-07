@@ -424,10 +424,10 @@ MShell的消息合并机制是这样：一个消息到达时，会有一个等�
 # 对于同一个环境预设来说，永远只会有一个会话对象
 /mshelle singleins <preset> <true/false>
 
-# 设置会话PTY的宽度，默认为256
+# 设置会话PTY的宽度，默认为80
 /mshelle columns <preset> <columns>
 
-# 设置会话PTY的高度，默认为64
+# 设置会话PTY的高度，默认为2
 /mshelle rows <preset> <rows>
 
 # 列出所有环境预设配置
