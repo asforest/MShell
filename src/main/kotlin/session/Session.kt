@@ -152,6 +152,11 @@ class Session(
             throw TerminalColumnRowsOutOfRangeException(preset.columns, preset.rows)
     }
 
+    override fun toString(): String
+    {
+        return "Session[pid=$pid, presetName=${preset.name}, preset=$preset, isLive=$isLive]"
+    }
+
     override fun equals(other: Any?): Boolean
     {
         if (other == null || other !is Session)
