@@ -140,7 +140,8 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
         } catch (e: BaseExternalException) {
             sender.sendMessage(e.message ?: e.stackTraceToString())
         } catch (e: Exception) {
-            sender.sendMessage("发生错误：${e.message}")
+            val detail = e.message ?: "没有错误详情可显示，异常类: ${e::class.qualifiedName}"
+            sender.sendMessage("发生错误：$detail")
             throw e
         }
     }
