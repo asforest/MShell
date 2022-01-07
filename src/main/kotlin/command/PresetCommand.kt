@@ -35,7 +35,7 @@ object PresetCommand : CompositeCommand(
                 throw MissingParamaterException("shell")
 
             ep.presets[presetName] = EnvironmentalPreset(
-                name = name,
+                name = presetName,
                 command = shell.joinToString(" "),
                 charset = charset,
             )
