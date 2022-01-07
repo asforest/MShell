@@ -20,12 +20,14 @@ import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermiss
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.NormalMember
+import net.mamoe.mirai.contact.User
 import net.mamoe.mirai.contact.asFriend
 import net.mamoe.mirai.contact.isFriend
 import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.events.BotEvent
 import net.mamoe.mirai.event.events.FriendMessageEvent
 import net.mamoe.mirai.event.events.GroupMessageEvent
+import net.mamoe.mirai.event.events.MessageEvent
 import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.message.data.PokeMessage
 import net.mamoe.mirai.message.data.anyIsInstance
@@ -131,14 +133,15 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
         }
     }
 
-    suspend inline fun FriendMessageEvent.withCatch(block: FriendMessageEvent.() -> Unit)
+    private suspend inline fun MessageEvent.withCatch(func: () -> Unit)
     {
-        try { block() } catch (e: BaseExternalException) { user.sendMessage(e.message ?: e.stackTraceToString()) }
+        try {
+            func()
+        } catch (e: BaseExternalException) {
+            sender.sendMessage(e.message ?: e.stackTraceToString())
+        } catch (e: Exception) {
+            sender.sendMessage("发生错误：${e.message}")
+            throw e
+        }
     }
-
-    suspend inline fun GroupMessageEvent.withCatch(block: GroupMessageEvent.() -> Unit)
-    {
-        try { block() } catch (e: BaseExternalException) { sender.sendMessage(e.message ?: e.stackTraceToString()) }
-    }
-
 }

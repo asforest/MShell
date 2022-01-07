@@ -34,8 +34,8 @@ object SessionManager
         } }
 
         val presetObj = useDefaultPreset(preset)
-        var session: Session
-        var created: Boolean
+        val session: Session
+        val created: Boolean
 
         // 单实例
         val hasSecondIns = sessions.keys.any { it.preset == presetObj }
@@ -284,7 +284,6 @@ object SessionManager
      */
     fun getConnectionManager(user: SessionUser, includeOffine: Boolean): ConnectionManager?
     {
-        val session = null
         for (cm in sessions.values)
             if(cm.getConnection(user, includeOffine) != null)
                 return cm
