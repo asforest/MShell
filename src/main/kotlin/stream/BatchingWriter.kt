@@ -2,11 +2,9 @@ package com.github.asforest.mshell.stream
 
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.event.Event
+import com.github.asforest.mshell.exception.ListenerAlreadyAddedException
 import com.github.asforest.mshell.util.AnsiEscapeUtil
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.Writer
 import java.lang.Exception
 import java.util.concurrent.LinkedBlockingQueue
@@ -31,7 +29,15 @@ class BatchingWriter(
             {
                 // 如果队里里没有消息，则将协程暂时挂起，进行等待
                 if(buffer.isEmpty())
-                    suspendCoroutine<Unit> { onNewDataArrive.once { it.resume(Unit) } }
+                {
+                    suspendCoroutine<Unit> {
+                        // 更新Continuation对象
+                        if("onNewDataArriveListenser" in onNewDataArrive)
+                            onNewDataArrive -= "onNewDataArriveListenser"
+
+                        onNewDataArrive.once("onNewDataArriveListenser") { it.resume(Unit) }
+                    }
+                }
 
                 // 进行消息合批
                 val buffered = StringBuffer()
@@ -77,6 +83,7 @@ class BatchingWriter(
     override fun flush()
     {
         buffer += MessageBuffered()
+
         onNewDataArrive { it() }
     }
 
@@ -87,6 +94,7 @@ class BatchingWriter(
         } catch (e: IllegalStateException) {
             throw BatchingBwriterBufferOverflowException("The buffer of BatchingWriter overflows")
         }
+
         onNewDataArrive { it() }
     }
 
