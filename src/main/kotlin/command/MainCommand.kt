@@ -37,50 +37,15 @@ object MainCommand : CompositeCommand(
         }
     }
 
-    @SubCommand @Description("向当前连接的会话stdin里输出内容并换行")
-    suspend fun CommandSender.input(
-        @Name("text") vararg text: String
-    ) {
-        withCatch {
-            val sessionUser = MShellUtils.getSessionUser(this)
-            val session = SessionManager.getSessionByUserConnected(sessionUser)
-                ?: throw UserDidNotConnectedYetException()
-            session.stdin.println(text.joinToString(" "))
-        }
-    }
-
-    @SubCommand @Description("向当前连接的会话stdin里输出内容但不换行")
+    @SubCommand @Description("向目标会话的stdin里输出内容")
     suspend fun CommandSender.write(
+        @Name("pid") pid: Long,
         @Name("text") vararg text: String
     ) {
         withCatch {
             val session = SessionManager.getSessionByUserConnected(MShellUtils.getSessionUser(this))
                 ?: throw throw UserDidNotConnectedYetException()
-            session.stdin.print(text.joinToString(" "))
-        }
-    }
-
-    @SubCommand @Description("向目标会话的stdin里输出内容并换行")
-    suspend fun CommandSender.inputto(
-        @Name("pid") pid: Long,
-        @Name("text") vararg text: String
-    ) {
-        withCatch {
-            val session = SessionManager.getSessionByPid(pid)
-                ?: throw NoSuchSessionException(pid)
-            session.stdin.println(text.joinToString(" "))
-        }
-    }
-
-    @SubCommand @Description("向目标会话的stdin里输出内容但不换行")
-    suspend fun CommandSender.writeto(
-        @Name("pid") pid: Long,
-        @Name("text") vararg text: String
-    ) {
-        withCatch {
-            val session = SessionManager.getSessionByPid(pid)
-                ?: throw NoSuchSessionException(pid)
-            session.stdin.print(text.joinToString(" "))
+            session.stdin.print(if(text.isEmpty()) "\n" else text.joinToString(" "))
         }
     }
 

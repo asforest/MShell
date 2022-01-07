@@ -46,7 +46,7 @@ object UserCommand : CompositeCommand(
 
             val session = SessionManager.getSessionByUserConnected(MShellUtils.getSessionUser(this))
                 ?: throw throw UserDidNotConnectedYetException()
-            session.stdin.print(text.joinToString(" "))
+            session.stdin.print(if(text.isEmpty()) "\n" else text.joinToString(" "))
         }
     }
 
