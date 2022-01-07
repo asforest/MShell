@@ -427,7 +427,7 @@ MShell的消息合并机制是这样：一个消息到达时，会有一个等�
 # 设置会话PTY的宽度，默认为80
 /mshelle columns <preset> <columns>
 
-# 设置会话PTY的高度，默认为2
+# 设置会话PTY的高度，默认为25
 /mshelle rows <preset> <rows>
 
 # 列出所有环境预设配置
