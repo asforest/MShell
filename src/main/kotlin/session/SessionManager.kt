@@ -45,11 +45,9 @@ object SessionManager
             session = Session(this, presetObj, MShellConfig.lastwillCapacity)
             registerSession(session)
 
-            session.start()
-
             // 自动执行exec
-            if(presetObj.exec != "")
-                session.stdin.println(presetObj.exec)
+            if(presetObj.input != "")
+                session.stdin.println(presetObj.input)
 
             created = true
         } else {
@@ -67,6 +65,10 @@ object SessionManager
             session.connect(user)
             user.sendTruncation()
         }
+
+        // 必须在用户连接之后调用start，否则遇到session瞬间执行完毕的情况时，user会漏消息
+        if(created)
+            session.start()
 
         return session
     }

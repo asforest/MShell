@@ -21,11 +21,13 @@ plugins {
 repositories {
 //    maven("https://maven.aliyun.com/repository/public")
     mavenCentral()
+    maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies")
 }
 
 dependencies {
 //    implementation("com.esotericsoftware.yamlbeans:yamlbeans:1.15")
     implementation("org.yaml:snakeyaml:1.30")
+    implementation("org.jetbrains.pty4j:pty4j:0.12.7")
 }
 
 tasks.withType<JavaCompile> {

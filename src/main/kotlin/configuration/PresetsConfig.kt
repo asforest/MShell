@@ -40,12 +40,14 @@ object PresetsConfig : YamlConfig("presets.yml")
     {
         return EnvironmentalPreset(
             name = name,
-            shell = fromMap["shell"] as String,
+            command = fromMap["shell"] as String,
             charset = fromMap["charset"] as String,
             workdir = fromMap["workdir"] as String,
             env = fromMap["env"] as HashMap<String, String>,
-            exec = fromMap["exec"] as String,
-            singleInstance = fromMap["single-instance"] as Boolean
+            input = fromMap["exec"] as String,
+            singleInstance = fromMap["single-instance"] as Boolean,
+            columns = fromMap["terminal-columns"] as Int,
+            rows = fromMap["terminal-rows"] as Int
         )
     }
 
@@ -53,12 +55,14 @@ object PresetsConfig : YamlConfig("presets.yml")
     {
         val map = LinkedHashMap<String, Any>()
 
-        map["shell"] = preset.shell
+        map["shell"] = preset.command
         map["charset"] = preset.charset
         map["workdir"] = preset.workdir
         map["env"] = preset.env
-        map["exec"] = preset.exec
+        map["exec"] = preset.input
         map["single-instance"] = preset.singleInstance
+        map["terminal-columns"] = preset.columns
+        map["terminal-rows"] = preset.rows
 
         return map
     }

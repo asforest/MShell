@@ -3,8 +3,11 @@ package com.github.asforest.mshell.session
 import com.github.asforest.mshell.event.Event
 import com.github.asforest.mshell.exception.SessionNotRegisteredException
 import com.github.asforest.mshell.exception.external.PresetIsIncompeleteException
+import com.github.asforest.mshell.exception.external.TerminalColumnRowsOutOfRangeException
 import com.github.asforest.mshell.exception.external.UnsupportedCharsetException
 import com.github.asforest.mshell.model.EnvironmentalPreset
+import com.pty4j.PtyProcess
+import com.pty4j.PtyProcessBuilder
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.PrintWriter
@@ -17,32 +20,33 @@ class Session(
     val preset: EnvironmentalPreset,
     val lastwillMessageLines: Int
 ) {
-    val process: Process
+    val process: PtyProcess
     val stdin: PrintWriter
     val pid: Long get() = process.pid()
     val lwm = SessionLastwillMessage(lastwillMessageLines)
+    var isLive = true
+
+    val onProcessEnd = Event<Session, Session.() -> Unit>(this)
 
     private var coStdoutCollector: Job
     private var stdoutOpeningFlag = true
 
-    var processDied = false
-    val onProcessEnd = Event<Session, Session.() -> Unit>(this)
-
     init {
-        val command = if(preset.shell != "") preset.shell else throw PresetIsIncompeleteException("环境预设还未配置完毕'${preset.name}'，请检查并完善以下选项: shell, charset")
-        val workdir = File(if(preset.workdir!= "") preset.workdir else System.getProperty("user.dir"))
-        val env = preset.env
-        val charset = if(preset.charset.isNotEmpty() && Charset.isSupported(preset.charset)) Charset.forName(preset.charset) else throw UnsupportedCharsetException(preset.charset)
+        validatePreset(preset)
+
+        val charset = Charset.forName(preset.charset)
 
         // 启动子进程
-        process = ProcessBuilder()
-            .command(command)
-            .directory(workdir)
-            .also { it.environment().putAll(env) }
-            .redirectErrorStream(true)
-            .redirectInput(ProcessBuilder.Redirect.PIPE)
-            .redirectOutput(ProcessBuilder.Redirect.PIPE)
+        process = PtyProcessBuilder()
+            .setCommand(preset.command.split(" ").toTypedArray())
+            .setDirectory(File(preset.workdir.ifEmpty { System.getProperty("user.dir") }).absolutePath)
+            .setEnvironment(System.getenv() + preset.env)
+            .setRedirectErrorStream(true)
+            .setWindowsAnsiColorEnabled(false)
+            .setInitialColumns(preset.columns)
+            .setInitialRows(preset.rows)
             .start()
+
         stdin = PrintWriter(process.outputStream, true, charset)
 
         // stdout收集协程
@@ -70,22 +74,23 @@ class Session(
                 }
             }
         }
-
-        // 当进程退出
-        process.onExit().thenRun { callProcessExit() }
     }
 
     fun start()
     {
         // 启动stdout收集协程
         coStdoutCollector.start()
+
+        // 当进程退出
+        process.onExit().thenRun {
+            onProcessEnd { it() }
+            isLive = false
+        }
     }
 
     fun kill()
     {
-        disconnectAll()
         process.destroy()
-        process.onExit().thenRun { callProcessExit() }
     }
 
     fun connect(user: SessionUser)
@@ -135,13 +140,16 @@ class Session(
 
     val connections: Collection<Connection> get() = manager.getConnectionManager(this)?.getConnections(false) ?: throw SessionNotRegisteredException(this)
 
-    private fun callProcessExit()
+    private fun validatePreset(preset: EnvironmentalPreset)
     {
-        if(!processDied)
-        {
-            onProcessEnd { it() }
-            processDied = true
-        }
+        if (preset.command.isEmpty())
+            throw PresetIsIncompeleteException(preset)
+
+        if (preset.charset.isEmpty() || !Charset.isSupported(preset.charset))
+            throw UnsupportedCharsetException(preset.charset)
+
+        if (preset.columns < 0 || preset.rows < 0 || preset.columns > 100000 || preset.rows > 100000)
+            throw TerminalColumnRowsOutOfRangeException(preset.columns, preset.rows)
     }
 
     override fun equals(other: Any?): Boolean

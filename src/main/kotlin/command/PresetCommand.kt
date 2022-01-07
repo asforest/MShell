@@ -36,7 +36,7 @@ object PresetCommand : CompositeCommand(
 
             ep.presets[presetName] = EnvironmentalPreset(
                 name = name,
-                shell = shell.joinToString(" "),
+                command = shell.joinToString(" "),
                 charset = charset,
             )
 
@@ -81,11 +81,11 @@ object PresetCommand : CompositeCommand(
             val preset = getPresetWithThrow(presetName)
             if(shell.isEmpty())
             {
-                ep.presets[presetName]!!.shell = ""
+                ep.presets[presetName]!!.command = ""
                 sendMessage("已清空${presetName}预设的shell选项")
             } else {
                 val s = shell.joinToString(" ")
-                ep.presets[presetName]!!.shell = s
+                ep.presets[presetName]!!.command = s
                 sendMessage("已更新${presetName}预设的shell: '$s'")
             }
             ep.write()
@@ -146,11 +146,11 @@ object PresetCommand : CompositeCommand(
             val preset = getPresetWithThrow(presetName)
             if(exec.isEmpty())
             {
-                ep.presets[presetName]!!.exec = ""
+                ep.presets[presetName]!!.input = ""
                 sendMessage("已清空${presetName}预设的exec选项")
             } else {
                 val e = exec.joinToString(" ")
-                ep.presets[presetName]!!.exec = e
+                ep.presets[presetName]!!.input = e
                 sendMessage("已更新${presetName}预设的exec: '$e'")
             }
             ep.write()
@@ -180,7 +180,7 @@ object PresetCommand : CompositeCommand(
     @SubCommand @Description("设置会话单实例约束")
     suspend fun CommandSender.singleins(
         @Name("preset") preset: String,
-        @Name("singleinstance") singleins: Boolean
+        @Name("true/false") singleins: Boolean
     ) {
         withCatch {
             val _preset = getPresetWithThrow(preset)
@@ -191,6 +191,32 @@ object PresetCommand : CompositeCommand(
              else
                 sendMessage("已禁用${preset}预设的单实例约束")
 
+            ep.write()
+        }
+    }
+
+    @SubCommand @Description("设置会话的终端宽度")
+    suspend fun CommandSender.columns(
+        @Name("preset") preset: String,
+        @Name("columns") columns: Int
+    ) {
+        withCatch {
+            val _preset = getPresetWithThrow(preset)
+            _preset.columns = columns
+            sendMessage("环境预设${preset}的终端宽度已更新为: $columns")
+            ep.write()
+        }
+    }
+
+    @SubCommand @Description("设置会话的终端高度")
+    suspend fun CommandSender.rows(
+        @Name("preset") preset: String,
+        @Name("rows") rows: Int
+    ) {
+        withCatch {
+            val _preset = getPresetWithThrow(preset)
+            _preset.rows = rows
+            sendMessage("环境预设${preset}的终端高度已更新为: $rows")
             ep.write()
         }
     }
