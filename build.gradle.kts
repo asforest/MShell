@@ -11,7 +11,7 @@ group = "com.github.asforest"
 version = gitTagName ?: "0.0.0"
 
 plugins {
-    val kotlinVersion = "1.5.10"
+    val kotlinVersion = "1.6.10"
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.serialization") version kotlinVersion
 
