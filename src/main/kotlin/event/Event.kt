@@ -22,8 +22,7 @@ class Event<TContext, TCallback>(val context: TContext)
 
     private fun addListener(callback: TCallback, label: String? = null, type: ListenerType)
     {
-        val _label = label ?: (callback.reflect()?.name ?: callback.hashCode().toString())
-        println(_label)
+        val _label = label ?: callback.hashCode().toString()
         this += Listener(callback, _label, type)
     }
 
