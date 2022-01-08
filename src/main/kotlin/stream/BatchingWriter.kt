@@ -32,10 +32,11 @@ class BatchingWriter(
                 {
                     suspendCoroutine<Unit> {
                         // 更新Continuation对象
-                        if("onNewDataArriveListenser" in onNewDataArrive)
-                            onNewDataArrive -= "onNewDataArriveListenser"
+//                        if("onNewDataArriveListenser" in onNewDataArrive)
+//                            onNewDataArrive -= "onNewDataArriveListenser"
 
-                        onNewDataArrive.once("onNewDataArriveListenser") { it.resume(Unit) }
+//                        onNewDataArrive.once("onNewDataArriveListenser") { it.resume(Unit) }
+                        onNewDataArrive.once { it.resume(Unit) }
                     }
                 }
 
