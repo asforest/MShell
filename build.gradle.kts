@@ -3,12 +3,13 @@ import java.util.Date
 import java.io.File
 import net.mamoe.mirai.console.gradle.BuildMiraiPluginTask
 
+fun getVersionName(tagName: String) = if(tagName.startsWith("v")) tagName.substring(1) else tagName
 val gitTagName: String? get() = Regex("(?<=refs/tags/).*").find(System.getenv("GITHUB_REF") ?: "")?.value
 val gitCommitSha: String? get() = System.getenv("GITHUB_SHA") ?: null
 val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS Z").format(Date()) as String
 
 group = "com.github.asforest"
-version = gitTagName ?: "0.0.0"
+version = gitTagName?.run { getVersionName(this) } ?: "0.0.0"
 
 plugins {
     val kotlinVersion = "1.6.10"
