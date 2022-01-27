@@ -6,8 +6,10 @@ import com.github.asforest.mshell.session.user.FriendUser
 import com.github.asforest.mshell.session.user.GroupUser
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.CommandSender
+import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.console.command.getGroupOrNull
 import net.mamoe.mirai.console.command.isConsole
+import net.mamoe.mirai.contact.User
 
 object MShellUtils
 {
@@ -52,5 +54,10 @@ object MShellUtils
             return ConsoleUser()
 
         return FriendUser(commandSender.user!!)
+    }
+
+    suspend fun sendMessage2(user: User?, message: String)
+    {
+        user?.sendMessage(message) ?: ConsoleCommandSender.sendMessage(message)
     }
 }

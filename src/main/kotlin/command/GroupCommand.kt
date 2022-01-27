@@ -95,6 +95,6 @@ object GroupCommand : CompositeCommand(
 
     private suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)
     {
-        try { block() } catch (e: BaseExternalException) { sendMessage(e.message ?: e.stackTraceToString()) }
+        MShellPlugin.catchException(user) { block() }
     }
 }

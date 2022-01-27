@@ -13,9 +13,14 @@ import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.session.SessionUser
 import com.github.asforest.mshell.session.user.FriendUser
 import com.github.asforest.mshell.session.user.GroupUser
+import com.github.asforest.mshell.util.MShellUtils
 import com.github.asforest.mshell.util.MiraiUtil
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
+import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CommandSender.Companion.asCommandSender
+import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
@@ -135,14 +140,26 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
 
     private suspend inline fun MessageEvent.withCatch(func: () -> Unit)
     {
+        catchException(sender) { func() }
+    }
+
+    /**
+     * 尝试捕捉异常
+     * @param user 遇到异常时，将异常信息发送给的用户（如果为null则代表是控制台）
+     * @param func
+     */
+    suspend inline fun catchException(user: User?, func: () -> Unit)
+    {
         try {
             func()
         } catch (e: BaseExternalException) {
-            sender.sendMessage(e.message ?: e.stackTraceToString())
+            MShellUtils.sendMessage2(user, e.message ?: e.stackTraceToString())
         } catch (e: Exception) {
             val detail = e.message ?: "没有错误详情可显示，异常类: ${e::class.qualifiedName}"
-            sender.sendMessage("发生错误：$detail")
+            MShellUtils.sendMessage2(user, "发生错误：$detail")
             throw e
         }
     }
+
+
 }
