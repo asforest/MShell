@@ -129,8 +129,9 @@ object PresetGrants : Map<String, Collection<PermitteeId>>
         return MShellPermissions.permissionMap
             .any {
                 if(it.key.namespace == MShellPlugin.id && it.key.name.startsWith(Prefix))
-                    return it.value.contains(permittee)
-                return false
+                    it.value.contains(permittee)
+                else
+                    false
             }
     }
 
