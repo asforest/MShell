@@ -156,7 +156,7 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
             MShellUtils.sendMessage2(user, e.message ?: e.stackTraceToString())
         } catch (e: Exception) {
             val detail = e.message ?: "没有错误详情可显示，异常类: ${e::class.qualifiedName}"
-            MShellUtils.sendMessage2(user, "发生错误：$detail")
+            MShellUtils.sendMessage2(user, "发生错误：$detail\n异常调用堆栈：\n${e.stackTraceToString()}")
             throw e
         }
     }

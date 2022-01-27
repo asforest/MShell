@@ -7,7 +7,9 @@ import net.mamoe.mirai.console.permission.PermissionService.Companion.cancel
 import net.mamoe.mirai.console.permission.PermissionService.Companion.permit
 import net.mamoe.mirai.console.permission.PermissionService.Companion.testPermission
 import net.mamoe.mirai.console.plugin.id
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 
+@ConsoleExperimentalApi
 object PresetGrants : Map<String, Collection<PermitteeId>>
 {
     const val Prefix = "preset."
@@ -58,8 +60,9 @@ object PresetGrants : Map<String, Collection<PermitteeId>>
         if(isGranted(preset, qqnumber))
             return false
 
-        val permission = if(preset !in this)
-            registerPermission(MShellPlugin.permissionId(Prefix + preset))
+        val presetPid = MShellPlugin.permissionId(Prefix + preset)
+        val permission = if(PermissionService.INSTANCE[presetPid] == null)
+            registerPermission(presetPid)
         else
             preset2permission(preset)
 

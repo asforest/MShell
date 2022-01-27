@@ -16,10 +16,8 @@ object MShellPermissions
         val clazz = Class.forName("net.mamoe.mirai.console.internal.permission.BuiltInPermissionService")
         val ins = clazz.getDeclaredField("INSTANCE").get(null)
         val config = clazz.getDeclaredField("config").also { it.isAccessible = true }.get(ins)
-        val grantedPermissionsMap: PluginDataExtensions.NotNullMutableMap<PermissionId, MutableCollection<PermitteeId>> =
-            config.javaClass.getDeclaredMethod("getGrantedPermissionMap").also { it.isAccessible = true }.invoke(config)
+        config.javaClass.getDeclaredMethod("getGrantedPermissionMap").also { it.isAccessible = true }.invoke(config)
                     as PluginDataExtensions.NotNullMutableMap<PermissionId, MutableCollection<PermitteeId>>
-        grantedPermissionsMap
     }
 
 
