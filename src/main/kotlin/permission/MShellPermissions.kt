@@ -10,7 +10,7 @@ import net.mamoe.mirai.console.permission.PermitteeId
 object MShellPermissions
 {
     val all by lazy { PermissionService.INSTANCE.register(MShellPlugin.permissionId("all"), "MShell插件主权限") }
-    val use by lazy { PermissionService.INSTANCE.register(MShellPlugin.permissionId("use"), "MShell插件部分使用权限") }
+    val use by lazy { PermissionService.INSTANCE.register(MShellPlugin.permissionId("use"), "MShell插件部分使用权限", all) }
 
     val permissionMap: PluginDataExtensions.NotNullMutableMap<PermissionId, MutableCollection<PermitteeId>> by lazy {
         val clazz = Class.forName("net.mamoe.mirai.console.internal.permission.BuiltInPermissionService")
