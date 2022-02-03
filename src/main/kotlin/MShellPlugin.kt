@@ -16,6 +16,7 @@ import com.github.asforest.mshell.session.user.FriendUser
 import com.github.asforest.mshell.session.user.GroupUser
 import com.github.asforest.mshell.util.MShellUtils
 import com.github.asforest.mshell.util.MiraiUtil
+import net.mamoe.mirai.console.command.CommandManager
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandSender.Companion.asCommandSender
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
@@ -50,11 +51,12 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
         PresetGrants.registerAllPresetPermissions()
 
         // 注册指令
-        MainCommand.register()
-        PresetCommand.register()
-        AuthCommand.register()
-        GroupCommand.register()
-        UserCommand.register()
+//        MainCommand.register()
+//        PresetCommand.register()
+//        AuthCommand.register()
+//        GroupCommand.register()
+//        UserCommand.register()
+        MShellCommand.register()
 
         val botEvents = GlobalEventChannel.filter { it is BotEvent }
 
