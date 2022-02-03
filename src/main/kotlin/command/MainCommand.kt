@@ -2,10 +2,8 @@ package com.github.asforest.mshell.command
 
 import com.github.asforest.mshell.MShellPlugin
 import com.github.asforest.mshell.configuration.MShellConfig
-import com.github.asforest.mshell.exception.external.BaseExternalException
-import com.github.asforest.mshell.exception.external.NoSuchSessionException
-import com.github.asforest.mshell.exception.external.SessionUserAlreadyConnectedException
-import com.github.asforest.mshell.exception.external.UserDidNotConnectedYetException
+import com.github.asforest.mshell.exception.business.NoSuchSessionException
+import com.github.asforest.mshell.exception.business.SessionUserAlreadyConnectedException
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager

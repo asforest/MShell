@@ -2,7 +2,6 @@ package com.github.asforest.mshell.stream
 
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.event.Event
-import com.github.asforest.mshell.exception.ListenerAlreadyAddedException
 import com.github.asforest.mshell.util.AnsiEscapeUtil
 import kotlinx.coroutines.*
 import java.io.Writer

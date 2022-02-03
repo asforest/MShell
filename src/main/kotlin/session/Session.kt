@@ -1,10 +1,10 @@
 package com.github.asforest.mshell.session
 
 import com.github.asforest.mshell.event.Event
-import com.github.asforest.mshell.exception.SessionNotRegisteredException
-import com.github.asforest.mshell.exception.external.PresetIsIncompeleteException
-import com.github.asforest.mshell.exception.external.TerminalColumnRowsOutOfRangeException
-import com.github.asforest.mshell.exception.external.UnsupportedCharsetException
+import com.github.asforest.mshell.exception.system.SessionNotRegisteredException
+import com.github.asforest.mshell.exception.business.PresetIsIncompeleteException
+import com.github.asforest.mshell.exception.business.TerminalColumnRowsOutOfRangeException
+import com.github.asforest.mshell.exception.business.UnsupportedCharsetException
 import com.github.asforest.mshell.model.EnvironmentalPreset
 import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder

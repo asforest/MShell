@@ -1,7 +1,9 @@
 package com.github.asforest.mshell.command
 
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.exception.external.*
+import com.github.asforest.mshell.exception.business.AmbiguousGroupIdException
+import com.github.asforest.mshell.exception.business.QQGroupNotFoundException
+import com.github.asforest.mshell.exception.business.UsingInConsoleNotAllowedException
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.session.user.GroupUser

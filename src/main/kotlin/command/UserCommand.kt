@@ -2,7 +2,7 @@ package com.github.asforest.mshell.command
 
 import com.github.asforest.mshell.MShellPlugin
 import com.github.asforest.mshell.authentication.Authentication
-import com.github.asforest.mshell.exception.external.*
+import com.github.asforest.mshell.exception.business.*
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.Session

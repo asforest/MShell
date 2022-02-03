@@ -1,7 +1,7 @@
 package com.github.asforest.mshell.authentication
 
 import com.github.asforest.mshell.configuration.PresetsConfig
-import com.github.asforest.mshell.exception.external.NoPermissionToUsePresetExcetption
+import com.github.asforest.mshell.exception.business.NoPermissionToUsePresetExcetption
 import com.github.asforest.mshell.model.EnvironmentalPreset
 import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.SessionManager

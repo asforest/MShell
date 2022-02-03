@@ -1,6 +1,6 @@
 package com.github.asforest.mshell.util
 
-import com.github.asforest.mshell.exception.ManifestNotReadableException
+import com.github.asforest.mshell.exception.system.ManifestNotReadableException
 import java.net.URLDecoder
 import java.util.jar.Attributes
 import java.util.jar.JarFile

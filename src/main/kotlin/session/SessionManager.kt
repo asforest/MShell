@@ -2,9 +2,9 @@ package com.github.asforest.mshell.session
 
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.configuration.PresetsConfig
-import com.github.asforest.mshell.exception.SessionAlreadyRegisteredException
-import com.github.asforest.mshell.exception.SessionNotRegisteredException
-import com.github.asforest.mshell.exception.external.*
+import com.github.asforest.mshell.exception.business.*
+import com.github.asforest.mshell.exception.system.SessionAlreadyRegisteredException
+import com.github.asforest.mshell.exception.system.SessionNotRegisteredException
 import com.github.asforest.mshell.model.EnvironmentalPreset
 import com.github.asforest.mshell.session.user.GroupUser
 import java.text.SimpleDateFormat

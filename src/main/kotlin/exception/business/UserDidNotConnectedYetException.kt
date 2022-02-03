@@ -1,9 +1,9 @@
-package com.github.asforest.mshell.exception.external
+package com.github.asforest.mshell.exception.business
 
-import com.github.asforest.mshell.session.SessionUser
+import com.github.asforest.mshell.exception.AbstractBusinessException
 import com.github.asforest.mshell.session.user.GroupUser
 
-class UserDidNotConnectedYetException : BaseExternalException
+class UserDidNotConnectedYetException : AbstractBusinessException
 {
     constructor() : super("当前并未连接到一个会话上")
 
