@@ -1,16 +1,23 @@
 package com.github.asforest.mshell.command.resolver
 
-import kotlin.reflect.KClass
-import kotlin.reflect.KFunction
-import kotlin.reflect.KType
+import kotlin.reflect.*
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.jvm.jvmErasure
-import kotlin.reflect.typeOf
 
+/**
+ * @param name: 指令名字
+ * @param callable: 指令KFunction对象
+ * @param parameters: value parameter
+ * @param exReParameter: extension receiver parameter
+ * @param permissionMask: 执行指令所需要的权限
+ * @param description: 函数的描述
+ */
 data class CommandSignature(
     val name: String,
     val callable: KFunction<*>,
     val parameters: List<Parameter>,
+    val exReParameter: KParameter?,
+    val permissionMask: Int,
     val description: String
 ) {
     data class Parameter(

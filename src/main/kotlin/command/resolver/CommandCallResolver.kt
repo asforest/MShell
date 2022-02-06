@@ -1,13 +1,12 @@
 package com.github.asforest.mshell.command.resolver
 
 import java.lang.reflect.Array
-import kotlin.reflect.KFunction
 import kotlin.reflect.full.callSuspend
 import kotlin.reflect.jvm.jvmErasure
 
 object CommandCallResolver
 {
-    fun resolve(signature: CommandSignature, arguments: List<String>): ArgumentedFunction?
+    fun resolve(signature: CommandSignature, arguments: List<String>, thisRef: Any): ArgumentedFunction?
     {
         val parameters = signature.parameters
 //        println(arguments)
@@ -70,11 +69,17 @@ object CommandCallResolver
             // 使用空数组
             if (remainingParameter.isVararg)
                 argumentsToCall += Array.newInstance(remainingParameter.type.jvmErasure.java.componentType, 0)
+
+            // 使用null
+            if (remainingParameter.isOptional)
+                argumentsToCall += null
+
+            // 不会再有第三种情况出现
         }
 
-        println(argumentsToCall.toString2())
+//        println(argumentsToCall.toString2())
 
-        return ArgumentedFunction(signature.callable, argumentsToCall)
+        return ArgumentedFunction(signature, argumentsToCall, thisRef)
     }
 
     private fun MutableList<Any?>.toString2(): String
@@ -92,12 +97,38 @@ object CommandCallResolver
         return "[$list]"
     }
 
+    /**
+     * @param signature: 函数签名
+     * @param arguments: 调用函数时要用到的实参
+     * @param thisRef: Function的this引用
+     */
     data class ArgumentedFunction(
-        val function: KFunction<*>,
-        val arguments: List<Any?>
+        val signature: CommandSignature,
+        val arguments: List<Any?>,
+        val thisRef: Any
     ) {
-        suspend fun callSuspend(instance: Any) = function.callSuspend(instance, *arguments.toTypedArray())
+        private val isExtensionFunction: Boolean = signature.exReParameter != null
 
-        fun call(instance: Any) = function.call(instance, *arguments.toTypedArray())
+        private fun buildArgs(extensionReceiver: Any?): kotlin.Array<Any?>
+        {
+            return (if(extensionReceiver != null && isExtensionFunction)
+                listOf(extensionReceiver, *arguments.toTypedArray())
+            else
+                listOf(*arguments.toTypedArray())).toTypedArray()
+        }
+
+        @JvmOverloads
+        suspend fun callSuspend(extensionReceiver: Any? = null)
+        {
+            val args = buildArgs(extensionReceiver)
+            signature.callable.callSuspend(thisRef, *args)
+        }
+
+        @JvmOverloads
+        suspend fun call(extensionReceiver: Any? = null)
+        {
+            val args = buildArgs(extensionReceiver)
+            signature.callable.callSuspend(thisRef, *args)
+        }
     }
 }

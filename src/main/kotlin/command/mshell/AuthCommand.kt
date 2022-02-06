@@ -1,6 +1,8 @@
-package com.github.asforest.mshell.command
+package com.github.asforest.mshell.command.mshell
 
-import com.github.asforest.mshell.MShellPlugin
+import com.github.asforest.mshell.command.MShellCommand
+import com.github.asforest.mshell.command.MShellCommand.MshellAdmin
+import com.github.asforest.mshell.command.resolver.SmartCommand
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.permission.PresetGrants
@@ -9,25 +11,19 @@ import com.github.asforest.mshell.session.user.FriendUser
 import com.github.asforest.mshell.util.MShellUtils.getFriendNick
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.CommandSender
-import net.mamoe.mirai.console.command.CompositeCommand
-import net.mamoe.mirai.console.permission.*
+import net.mamoe.mirai.console.permission.AbstractPermitteeId
 import net.mamoe.mirai.console.permission.PermissionService.Companion.cancel
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.permission.PermissionService.Companion.permit
+import net.mamoe.mirai.console.permission.PermitteeId
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 
 @ConsoleExperimentalApi
-object AuthCommand : CompositeCommand(
-    MShellPlugin,
-    primaryName = "mshella",
-    description = "MShell插件管理员配置指令",
-    secondaryNames = arrayOf("msa", "ma"),
-    parentPermission = MShellPermissions.all
-) {
-    @SubCommand @Description("添加管理员")
-    suspend fun CommandSender.add(
-        @Name("qq") qqnumber: Long
-    ) {
+object AuthCommand : SmartCommand()
+{
+    @CommandFunc(desc = "添加管理员", permission = MshellAdmin)
+    suspend fun CommandSender.add(qqnumber: Long)
+    {
         val friend = getFriendNick(qqnumber)
         val permitte = AbstractPermitteeId.ExactFriend(qqnumber)
         val permission = MShellPermissions.all
@@ -40,10 +36,9 @@ object AuthCommand : CompositeCommand(
         }
     }
 
-    @SubCommand @Description("移除管理员")
-    suspend fun CommandSender.remove(
-        @Name("qq") qqnumber: Long
-    ) {
+    @CommandFunc(desc = "移除管理员", permission = MshellAdmin)
+    suspend fun CommandSender.remove(qqnumber: Long)
+    {
         val friend = getFriendNick(qqnumber)
         val permittee = AbstractPermitteeId.ExactFriend(qqnumber)
         val permission = MShellPermissions.all
@@ -60,7 +55,7 @@ object AuthCommand : CompositeCommand(
         }
     }
 
-    @SubCommand @Description("列出所有管理员")
+    @CommandFunc(desc = "列出所有管理员", permission = MshellAdmin)
     suspend fun CommandSender.list() {
         val f = grantings.filterIsInstance<AbstractPermitteeId.ExactFriend>()
         var output = ""
@@ -71,11 +66,9 @@ object AuthCommand : CompositeCommand(
         sendMessage(output.ifEmpty { "还没有任何管理员" })
     }
 
-    @SubCommand @Description("添加预设授权用户")
-    suspend fun CommandSender.adduser(
-        @Name("preset") preset: String,
-        @Name("qq") qqnumber: Long
-    ) {
+    @CommandFunc(desc = "添加预设授权用户", permission = MshellAdmin)
+    suspend fun CommandSender.adduser(preset: String, qqnumber: Long)
+    {
         if(preset !in PresetsConfig.presets)
         {
             sendMessage("预设不存在：$preset")
@@ -92,11 +85,9 @@ object AuthCommand : CompositeCommand(
         }
     }
 
-    @SubCommand @Description("移除预设授权用户")
-    suspend fun CommandSender.removeuser(
-        @Name("preset") preset: String,
-        @Name("qq") qqnumber: Long
-    ) {
+    @CommandFunc(desc = "移除预设授权用户", permission = MshellAdmin)
+    suspend fun CommandSender.removeuser(preset: String, qqnumber: Long)
+    {
         if(preset !in PresetsConfig.presets)
         {
             sendMessage("预设不存在：$preset")
@@ -113,10 +104,9 @@ object AuthCommand : CompositeCommand(
         }
     }
 
-    @SubCommand @Description("列出所有预设授权用户")
-    suspend fun CommandSender.listuser(
-        @Name("preset") preset: String? = null
-    ) {
+    @CommandFunc(desc = "列出所有预设授权用户", permission = MshellAdmin)
+    suspend fun CommandSender.listuser(preset: String? = null)
+    {
         if(preset != null && preset !in PresetsConfig.presets)
         {
             sendMessage("预设不存在：$preset")

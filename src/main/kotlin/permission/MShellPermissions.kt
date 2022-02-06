@@ -19,6 +19,4 @@ object MShellPermissions
         config.javaClass.getDeclaredMethod("getGrantedPermissionMap").also { it.isAccessible = true }.invoke(config)
                     as PluginDataExtensions.NotNullMutableMap<PermissionId, MutableCollection<PermitteeId>>
     }
-
-
 }
