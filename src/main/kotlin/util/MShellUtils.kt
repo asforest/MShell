@@ -1,6 +1,6 @@
 package com.github.asforest.mshell.util
 
-import com.github.asforest.mshell.session.AbstractSessionUser
+import com.github.asforest.mshell.session.user.AbstractSessionUser
 import com.github.asforest.mshell.session.user.ConsoleUser
 import com.github.asforest.mshell.session.user.FriendUser
 import com.github.asforest.mshell.session.user.GroupUser

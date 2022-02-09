@@ -5,7 +5,9 @@ import com.github.asforest.mshell.exception.business.NoPermissionToUsePresetExce
 import com.github.asforest.mshell.model.EnvironmentalPreset
 import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.SessionManager
+import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 
+@ConsoleExperimentalApi
 object Authentication
 {
     /**

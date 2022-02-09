@@ -1,11 +1,11 @@
 package com.github.asforest.mshell.session
 
-import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.exception.business.*
 import com.github.asforest.mshell.exception.system.SessionAlreadyRegisteredException
 import com.github.asforest.mshell.exception.system.SessionNotRegisteredException
 import com.github.asforest.mshell.model.EnvironmentalPreset
+import com.github.asforest.mshell.session.user.AbstractSessionUser
 import com.github.asforest.mshell.session.user.GroupUser
 import java.text.SimpleDateFormat
 
@@ -41,7 +41,7 @@ object SessionManager
         if(!presetObj.singleInstance || !hasSecondIns)
         {
             // 创建会话
-            session = Session(this, presetObj, MShellConfig.lastwillCapacity)
+            session = Session(this, presetObj)
             registerSession(session)
 
             // 自动执行exec
@@ -59,10 +59,12 @@ object SessionManager
         // 用户自动连接
         if(user != null)
         {
+            val conn = session.connect(user)
+
             if(created)
-                user.appendMessage("会话已创建(pid: ${session.pid})，环境预设(${session.preset.name})\n")
-            session.connect(user)
-            user.appendTruncation()
+                conn.appendMessage("会话已创建(pid: ${session.pid})，环境预设(${session.preset.name})\n")
+
+            conn.appendTruncation()
         }
 
         // 必须在用户连接之后调用start，否则遇到session瞬间执行完毕的情况时，user会漏消息
@@ -152,8 +154,9 @@ object SessionManager
      * 使一个用户连接到一个会话
      * @param user 用户
      * @param session 要连接到的会话
+     * @return Connection对象
      */
-    fun connect(user: AbstractSessionUser, session: Session)
+    fun connect(user: AbstractSessionUser, session: Session): Connection
     {
         // 安全检查
         getSessionByUserConnected(user)?.also {
@@ -162,7 +165,7 @@ object SessionManager
 
         val connectionManager = getConnectionManager(session) ?: throw SessionNotRegisteredException(session)
         val whenOnlineChanged = connectionManager.getConnection(user, true)?.whenOnlineChanged ?: -1
-        val (_, isReconnection) = connectionManager.openConnection(user)
+        val (conn, isReconnection) = connectionManager.openConnection(user)
 
         // 发送遗愿消息
         if(whenOnlineChanged != -1L && session.lwm.hasMessage(whenOnlineChanged))
@@ -176,13 +179,15 @@ object SessionManager
             }
             sb.append("\n==========最后输出(${SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(last)})==========\n")
 
-            user.appendTruncation()
-            user.appendMessage(sb.toString())
-            user.appendTruncation()
+            conn.appendTruncation()
+            conn.appendMessage(sb.toString())
+            conn.appendTruncation()
         }
 
-        user.appendMessage((if(isReconnection) "已重连" else "已连接")+"到会话(pid: ${session.pid})，环境预设(${session.preset.name})\n")
-        user.appendTruncation()
+        conn.appendMessage((if(isReconnection) "已重连" else "已连接")+"到会话(pid: ${session.pid})，环境预设(${session.preset.name})\n")
+        conn.appendTruncation()
+
+        return conn
     }
 
     /**
@@ -204,12 +209,13 @@ object SessionManager
         val cm = getConnectionManager(user, includeOffine = false)!!
         val session = getSessionByUserConnected(user)!!
 
-        cm.closeConnection(user)
+        val conn = cm.getConnection(user, false)!!
 
         // 发送消息
-        user.appendTruncation()
-        user.appendMessage("已从会话断开(pid: ${cm.session.pid})，环境预设(${session.preset.name})\n")
-        user.appendTruncation()
+        conn.appendTruncation()
+        conn.appendMessage("已从会话断开(pid: ${cm.session.pid})，环境预设(${session.preset.name})\n")
+
+        cm.closeConnection(user)
 
         return cm.session
     }

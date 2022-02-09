@@ -6,6 +6,7 @@ import com.github.asforest.mshell.exception.business.PresetIsIncompeleteExceptio
 import com.github.asforest.mshell.exception.business.TerminalColumnRowsOutOfRangeException
 import com.github.asforest.mshell.exception.business.UnsupportedCharsetException
 import com.github.asforest.mshell.model.EnvironmentalPreset
+import com.github.asforest.mshell.session.user.AbstractSessionUser
 import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
 import kotlinx.coroutines.*
@@ -18,12 +19,11 @@ import kotlin.coroutines.suspendCoroutine
 class Session(
     val manager: SessionManager,
     val preset: EnvironmentalPreset,
-    val lastwillMessageLines: Int
 ) {
     val process: PtyProcess
     val stdin: PrintWriter
     val pid: Long get() = process.pid()
-    val lwm = SessionLastwillMessage(lastwillMessageLines)
+    val lwm = SessionLastwillMessage(preset.lastwillCapacity)
     var isLive = true
 
     val onProcessEnd = Event<Session, Session.() -> Unit>(this)
@@ -63,7 +63,7 @@ class Session(
                 if(len != -1) { // 有消息时
                     val message = String(buffer, 0, len, charset);
                     // 发送给所有连接上的用户
-                    usersConnected.forEach { it.appendMessage(message) }
+                    connections.forEach { it.appendMessage(message) }
 
                     // 保留遗言
                     lwm.append(message)
@@ -93,9 +93,9 @@ class Session(
         process.destroy()
     }
 
-    fun connect(user: AbstractSessionUser)
+    fun connect(user: AbstractSessionUser): Connection
     {
-        manager.connect(user, this)
+        return manager.connect(user, this)
     }
 
     /**
@@ -121,7 +121,7 @@ class Session(
      */
     fun broadcastMessageBatchly(message: String)
     {
-        usersConnected.forEach { it.appendMessage(message) }
+        connections.forEach { it.appendMessage(message) }
     }
 
     /**
@@ -129,7 +129,7 @@ class Session(
      */
     fun broadcaseMessageTruncation()
     {
-        usersConnected.forEach { it.appendTruncation() }
+        connections.forEach { it.appendTruncation() }
     }
 
     fun isUserConnected(user: AbstractSessionUser): Boolean = manager.getSessionByUserConnected(user) == this

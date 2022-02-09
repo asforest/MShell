@@ -1,13 +1,12 @@
 package com.github.asforest.mshell.session.user
 
-import com.github.asforest.mshell.session.AbstractSessionUser
 import net.mamoe.mirai.contact.Group
 
 class GroupUser(
     val group: Group
 ) : AbstractSessionUser() {
 
-    override suspend fun onSendMessage(message: String)
+    override suspend fun sendMessage(message: String)
     {
         group.sendMessage(message)
     }

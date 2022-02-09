@@ -1,16 +1,19 @@
 package com.github.asforest.mshell.stream
 
-import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.event.Event
+import com.github.asforest.mshell.model.EnvironmentalPreset
 import com.github.asforest.mshell.util.AnsiEscapeUtil
-import kotlinx.coroutines.*
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.io.Writer
-import java.lang.Exception
 import java.util.concurrent.LinkedBlockingQueue
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 class BatchingWriter(
+    val preset: EnvironmentalPreset,
     var onBatchedOutput: suspend (text: String)->Unit,
 //    val onClose: (()->Unit)?
 ): Writer() {
@@ -21,8 +24,8 @@ class BatchingWriter(
 
     init {
         coBatching = GlobalScope.launch {
-            val truncation = MShellConfig.truncationThreshold
-            val batchingTimeout = MShellConfig.batchingInteval.toLong()
+            val truncation = preset.truncationThreshold
+            val batchingTimeout = preset.batchingInteval.toLong()
 
             while(true)
             {

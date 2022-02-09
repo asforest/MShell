@@ -10,7 +10,7 @@ import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
-import com.github.asforest.mshell.session.AbstractSessionUser
+import com.github.asforest.mshell.session.user.AbstractSessionUser
 import com.github.asforest.mshell.session.user.FriendUser
 import com.github.asforest.mshell.session.user.GroupUser
 import com.github.asforest.mshell.util.MShellUtils

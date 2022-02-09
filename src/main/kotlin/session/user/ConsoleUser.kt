@@ -1,11 +1,10 @@
 package com.github.asforest.mshell.session.user
 
-import com.github.asforest.mshell.session.AbstractSessionUser
 import net.mamoe.mirai.console.command.ConsoleCommandSender
 
 class ConsoleUser : AbstractSessionUser()
 {
-    override suspend fun onSendMessage(message: String)
+    override suspend fun sendMessage(message: String)
     {
         ConsoleCommandSender.sendMessage(message)
     }

@@ -81,7 +81,8 @@ object PresetCommand : CompositeCommand(
         @Name("shell") vararg shell: String
     ) {
         withCatch {
-            val preset = getPresetWithThrow(presetName)
+            getPresetWithThrow(presetName)
+
             if(shell.isEmpty())
             {
                 ep.presets[presetName]!!.command = ""
@@ -101,7 +102,8 @@ object PresetCommand : CompositeCommand(
         @Name("dir") vararg dir: String
     ) {
         withCatch {
-            val preset = getPresetWithThrow(presetName)
+            getPresetWithThrow(presetName)
+
             if(dir.isEmpty())
             {
                 ep.presets[presetName]!!.workdir = ""
@@ -146,7 +148,8 @@ object PresetCommand : CompositeCommand(
         @Name("exec") vararg exec: String
     ) {
         withCatch {
-            val preset = getPresetWithThrow(presetName)
+            getPresetWithThrow(presetName)
+
             if(exec.isEmpty())
             {
                 ep.presets[presetName]!!.input = ""
@@ -166,7 +169,8 @@ object PresetCommand : CompositeCommand(
         @Name("charset") charset: String =""
     ) {
         withCatch {
-            val preset = getPresetWithThrow(presetName)
+            getPresetWithThrow(presetName)
+
             if(charset.isEmpty()) {
                 ep.presets[presetName]!!.charset = ""
                 sendMessage("已清空${presetName}预设的charset选项")
@@ -231,7 +235,8 @@ object PresetCommand : CompositeCommand(
         withCatch {
             if(presetName != null)
             {
-                val preset = getPresetWithThrow(presetName)
+                getPresetWithThrow(presetName)
+
                 ep.defaultPreset = presetName
                 ep.write()
                 sendMessage("已更新默认环境预设: '$presetName'")
@@ -249,7 +254,9 @@ object PresetCommand : CompositeCommand(
         }
     }
 
-    fun getPresetWithThrow(presetName: String): EnvironmentalPreset
+
+    @Suppress("NOTHING_TO_INLINE")
+    inline fun getPresetWithThrow(presetName: String): EnvironmentalPreset
     {
         return ep.presets[presetName] ?: throw PresetNotFoundException(presetName)
     }

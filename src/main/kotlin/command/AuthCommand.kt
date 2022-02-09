@@ -147,7 +147,7 @@ object AuthCommand : CompositeCommand(
     {
         val _bot = bot
         if(_bot != null)
-            return FriendUser(_bot?.getFriend(qqnumber) ?: return null)
+            return FriendUser(_bot.getFriend(qqnumber) ?: return null)
 
         Bot.instances.forEach { bot ->
             val friend = bot.getFriend(qqnumber)

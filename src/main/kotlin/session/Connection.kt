@@ -1,10 +1,31 @@
 package com.github.asforest.mshell.session
 
+import com.github.asforest.mshell.session.user.AbstractSessionUser
+import com.github.asforest.mshell.stream.BatchingWriter
+
 class Connection(
     val user: AbstractSessionUser,
     val session: Session,
 ) {
     val sessionPid: Long get() = session.pid
+    val batchingWriter = BatchingWriter(session.preset) { msg -> user.sendMessage(msg) }
+
+    /**
+     * 分包发送消息，发送间隔较短的消息会被合并成一条
+     * @param message 要发送的消息
+     */
+    fun appendMessage(message: String)
+    {
+        batchingWriter += message
+    }
+
+    /**
+     * 打断消息合并
+     */
+    fun appendTruncation()
+    {
+        batchingWriter.flush()
+    }
 
     /**
      * 距离上一个在线或者离线状态切换过后所经过的时间

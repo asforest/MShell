@@ -2,6 +2,7 @@ package com.github.asforest.mshell.session
 
 import com.github.asforest.mshell.exception.system.SessionConnectionNotFoundException
 import com.github.asforest.mshell.exception.system.SessionConnectionNotMatchException
+import com.github.asforest.mshell.session.user.AbstractSessionUser
 
 class ConnectionManager (
     val session: Session
