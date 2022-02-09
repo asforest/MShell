@@ -5,7 +5,7 @@ import com.github.asforest.mshell.exception.system.SessionNotRegisteredException
 import com.github.asforest.mshell.exception.business.PresetIsIncompeleteException
 import com.github.asforest.mshell.exception.business.TerminalColumnRowsOutOfRangeException
 import com.github.asforest.mshell.exception.business.UnsupportedCharsetException
-import com.github.asforest.mshell.model.EnvironmentalPreset
+import com.github.asforest.mshell.model.Preset
 import com.github.asforest.mshell.session.user.AbstractSessionUser
 import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
@@ -18,7 +18,7 @@ import kotlin.coroutines.suspendCoroutine
 
 class Session(
     val manager: SessionManager,
-    val preset: EnvironmentalPreset,
+    val preset: Preset,
 ) {
     val process: PtyProcess
     val stdin: PrintWriter
@@ -140,7 +140,7 @@ class Session(
 
     val connections: Collection<Connection> get() = manager.getConnectionManager(this)?.getConnections(false) ?: throw SessionNotRegisteredException(this)
 
-    private fun validatePreset(preset: EnvironmentalPreset)
+    private fun validatePreset(preset: Preset)
     {
         if (preset.command.isEmpty())
             throw PresetIsIncompeleteException(preset)

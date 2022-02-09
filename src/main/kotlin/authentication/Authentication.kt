@@ -2,7 +2,7 @@ package com.github.asforest.mshell.authentication
 
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.exception.business.NoPermissionToUsePresetExcetption
-import com.github.asforest.mshell.model.EnvironmentalPreset
+import com.github.asforest.mshell.model.Preset
 import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.SessionManager
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
@@ -13,7 +13,7 @@ object Authentication
     /**
      * 使用默认的环境预设
      */
-    fun useDefaultPreset(preset: String?, qqnumber: Long): EnvironmentalPreset
+    fun useDefaultPreset(preset: String?, qqnumber: Long): Preset
     {
         // 先尝试获取默认的Preset
         val defPreset = SessionManager.useDefaultPreset(preset)
@@ -37,7 +37,7 @@ object Authentication
     /**
      * 获取所有可用的环境预设
      */
-    fun getAvailablePresets(qqnumber: Long): List<EnvironmentalPreset>
+    fun getAvailablePresets(qqnumber: Long): List<Preset>
     {
         return PresetsConfig.presets.values.filter { PresetGrants.testGrant(it.name, qqnumber) }
     }

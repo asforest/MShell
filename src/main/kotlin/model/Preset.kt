@@ -14,7 +14,7 @@ package com.github.asforest.mshell.model
  * @param batchingInteval 子进程stdout最大合并间隔（单位：字符）
  * @param lastwillCapacity 遗愿消息缓冲区大小（单位：字符）
  */
-data class EnvironmentalPreset(
+data class Preset(
     var name: String,
     var command: String = "",
     var charset: String = "",

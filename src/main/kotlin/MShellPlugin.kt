@@ -5,7 +5,7 @@ import com.github.asforest.mshell.command.*
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.exception.AbstractMShellException
-import com.github.asforest.mshell.model.EnvironmentalPreset
+import com.github.asforest.mshell.model.Preset
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.Session
@@ -104,7 +104,7 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
         message: MessageChain,
         session: Session?,
         user: AbstractSessionUser,
-        preset: EnvironmentalPreset? = null
+        preset: Preset? = null
     ) {
         val pokePresent = message.anyIsInstance<PokeMessage>()
 

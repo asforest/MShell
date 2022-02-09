@@ -4,7 +4,7 @@ import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.exception.business.*
 import com.github.asforest.mshell.exception.system.SessionAlreadyRegisteredException
 import com.github.asforest.mshell.exception.system.SessionNotRegisteredException
-import com.github.asforest.mshell.model.EnvironmentalPreset
+import com.github.asforest.mshell.model.Preset
 import com.github.asforest.mshell.session.user.AbstractSessionUser
 import com.github.asforest.mshell.session.user.GroupUser
 import java.text.SimpleDateFormat
@@ -311,7 +311,7 @@ object SessionManager
     /**
      * 使用默认环境预设
      */
-    fun useDefaultPreset(preset: String?): EnvironmentalPreset
+    fun useDefaultPreset(preset: String?): Preset
     {
         // 加载环境预设
         val name: String = if(preset == null) {

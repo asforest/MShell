@@ -1,7 +1,7 @@
 package com.github.asforest.mshell.stream
 
 import com.github.asforest.mshell.event.Event
-import com.github.asforest.mshell.model.EnvironmentalPreset
+import com.github.asforest.mshell.model.Preset
 import com.github.asforest.mshell.util.AnsiEscapeUtil
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.Job
@@ -13,7 +13,7 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 class BatchingWriter(
-    val preset: EnvironmentalPreset,
+    val preset: Preset,
     var onBatchedOutput: suspend (text: String)->Unit,
 //    val onClose: (()->Unit)?
 ): Writer() {

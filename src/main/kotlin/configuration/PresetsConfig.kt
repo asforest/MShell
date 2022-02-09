@@ -1,11 +1,11 @@
 package com.github.asforest.mshell.configuration
 
-import com.github.asforest.mshell.model.EnvironmentalPreset
+import com.github.asforest.mshell.model.Preset
 
 object PresetsConfig : YamlConfig("presets.yml")
 {
     var defaultPreset: String = ""
-    var presets = HashMap<String, EnvironmentalPreset>()
+    var presets = HashMap<String, Preset>()
 
     fun validate()
     {
@@ -36,9 +36,9 @@ object PresetsConfig : YamlConfig("presets.yml")
         validate()
     }
 
-    private fun map2preset(name: String, fromMap: HashMap<String, Any>): EnvironmentalPreset
+    private fun map2preset(name: String, fromMap: HashMap<String, Any>): Preset
     {
-        return EnvironmentalPreset(
+        return Preset(
             name = name,
             command = fromMap["shell"] as String,
             charset = fromMap["charset"] as String,
@@ -51,7 +51,7 @@ object PresetsConfig : YamlConfig("presets.yml")
         )
     }
 
-    private fun preset2map(preset: EnvironmentalPreset): HashMap<String, Any>
+    private fun preset2map(preset: Preset): HashMap<String, Any>
     {
         val map = LinkedHashMap<String, Any>()
 

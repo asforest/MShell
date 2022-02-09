@@ -6,7 +6,7 @@ import com.github.asforest.mshell.exception.business.MissingParamaterException
 import com.github.asforest.mshell.exception.business.PresetAlreadyExistedYetException
 import com.github.asforest.mshell.exception.business.PresetNotFoundException
 import com.github.asforest.mshell.exception.business.UnsupportedCharsetException
-import com.github.asforest.mshell.model.EnvironmentalPreset
+import com.github.asforest.mshell.model.Preset
 import com.github.asforest.mshell.permission.MShellPermissions
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
@@ -37,7 +37,7 @@ object PresetCommand : CompositeCommand(
             if(shell.isEmpty())
                 throw MissingParamaterException("shell")
 
-            ep.presets[presetName] = EnvironmentalPreset(
+            ep.presets[presetName] = Preset(
                 name = presetName,
                 command = shell.joinToString(" "),
                 charset = charset,
@@ -256,7 +256,7 @@ object PresetCommand : CompositeCommand(
 
 
     @Suppress("NOTHING_TO_INLINE")
-    inline fun getPresetWithThrow(presetName: String): EnvironmentalPreset
+    inline fun getPresetWithThrow(presetName: String): Preset
     {
         return ep.presets[presetName] ?: throw PresetNotFoundException(presetName)
     }
