@@ -47,7 +47,10 @@ object PresetsConfig : YamlConfig("presets.yml")
             input = fromMap["exec"] as String,
             singleInstance = fromMap["single-instance"] as Boolean,
             columns = fromMap["terminal-columns"] as Int,
-            rows = fromMap["terminal-rows"] as Int
+            rows = fromMap["terminal-rows"] as Int,
+            truncationThreshold = fromMap["truncation-threshold"] as Int,
+            batchingInteval = fromMap["batching-inteval"] as Int,
+            lastwillCapacity = fromMap["lastwill-capacity"] as Int,
         )
     }
 
@@ -63,6 +66,9 @@ object PresetsConfig : YamlConfig("presets.yml")
         map["single-instance"] = preset.singleInstance
         map["terminal-columns"] = preset.columns
         map["terminal-rows"] = preset.rows
+        map["truncation-threshold"] = preset.truncationThreshold
+        map["batching-inteval"] = preset.batchingInteval
+        map["lastwill-capacity"] = preset.lastwillCapacity
 
         return map
     }

@@ -228,6 +228,45 @@ object PresetCommand : CompositeCommand(
         }
     }
 
+    @SubCommand @Description("设置会话的stdout合并字符数上限")
+    suspend fun CommandSender.truncation(
+        @Name("preset") preset: String,
+        @Name("threshold-in-chars") threshold: Int
+    ) {
+        withCatch {
+            val _preset = getPresetWithThrow(preset)
+            _preset.truncationThreshold = threshold
+            sendMessage("环境预设${preset}的合并字符数上限已更新为: $threshold 字符")
+            ep.write()
+        }
+    }
+
+    @SubCommand @Description("设置会话的stdout合并间隔")
+    suspend fun CommandSender.batch(
+        @Name("preset") preset: String,
+        @Name("inteval-in-ms") inteval: Int
+    ) {
+        withCatch {
+            val _preset = getPresetWithThrow(preset)
+            _preset.batchingInteval = inteval
+            sendMessage("环境预设${preset}的合并间隔已更新为: $inteval ms")
+            ep.write()
+        }
+    }
+
+    @SubCommand @Description("设置会话的遗愿消息缓冲区大小")
+    suspend fun CommandSender.lastwill(
+        @Name("preset") preset: String,
+        @Name("capacity-in-chars") capacity: Int
+    ) {
+        withCatch {
+            val _preset = getPresetWithThrow(preset)
+            _preset.lastwillCapacity = capacity
+            sendMessage("环境预设${preset}的遗愿消息缓冲区大小已更新为: $capacity 字符")
+            ep.write()
+        }
+    }
+
     @SubCommand @Description("设置默认的环境预设方案")
     suspend fun CommandSender.def(
         @Name("preset") presetName: String? =null

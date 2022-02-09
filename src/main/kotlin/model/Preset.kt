@@ -10,8 +10,8 @@ package com.github.asforest.mshell.model
  * @param singleInstance 单实例模式
  * @param columns PTY的宽度（单位：行）
  * @param rows PTY的高度（单位：行）
- * @param truncationThreshold 子进程stdout最大合并字符数的上限（单位：字符）
- * @param batchingInteval 子进程stdout最大合并间隔（单位：字符）
+ * @param truncationThreshold 子进程stdout合并字符数上限（单位：字符）
+ * @param batchingInteval 子进程stdout合并间隔（单位：字符）
  * @param lastwillCapacity 遗愿消息缓冲区大小（单位：字符）
  */
 data class Preset(
@@ -31,13 +31,16 @@ data class Preset(
     override fun toString(): String
     {
         val str = listOf(
-            "shell=$command",
+            "command=$command",
             "charset=$charset",
             "workdir=$workdir",
             "env=$env",
             "exec=$input",
             "singleInstance=$singleInstance",
-            "ptySize=$columns x $rows",
+            "ptySize=${columns}x$rows",
+            "truncation: $truncationThreshold",
+            "batching: $batchingInteval",
+            "lastwill: $lastwillCapacity"
         ).joinToString(", ")
 
         return "[$str]"
