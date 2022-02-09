@@ -1,12 +1,11 @@
 package com.github.asforest.mshell.session.user
 
-import com.github.asforest.mshell.session.SessionUser
+import com.github.asforest.mshell.session.AbstractSessionUser
 import net.mamoe.mirai.contact.Group
-import net.mamoe.mirai.contact.Member
 
 class GroupUser(
     val group: Group
-) : SessionUser() {
+) : AbstractSessionUser() {
 
     override suspend fun onSendMessage(message: String)
     {
@@ -20,7 +19,7 @@ class GroupUser(
 
     override fun equals(other: Any?): Boolean
     {
-        if (other == null || other !is SessionUser)
+        if (other == null || other !is AbstractSessionUser)
             return false
 
         return toString() == other.toString()

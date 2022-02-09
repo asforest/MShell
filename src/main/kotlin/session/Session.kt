@@ -63,7 +63,7 @@ class Session(
                 if(len != -1) { // 有消息时
                     val message = String(buffer, 0, len, charset);
                     // 发送给所有连接上的用户
-                    usersConnected.forEach { it.sendMessage(message) }
+                    usersConnected.forEach { it.appendMessage(message) }
 
                     // 保留遗言
                     lwm.append(message)
@@ -93,7 +93,7 @@ class Session(
         process.destroy()
     }
 
-    fun connect(user: SessionUser)
+    fun connect(user: AbstractSessionUser)
     {
         manager.connect(user, this)
     }
@@ -102,7 +102,7 @@ class Session(
      * 断开某个用户与当前会话的连接
      * @param user 要断开的用户
      */
-    fun disconnect(user: SessionUser)
+    fun disconnect(user: AbstractSessionUser)
     {
         manager.disconnect(user)
     }
@@ -121,7 +121,7 @@ class Session(
      */
     fun broadcastMessageBatchly(message: String)
     {
-        usersConnected.forEach { it.sendMessage(message) }
+        usersConnected.forEach { it.appendMessage(message) }
     }
 
     /**
@@ -129,14 +129,14 @@ class Session(
      */
     fun broadcaseMessageTruncation()
     {
-        usersConnected.forEach { it.sendTruncation() }
+        usersConnected.forEach { it.appendTruncation() }
     }
 
-    fun isUserConnected(user: SessionUser): Boolean = manager.getSessionByUserConnected(user) == this
+    fun isUserConnected(user: AbstractSessionUser): Boolean = manager.getSessionByUserConnected(user) == this
 
     val isConnected: Boolean get() = usersConnected.isNotEmpty()
 
-    val usersConnected: Collection<SessionUser> get() = manager.getUsersConnectedTo(this)
+    val usersConnected: Collection<AbstractSessionUser> get() = manager.getUsersConnectedTo(this)
 
     val connections: Collection<Connection> get() = manager.getConnectionManager(this)?.getConnections(false) ?: throw SessionNotRegisteredException(this)
 

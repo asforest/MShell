@@ -5,7 +5,7 @@ import com.github.asforest.mshell.stream.BatchingWriter
 /**
  * 其子类有：[GroupUser]、[FriendUser]、[ConsoleUser]
  */
-abstract class SessionUser
+abstract class AbstractSessionUser
 {
     private val batchingWriter = BatchingWriter { msg -> onSendMessage(msg) }
 
@@ -13,7 +13,7 @@ abstract class SessionUser
      * 分包发送消息，发送间隔较短的消息会被合并成一条
      * @param message 要发送的消息
      */
-    fun sendMessage(message: String)
+    fun appendMessage(message: String)
     {
         if(message.isEmpty())
             return
@@ -24,7 +24,7 @@ abstract class SessionUser
     /**
      * 强制打断消息合并
      */
-    fun sendTruncation()
+    fun appendTruncation()
     {
         batchingWriter.flush()
     }

@@ -22,7 +22,7 @@ object SessionManager
      * @param user 会话启动后，要立即连接上来的用户
      * @return 创建的Session，也可能是复用的Session
      */
-    fun createSession(preset: String?, user: SessionUser?): Session
+    fun createSession(preset: String?, user: AbstractSessionUser?): Session
     {
         // user不能连接到任何会话，否则会抛异常
         user?.also { getSessionByUserConnected(user)?.also { session ->
@@ -60,9 +60,9 @@ object SessionManager
         if(user != null)
         {
             if(created)
-                user.sendMessage("会话已创建(pid: ${session.pid})，环境预设(${session.preset.name})\n")
+                user.appendMessage("会话已创建(pid: ${session.pid})，环境预设(${session.preset.name})\n")
             session.connect(user)
-            user.sendTruncation()
+            user.appendTruncation()
         }
 
         // 必须在用户连接之后调用start，否则遇到session瞬间执行完毕的情况时，user会漏消息
@@ -120,7 +120,7 @@ object SessionManager
      * @param user 要重连/新建会话的用户
      * @param preset 可选的预设
      */
-    fun reconnectOrCreate(user: SessionUser, preset: String? = null)
+    fun reconnectOrCreate(user: AbstractSessionUser, preset: String? = null)
     {
         getSessionByUserConnected(user)?.also {
             throw SessionUserAlreadyConnectedException(it.pid)
@@ -141,7 +141,7 @@ object SessionManager
      * @param user 用户
      * @param pid 子进程的pid
      */
-    fun connect(user: SessionUser, pid: Long): Session
+    fun connect(user: AbstractSessionUser, pid: Long): Session
     {
         val session = getSessionByPid(pid) ?: throw NoSuchSessionException(pid)
         connect(user, session)
@@ -153,7 +153,7 @@ object SessionManager
      * @param user 用户
      * @param session 要连接到的会话
      */
-    fun connect(user: SessionUser, session: Session)
+    fun connect(user: AbstractSessionUser, session: Session)
     {
         // 安全检查
         getSessionByUserConnected(user)?.also {
@@ -176,13 +176,13 @@ object SessionManager
             }
             sb.append("\n==========最后输出(${SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(last)})==========\n")
 
-            user.sendTruncation()
-            user.sendMessage(sb.toString())
-            user.sendTruncation()
+            user.appendTruncation()
+            user.appendMessage(sb.toString())
+            user.appendTruncation()
         }
 
-        user.sendMessage((if(isReconnection) "已重连" else "已连接")+"到会话(pid: ${session.pid})，环境预设(${session.preset.name})\n")
-        user.sendTruncation()
+        user.appendMessage((if(isReconnection) "已重连" else "已连接")+"到会话(pid: ${session.pid})，环境预设(${session.preset.name})\n")
+        user.appendTruncation()
     }
 
     /**
@@ -190,7 +190,7 @@ object SessionManager
      * @param user 要断开的用户
      * @return 连接到的Session
      */
-    fun disconnect(user: SessionUser): Session
+    fun disconnect(user: AbstractSessionUser): Session
     {
         if(!hasUserConnectedToAnySession(user))
         {
@@ -207,9 +207,9 @@ object SessionManager
         cm.closeConnection(user)
 
         // 发送消息
-        user.sendTruncation()
-        user.sendMessage("已从会话断开(pid: ${cm.session.pid})，环境预设(${session.preset.name})\n")
-        user.sendTruncation()
+        user.appendTruncation()
+        user.appendMessage("已从会话断开(pid: ${cm.session.pid})，环境预设(${session.preset.name})\n")
+        user.appendTruncation()
 
         return cm.session
     }
@@ -218,7 +218,7 @@ object SessionManager
      * 尝试将一个用户从所连接的会话上断开，如果用户没有连接到任何会话，则不做任何事情
      * @param user 要断开的用户
      */
-    fun tryToDisconnect(user: SessionUser)
+    fun tryToDisconnect(user: AbstractSessionUser)
     {
         if(hasUserConnectedToAnySession(user))
             disconnect(user)
@@ -251,7 +251,7 @@ object SessionManager
     /**
      * 根据User获取相应已经连接的Session
      */
-    fun getSessionByUserConnected(user: SessionUser): Session?
+    fun getSessionByUserConnected(user: AbstractSessionUser): Session?
     {
         for (connectionManager in sessions.values)
             if(connectionManager.isUserConnected(user))
@@ -263,7 +263,7 @@ object SessionManager
     /**
      * 判断一个User是否连接到了任意一个Session上
      */
-    fun hasUserConnectedToAnySession(user: SessionUser): Boolean
+    fun hasUserConnectedToAnySession(user: AbstractSessionUser): Boolean
     {
         for (connectionManager in sessions.values)
             if(connectionManager.isUserConnected(user))
@@ -275,7 +275,7 @@ object SessionManager
     /**
      * 获取连接到某个Session上的所有User
      */
-    fun getUsersConnectedTo(session: Session): Collection<SessionUser>
+    fun getUsersConnectedTo(session: Session): Collection<AbstractSessionUser>
     {
         return getConnectionManager(session)?.getConnections(false)?.map { it.user } ?: return listOf()
     }
@@ -283,7 +283,7 @@ object SessionManager
     /**
      * 根据连接到的用户来获取对应的ConnectionManager
      */
-    fun getConnectionManager(user: SessionUser, includeOffine: Boolean): ConnectionManager?
+    fun getConnectionManager(user: AbstractSessionUser, includeOffine: Boolean): ConnectionManager?
     {
         for (cm in sessions.values)
             if(cm.getConnection(user, includeOffine) != null)

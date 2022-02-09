@@ -4,14 +4,13 @@ import com.github.asforest.mshell.authentication.Authentication
 import com.github.asforest.mshell.command.*
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.configuration.PresetsConfig
-import com.github.asforest.mshell.exception.AbstractBusinessException
 import com.github.asforest.mshell.exception.AbstractMShellException
 import com.github.asforest.mshell.model.EnvironmentalPreset
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
-import com.github.asforest.mshell.session.SessionUser
+import com.github.asforest.mshell.session.AbstractSessionUser
 import com.github.asforest.mshell.session.user.FriendUser
 import com.github.asforest.mshell.session.user.GroupUser
 import com.github.asforest.mshell.util.MShellUtils
@@ -104,7 +103,7 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
     fun handleMessage(
         message: MessageChain,
         session: Session?,
-        user: SessionUser,
+        user: AbstractSessionUser,
         preset: EnvironmentalPreset? = null
     ) {
         val pokePresent = message.anyIsInstance<PokeMessage>()

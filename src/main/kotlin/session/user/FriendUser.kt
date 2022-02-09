@@ -1,9 +1,9 @@
 package com.github.asforest.mshell.session.user
 
-import com.github.asforest.mshell.session.SessionUser
+import com.github.asforest.mshell.session.AbstractSessionUser
 import net.mamoe.mirai.contact.User
 
-class FriendUser(val user: User) : SessionUser()
+class FriendUser(val user: User) : AbstractSessionUser()
 {
     override suspend fun onSendMessage(message: String)
     {
@@ -17,7 +17,7 @@ class FriendUser(val user: User) : SessionUser()
 
     override fun equals(other: Any?): Boolean
     {
-        if (other == null || other !is SessionUser)
+        if (other == null || other !is AbstractSessionUser)
             return false
 
         return toString() == other.toString()

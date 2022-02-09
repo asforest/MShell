@@ -1,7 +1,7 @@
 package com.github.asforest.mshell.session
 
 class Connection(
-    val user: SessionUser,
+    val user: AbstractSessionUser,
     val session: Session,
 ) {
     val sessionPid: Long get() = session.pid
