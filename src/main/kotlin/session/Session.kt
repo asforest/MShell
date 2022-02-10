@@ -15,6 +15,10 @@ import java.text.SimpleDateFormat
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
+/**
+ * Session 代表一个会话对象，会话对象就是对一个子进程进行封装和管理的对象，
+ * 可以粗略地认为一个会话就是一个子进程
+ */
 @DelicateCoroutinesApi
 class Session(
     val manager1: SessionManager,
@@ -66,12 +70,10 @@ class Session(
                 if(len != -1) { // 有消息时
                     val message = String(buffer, 0, len, charset)
 
-//                    println("msg: $message")
-
                     // 发送给所有连接上的用户
                     connections.forEach { it.sendMessage(message) }
 
-                    // 保留遗言
+                    // 再作为遗言保留一份，以便发送给暂时离线的用户
                     lwm.append(message)
                 } else {
                     process.inputStream.close()
@@ -87,7 +89,7 @@ class Session(
             }
         }
 
-        // 输入input
+        // 向子进程的stdin输入input选项里的内容
         if(preset.input.isNotEmpty())
             stdin.println(preset.input)
 
@@ -120,14 +122,14 @@ class Session(
         // 发送退出消息
         broadcaseMessageTruncation()
         broadcastMessageBatchly("会话已结束(pid: $pid)，环境预设(${preset.name})\n")
-        println("开始刷新缓冲区")
+//        println("开始刷新缓冲区")
 
         // 关掉所有连接
         disconnectAll()
 
         connectionManager.closeAndWait()
 
-        println("cleanup")
+//        println("cleanup")
         onProcessExit.invoke()
     }
 

@@ -10,6 +10,9 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
+/**
+ * BatchingWriter 用来将时间相近的两条消息合并成一条发送
+ */
 @DelicateCoroutinesApi
 class BatchingWriter(
     val preset: Preset,
@@ -142,7 +145,8 @@ class BatchingWriter(
     }
 
     /**
-     * 挂起协程，直到有数据到来
+     * 挂起协程，直到有数据到来，或者等待超过指定时间
+     * @param timeoutMs 等待超时，为0则用不超时
      * @return 等待了多长时间，单位毫秒
      */
     private suspend fun waitUntilDataArrive(timeoutMs: Int = 0): Long
@@ -183,6 +187,9 @@ class BatchingWriter(
         return System.currentTimeMillis() - startTime
     }
 
+    /**
+     * 调用onBatchedOutput回调函数
+     */
     private suspend fun callOnBatchedOutput(str: String)
     {
         if (str.isNotEmpty())
@@ -192,6 +199,9 @@ class BatchingWriter(
         }
     }
 
+    /**
+     * 消息发送缓冲区，是一个StringBuffer类的封装
+     */
     private class SendingBuffer
     {
         var sb = StringBuffer()

@@ -3,6 +3,12 @@ package com.github.asforest.mshell.session
 import com.github.asforest.mshell.session.user.AbstractSessionUser
 import com.github.asforest.mshell.stream.BatchingWriter
 
+/**
+ * Connection 代表一个用户与会话之间连接对象
+ *
+ * 当用户从会话上断开时，连接对象不会销毁，而是被标记为offline状态，
+ * 以便当用户重新连接上来时，向用户发送遗愿消息
+ */
 class Connection(
     val user: AbstractSessionUser,
     val session: Session,

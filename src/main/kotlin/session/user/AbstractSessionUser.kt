@@ -1,6 +1,8 @@
 package com.github.asforest.mshell.session.user
 
 /**
+ * AbstractSessionUser表示一个用户（MShell用户，不是其它概念中的用户）
+ *
  * 其子类有：[GroupUser]、[FriendUser]、[ConsoleUser]
  */
 abstract class AbstractSessionUser
