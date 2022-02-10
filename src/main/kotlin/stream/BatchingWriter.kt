@@ -110,7 +110,7 @@ class BatchingWriter(
     {
         exitFlag = true
 
-        onNewDataArrive()
+        flush()
     }
 
     override fun flush()
@@ -118,14 +118,19 @@ class BatchingWriter(
         buffer += "" // 空字符串表示显式隔断
 
         onNewDataArrive()
+
+//        println("truncate")
     }
 
     override fun write(cbuf: CharArray, off: Int, len: Int)
     {
         try {
-            val str = String(cbuf, off, len).trim().replace(AnsiEscapeUtil.pattern, "")
+            val str = String(cbuf, off, len).replace(AnsiEscapeUtil.pattern, "")
             if (str.isNotEmpty())
+            {
                 buffer += str
+//                println("append: $str")
+            }
         } catch (e: IllegalStateException) {
             throw BatchingBwriterBufferOverflowException("The buffer of BatchingWriter overflows")
         }
@@ -214,7 +219,7 @@ class BatchingWriter(
 
         operator fun plusAssign(str: String) { sb.append(str) }
 
-        override fun toString(): String = sb.toString()
+        override fun toString(): String = sb.toString().trim()
     }
 
     class BatchingBwriterBufferOverflowException(message: String) : Exception(message)

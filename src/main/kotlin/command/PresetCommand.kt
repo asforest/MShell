@@ -31,7 +31,7 @@ object PresetCommand : CompositeCommand(
     ) {
         withCatch {
             if (presetName in ep.presets.keys)
-                throw PresetAlreadyExistedYetException("环境预设'$presetName'已经存在了")
+                throw PresetAlreadyExistedYetException("环境预设 $presetName 已经存在了，不能重复创建")
             if(!Charset.isSupported(charset))
                 throw UnsupportedCharsetException(charset)
             if(shell.isEmpty())
@@ -60,7 +60,7 @@ object PresetCommand : CompositeCommand(
             getPresetWithThrow(presetName)
             ep.presets.remove(presetName)
             ep.write()
-            sendMessage("已删除环境预设'$presetName'")
+            sendMessage("已删除环境预设 $presetName")
         }
     }
 
@@ -86,11 +86,11 @@ object PresetCommand : CompositeCommand(
             if(shell.isEmpty())
             {
                 ep.presets[presetName]!!.command = ""
-                sendMessage("已清空${presetName}预设的shell选项")
+                sendMessage("已清空 $presetName 环境预设的 shell 选项")
             } else {
                 val s = shell.joinToString(" ")
                 ep.presets[presetName]!!.command = s
-                sendMessage("已更新${presetName}预设的shell: '$s'")
+                sendMessage("已更新 $presetName 环境预设的 shell 为 $s")
             }
             ep.write()
         }
@@ -107,11 +107,11 @@ object PresetCommand : CompositeCommand(
             if(dir.isEmpty())
             {
                 ep.presets[presetName]!!.workdir = ""
-                sendMessage("已清空${presetName}预设的cwd选项")
+                sendMessage("已清空 $presetName 环境预设的 cwd 选项")
             } else {
                 val d = dir.joinToString(" ")
                 ep.presets[presetName]!!.workdir = d
-                sendMessage("已更新${presetName}预设的cwd: '$d'")
+                sendMessage("已更新 $presetName 环境预设的 cwd 为 $d")
             }
             ep.write()
         }
@@ -130,11 +130,11 @@ object PresetCommand : CompositeCommand(
                 if(value.isEmpty())
                 {
                     ep.presets[presetName]!!.env.remove(key)
-                    sendMessage("已移除${presetName}预设的环境变量: '$key'")
+                    sendMessage("已移除 $presetName 环境预设的环境变量键 $key")
                 } else {
                     val v = value.joinToString(" ")
                     ep.presets[presetName]!!.env[key] = v
-                    sendMessage("已更新${presetName}预设的环境变量'$key': '$v'")
+                    sendMessage("已更新 $presetName 环境预设的环境变量 $key=$v")
                 }
                 ep.write()
             }
@@ -153,11 +153,11 @@ object PresetCommand : CompositeCommand(
             if(exec.isEmpty())
             {
                 ep.presets[presetName]!!.input = ""
-                sendMessage("已清空${presetName}预设的exec选项")
+                sendMessage("已清空 $presetName 环境预设的 exec 选项")
             } else {
                 val e = exec.joinToString(" ")
                 ep.presets[presetName]!!.input = e
-                sendMessage("已更新${presetName}预设的exec: '$e'")
+                sendMessage("已更新 $presetName 环境预设的 exec 为 $e")
             }
             ep.write()
         }
@@ -173,12 +173,12 @@ object PresetCommand : CompositeCommand(
 
             if(charset.isEmpty()) {
                 ep.presets[presetName]!!.charset = ""
-                sendMessage("已清空${presetName}预设的charset选项")
+                sendMessage("已清空 $presetName 环境预设的 charset 选项")
             } else {
                 if(!Charset.isSupported(charset))
                     throw UnsupportedCharsetException(charset)
                 ep.presets[presetName]!!.charset = charset
-                sendMessage("已更新${presetName}预设的charset: '$charset'")
+                sendMessage("已更新 $presetName 环境预设的 charset 为 $charset")
             }
             ep.write()
         }
@@ -194,9 +194,9 @@ object PresetCommand : CompositeCommand(
             _preset.singleInstance = singleins
 
             if(singleins)
-                sendMessage("已启用${preset}预设的单实例约束")
+                sendMessage("已启用环境预设 $preset 的单实例约束")
              else
-                sendMessage("已禁用${preset}预设的单实例约束")
+                sendMessage("已禁用环境预设 $preset 的单实例约束")
 
             ep.write()
         }
@@ -210,7 +210,7 @@ object PresetCommand : CompositeCommand(
         withCatch {
             val _preset = getPresetWithThrow(preset)
             _preset.columns = columns
-            sendMessage("环境预设${preset}的终端宽度已更新为: $columns")
+            sendMessage("环境预设 $preset 的终端宽度已更新为 $columns")
             ep.write()
         }
     }
@@ -223,7 +223,7 @@ object PresetCommand : CompositeCommand(
         withCatch {
             val _preset = getPresetWithThrow(preset)
             _preset.rows = rows
-            sendMessage("环境预设${preset}的终端高度已更新为: $rows")
+            sendMessage("环境预设 $preset 的终端高度已更新为 $rows")
             ep.write()
         }
     }
@@ -236,7 +236,7 @@ object PresetCommand : CompositeCommand(
         withCatch {
             val _preset = getPresetWithThrow(preset)
             _preset.truncationThreshold = threshold
-            sendMessage("环境预设${preset}的合并字符数上限已更新为: $threshold 字符")
+            sendMessage("环境预设 $preset 的合并字符数上限已更新为 $threshold 字符")
             ep.write()
         }
     }
@@ -249,7 +249,7 @@ object PresetCommand : CompositeCommand(
         withCatch {
             val _preset = getPresetWithThrow(preset)
             _preset.batchingInteval = inteval
-            sendMessage("环境预设${preset}的合并间隔已更新为: $inteval ms")
+            sendMessage("环境预设 $preset 的合并间隔已更新为 $inteval ms")
             ep.write()
         }
     }
@@ -262,7 +262,7 @@ object PresetCommand : CompositeCommand(
         withCatch {
             val _preset = getPresetWithThrow(preset)
             _preset.lastwillCapacity = capacity
-            sendMessage("环境预设${preset}的遗愿消息缓冲区大小已更新为: $capacity 字符")
+            sendMessage("环境预设 $preset 的遗愿消息缓冲区大小已更新为 $capacity 字符")
             ep.write()
         }
     }
@@ -278,9 +278,9 @@ object PresetCommand : CompositeCommand(
 
                 ep.defaultPreset = presetName
                 ep.write()
-                sendMessage("已更新默认环境预设: '$presetName'")
+                sendMessage("已设置默环境认预设为 $presetName")
             } else {
-                sendMessage("当前默认环境预设是: ${ep.defaultPreset}")
+                sendMessage("当前默认环境预设是 ${ep.defaultPreset}")
             }
         }
     }

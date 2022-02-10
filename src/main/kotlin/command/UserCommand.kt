@@ -94,7 +94,7 @@ object UserCommand : CompositeCommand(
             var output = ""
             for ((index, session) in sessions.withIndex()) {
                 val pid = session.pid
-                val usersConnected = session.usersOnline
+                val usersConnected = session.users
 
                 output += "[$index] pid: $pid: $usersConnected\n"
             }

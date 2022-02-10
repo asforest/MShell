@@ -21,7 +21,7 @@ import kotlin.coroutines.suspendCoroutine
  */
 @DelicateCoroutinesApi
 class Session(
-    val manager1: SessionManager,
+    val manager: SessionManager,
     val preset: Preset,
     userAutoConnect: AbstractSessionUser? = null
 ) {
@@ -79,7 +79,7 @@ class Session(
                     process.inputStream.close()
                     stdoutOpen = false
 
-                    println("BBB: $isLive")
+//                    println("BBB: $isLive")
 //
                     if(!isLive)
                         cleanup()
@@ -95,14 +95,8 @@ class Session(
 
         // 用户自动连接
         if(userAutoConnect != null)
-        {
-            val conn = connect(userAutoConnect)
-            conn.sendMessage("会话已创建(pid: $pid)，环境预设(${preset.name})\n")
-        }
-    }
+            connect(userAutoConnect)
 
-    fun start()
-    {
         // 启动stdout收集协程
         coStdoutCollector.start()
 
@@ -110,23 +104,24 @@ class Session(
         process.onExit().thenRun {
             isLive = false
 
-            println("AAA: $stdoutOpen")
+//            println("AAA: $stdoutOpen")
 
             if (!stdoutOpen)
                 GlobalScope.launch { cleanup() }
         }
     }
 
+    /**
+     * 子进程退出时的清理方法
+     */
     private suspend fun cleanup()
     {
         // 发送退出消息
         broadcaseMessageTruncation()
-        broadcastMessageBatchly("会话已结束(pid: $pid)，环境预设(${preset.name})\n")
+        broadcastMessageBatchly("已从会话断开 $identity 因为会话已结束\n")
 //        println("开始刷新缓冲区")
 
-        // 关掉所有连接
-        disconnectAll()
-
+        // 关掉连接管理器
         connectionManager.closeAndWait()
 
 //        println("cleanup")
@@ -138,32 +133,41 @@ class Session(
         process.destroy()
     }
 
+    /**
+     * 使一个用户连接到当前会话上
+     * @param user 要连接的用户
+     * @return Connection 对象
+     */
     fun connect(user: AbstractSessionUser): Connection
     {
-        if(manager1.hasUserConnectedToAnySession(user))
+        if(manager.hasUserConnectedToAnySession(user))
             throw SessionUserAlreadyConnectedException(pid)
 
         val whenOnlineChanged = connectionManager.getConnection(user, true)?.whenOnlineChanged ?: -1
         val (conn, isReconnection) = connectionManager.openConnection(user)
 
-        // 发送遗愿消息
-        if(whenOnlineChanged != -1L && lwm.hasMessage(whenOnlineChanged))
+        if (isReconnection)
         {
-            var last: Long = 0
-            val sb = StringBuffer()
-            for (msg in lwm.getAllLines(whenOnlineChanged))
+            // 发送遗愿消息
+            if(whenOnlineChanged != -1L && lwm.hasMessage(whenOnlineChanged))
             {
-                sb.append(msg.message)
-                last = msg.time
-            }
-            sb.append("\n==========最后输出(${SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(last)})==========\n")
+                var last: Long = 0
+                val sb = StringBuffer()
+                for (msg in lwm.getAllLines(whenOnlineChanged))
+                {
+                    sb.append(msg.message)
+                    last = msg.time
+                }
+                val ts = SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(last)
+                sb.append("\n========== 最后输出（$ts）==========\n")
 
-            conn.sendTruncation()
-            conn.sendMessage(sb.toString())
-            conn.sendTruncation()
+                conn.sendTruncation()
+                conn.sendMessage(sb.toString())
+                conn.sendTruncation()
+            }
         }
 
-        conn.sendMessage((if(isReconnection) "已重连" else "已连接")+"到会话(pid: $pid)，环境预设(${preset.name})\n")
+        conn.sendMessage(if(isReconnection) "已重连到会话 $identity\n" else "会话已创建且已连接 $identity\n")
         conn.sendTruncation()
 
         return conn
@@ -183,7 +187,8 @@ class Session(
 
         // 发送消息
         connection.sendTruncation()
-        connection.sendMessage("已从会话断开(pid: $pid)，环境预设(${preset.name})\n")
+        connection.sendMessage("已从会话断开 $identity\n")
+        connection.sendTruncation()
         connection.close()
 
         return connection
@@ -194,7 +199,7 @@ class Session(
      */
     fun disconnectAll()
     {
-        for (user in usersOnline)
+        for (user in users)
             disconnect(user)
     }
 
@@ -215,14 +220,34 @@ class Session(
         connections.forEach { it.sendTruncation() }
     }
 
+    /**
+     * 获取一个用户的连接
+     */
     fun getConnection(user: AbstractSessionUser): Connection? = connectionManager.getConnection(user, includeOffline = false)
 
+    /**
+     * 判断用户是否连接到了当前会话上
+     */
     fun isUserConnected(user: AbstractSessionUser): Boolean = getConnection(user) != null
 
-    val usersOnline: Collection<AbstractSessionUser> get() = connectionManager.getConnections(includeOffline = false).map { it.user }
+    /**
+     * 所有的在线用户
+     */
+    val users: Collection<AbstractSessionUser> get() = connectionManager.getConnections(includeOffline = false).map { it.user }
 
+    /**
+     * 所有在线的连接
+     */
     val connections: Collection<Connection> get() = connectionManager.getConnections(includeOffline = false)
 
+    /**
+     * 会话的标识字符串
+     */
+    val identity: String get() = "$pid（${preset.name}）"
+
+    /**
+     * 验证预设的有效性
+     */
     @Suppress("NOTHING_TO_INLINE")
     private inline fun validatePreset(preset: Preset)
     {

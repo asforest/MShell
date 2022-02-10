@@ -93,7 +93,7 @@ object MainCommand : CompositeCommand(
         for ((index, session) in SessionManager.sessions.withIndex())
         {
             val pid = session.pid
-            val usersConnected = session.usersOnline
+            val usersConnected = session.users
             
             output += "[$index] ${session.preset.name} | $pid: $usersConnected\n"
         }

@@ -34,7 +34,7 @@ object GroupCommand : CompositeCommand(
 
             val session = SessionManager.createSession(preset, groupUser)
 
-            sendMessage("会话(pid: ${session.pid})已创建到 ${groupUser.group.id}(${groupUser.group.name})")
+            sendMessage("会话 ${session.identity} 已创建到群聊 $groupUser")
         }
     }
 
@@ -50,7 +50,7 @@ object GroupCommand : CompositeCommand(
             val groupUser = getSessionUser(groupId)
             val conn = SessionManager.connect(groupUser, pid)
 
-            sendMessage("会话(pid: ${conn.session.pid})已连接到 ${groupUser.group.id}(${groupUser.group.name})")
+            sendMessage("会话 ${conn.session.identity} 已连接到群聊 $groupUser")
         }
     }
 
@@ -65,7 +65,7 @@ object GroupCommand : CompositeCommand(
             val groupUser = getSessionUser(groupId)
             val conn = SessionManager.disconnect(groupUser)
 
-            sendMessage("会话(pid: ${conn.session.pid})已断开 ${groupUser.group.id}(${groupUser.group.name})")
+            sendMessage("会话 ${conn.session.identity} 已从群聊 $groupUser 上断开")
         }
     }
 

@@ -55,13 +55,12 @@ object SessionManager
             // 创建会话
             session = Session(this, preset, user) // 用户自动连接由构造函数代为完成
             registerSession(session)
-            session.start()
         }
 
         return session
     }
 
-        /**
+    /**
      * 尝试重连会话，如果无法重连，会创建一个新的会话
      * @param user 要重连/新建会话的用户
      * @param preset 可选的预设，只在创建新会话时生效
@@ -74,7 +73,8 @@ object SessionManager
 
         if (lastSession != null)
         {
-            lastSession.connectionManager.openConnection(user)
+            lastSession.connect(user)
+//            lastSession.connectionManager.openConnection(user)
         } else {
             createSession(preset, user)
         }
