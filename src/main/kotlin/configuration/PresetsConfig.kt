@@ -38,20 +38,21 @@ object PresetsConfig : YamlConfig("presets.yml")
 
     private fun map2preset(name: String, fromMap: HashMap<String, Any>): Preset
     {
-        return Preset(
-            name = name,
-            command = fromMap["shell"] as String,
-            charset = fromMap["charset"] as String,
-            workdir = fromMap["workdir"] as String,
-            env = fromMap["env"] as HashMap<String, String>,
-            input = fromMap["exec"] as String,
-            singleInstance = fromMap["single-instance"] as Boolean,
-            columns = fromMap["terminal-columns"] as Int,
-            rows = fromMap["terminal-rows"] as Int,
-            truncationThreshold = fromMap["truncation-threshold"] as Int,
-            batchingInteval = fromMap["batching-inteval"] as Int,
-            lastwillCapacity = fromMap["lastwill-capacity"] as Int,
-        )
+        val preset = Preset(name)
+
+        preset.command = fromMap["shell"] as String? ?: preset.command
+        preset.charset = fromMap["charset"] as String? ?: preset.charset
+        preset.workdir = fromMap["workdir"] as String? ?: preset.workdir
+        preset.env = fromMap["env"] as MutableMap<String, String>? ?: preset.env
+        preset.input = fromMap["exec"] as String? ?: preset.input
+        preset.singleInstance = fromMap["single-instance"] as Boolean? ?: preset.singleInstance
+        preset.columns = fromMap["terminal-columns"] as Int? ?: preset.columns
+        preset.rows = fromMap["terminal-rows"] as Int? ?: preset.rows
+        preset.truncationThreshold = fromMap["truncation-threshold"] as Int? ?: preset.truncationThreshold
+        preset.batchingInteval = fromMap["batching-inteval"] as Int? ?: preset.batchingInteval
+        preset.lastwillCapacity = fromMap["lastwill-capacity1"] as Int? ?: preset.lastwillCapacity
+
+        return preset
     }
 
     private fun preset2map(preset: Preset): HashMap<String, Any>
@@ -72,5 +73,9 @@ object PresetsConfig : YamlConfig("presets.yml")
 
         return map
     }
+
+//    @Retention(AnnotationRetention.RUNTIME)
+//    @Target(AnnotationTarget.FIELD)
+//    annotation class StoreField(val name: String)
 }
 

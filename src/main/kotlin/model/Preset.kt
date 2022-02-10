@@ -19,7 +19,7 @@ data class Preset(
     var command: String = "",
     var charset: String = "",
     var workdir: String = "",
-    var env: HashMap<String, String> = HashMap(),
+    var env: MutableMap<String, String> = mutableMapOf(),
     var input: String = "",
     var singleInstance: Boolean = false,
     var columns: Int = 80,
