@@ -2,7 +2,7 @@ package com.github.asforest.mshell.session
 
 import kotlin.math.abs
 
-class SessionLastwillMessage(
+class LastwillMessage(
     var capacityInBytes: Int
 ) {
     val bytesUsed:Int get() {

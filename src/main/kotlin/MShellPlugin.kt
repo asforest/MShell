@@ -4,7 +4,7 @@ import com.github.asforest.mshell.authentication.Authentication
 import com.github.asforest.mshell.command.*
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.configuration.PresetsConfig
-import com.github.asforest.mshell.exception.AbstractMShellException
+import com.github.asforest.mshell.exception.AbstractBusinessException
 import com.github.asforest.mshell.model.Preset
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.permission.PresetGrants
@@ -65,12 +65,12 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
 
                 if (sender.asFriend().asCommandSender().hasPermission(MShellPermissions.all))
                 {
-                    val session = SessionManager.getSessionByUserConnected(GroupUser(group))
+                    val session = SessionManager.getSession(GroupUser(group))
                     if(session != null)
                         handleSessionInput(message, session)
                 } else {
                     // 当做普通用户处理
-                    val session = SessionManager.getSessionByUserConnected(GroupUser(group))
+                    val session = SessionManager.getSession(GroupUser(group))
                     if(session != null)
                     {
                         // 授权用户
@@ -88,11 +88,11 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
                 val fuser = FriendUser(user)
                 if (sender.asCommandSender().hasPermission(MShellPermissions.all))
                 {
-                    val session = SessionManager.getSessionByUserConnected(fuser)
+                    val session = SessionManager.getSession(fuser)
 
                     handleMessage(message, session, fuser)
                 } else if (PresetGrants.isGranted(fuser.user.id)) { // 处理授权用户
-                    val session = SessionManager.getSessionByUserConnected(fuser)
+                    val session = SessionManager.getSession(fuser)
                     val preset = Authentication.useDefaultPreset(null, fuser.user.id)
                     handleMessage(message, session, fuser, preset)
                 }
@@ -148,7 +148,7 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
     {
         try {
             func()
-        } catch (e: AbstractMShellException) {
+        } catch (e: AbstractBusinessException) {
             MShellUtils.sendMessage2(user, e.message ?: e.stackTraceToString())
         } catch (e: Exception) {
             val detail = e.message ?: "没有错误详情可显示，异常类: ${e::class.qualifiedName}"

@@ -3,11 +3,13 @@ package com.github.asforest.mshell.session
 import com.github.asforest.mshell.exception.system.SessionConnectionNotFoundException
 import com.github.asforest.mshell.exception.system.SessionConnectionNotMatchException
 import com.github.asforest.mshell.session.user.AbstractSessionUser
+import kotlinx.coroutines.DelicateCoroutinesApi
 
+@DelicateCoroutinesApi
 class ConnectionManager (
     val session: Session
 ) {
-    val connections = mutableListOf<Connection>()
+    private val connections = mutableListOf<Connection>()
 
     /**
      * 建立/打开连接
@@ -21,7 +23,7 @@ class ConnectionManager (
 
         if(connection == null)
         {
-            connection = Connection(user, session)
+            connection = Connection(user, session, this)
             connections += connection
         } else {
             connection.isOnline = true
@@ -37,15 +39,8 @@ class ConnectionManager (
     {
         val connection = getConnection(user, includeOffline = false)
             ?: throw SessionConnectionNotFoundException(user.toString())
-        closeConnection(connection)
-    }
 
-    /**
-     * 关闭一个会话的所有的连接
-     */
-    fun closeAllConnections()
-    {
-        getConnections(includeOffline = false).forEach { closeConnection(it) }
+        closeConnection(connection)
     }
 
     /**
@@ -60,15 +55,9 @@ class ConnectionManager (
     }
 
     /**
-     * 用户是否连接到了当前会话上
-     */
-    fun isUserConnected(user: AbstractSessionUser): Boolean
-    {
-        return getConnection(user, includeOffline = false) != null
-    }
-
-    /**
      * 根据用户获取指定连接
+     * @param user 用户
+     * @param includeOffline 是否包括离线连接
      */
     fun getConnection(user: AbstractSessionUser, includeOffline: Boolean): Connection?
     {
@@ -86,5 +75,18 @@ class ConnectionManager (
     fun getConnections(includeOffline: Boolean): List<Connection>
     {
         return connections.filter { includeOffline || it.isOnline }
+    }
+
+    /**
+     * 关闭连接管理器本身
+     */
+    suspend fun closeAndWait()
+    {
+        // 刷新缓冲区
+        for (connection in getConnections(includeOffline = true))
+        {
+            connection.batchingWriter.close()
+            connection.batchingWriter.wait()
+        }
     }
 }

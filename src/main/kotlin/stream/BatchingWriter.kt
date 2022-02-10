@@ -3,70 +3,100 @@ package com.github.asforest.mshell.stream
 import com.github.asforest.mshell.event.Event
 import com.github.asforest.mshell.model.Preset
 import com.github.asforest.mshell.util.AnsiEscapeUtil
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.Writer
-import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.LinkedBlockingDeque
+import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
+@DelicateCoroutinesApi
 class BatchingWriter(
     val preset: Preset,
     var onBatchedOutput: suspend (text: String)->Unit,
-//    val onClose: (()->Unit)?
 ): Writer() {
-    private val buffer = LinkedBlockingQueue<MessageBuffered>(1*1024*1024)
-
+    private val buffer = LinkedBlockingDeque<String>(1*1024*1024)
     private val coBatching: Job
-    private var onNewDataArrive = Event<Unit, () -> Unit>(Unit)
+    private var onNewDataArrive = Event()
+    private var exitFlag = false
 
     init {
         coBatching = GlobalScope.launch {
             val truncation = preset.truncationThreshold
             val batchingTimeout = preset.batchingInteval.toLong()
 
-            while(true)
+            while(!exitFlag)
             {
-                // 如果队里里没有消息，则将协程暂时挂起，进行等待
                 if(buffer.isEmpty())
-                {
-                    suspendCoroutine<Unit> {
-                        // 更新Continuation对象
-                        if("onNewDataArriveListenser" in onNewDataArrive)
-                            onNewDataArrive -= "onNewDataArriveListenser"
+                    waitUntilDataArrive()
 
-                        onNewDataArrive.once("onNewDataArriveListenser") { it.resume(Unit) }
+                val sbuf = SendingBuffer()
+
+                while (buffer.isNotEmpty())
+                {
+                    while (true)
+                    {
+                        val msg = buffer.poll()
+
+                        if (msg == null)
+                        {
+                            // 合并时间较近的两条消息
+                            val elapse = waitUntilDataArrive(batchingTimeout.toInt())
+
+//                            println("$batchingTimeout : $elapse")
+
+                            if (elapse < batchingTimeout)
+                                continue
+                            else
+                                break
+                        }
+
+                        // 空字符串表示显式隔断
+                        if (msg.isEmpty())
+                        {
+//                            println("truncate !")
+                            break
+                        }
+
+                        // 如果总长度超出truncation，则分多次发送
+                        if (sbuf.length + msg.length > truncation)
+                        {
+//                            val oo = msg.trim().replace(Regex("(\\n|\\r|\\r\\n)"), "/n")
+//                            val bb = sbuf.toString().trim().replace(Regex("(\\n|\\r|\\r\\n)"), "/n")
+
+                            if (msg.length <= truncation)
+                            {
+//                                println("overflow: ${sbuf.length + msg.length}(${msg.length}) > $truncation |$oo|$bb]")
+
+                                // 将消息重新插回队列里，等待下个来循环处理
+                                buffer.addFirst(msg)
+                                break
+                            } else {
+//                                println("overflow!!!!: ${sbuf.length + msg.length}(${msg.length}) > $truncation |$oo|$bb]")
+
+                                // 清空所有现有内容
+                                callOnBatchedOutput(sbuf.take())
+
+                                // 强行插入发送缓冲区
+                                sbuf += msg
+                                break
+                            }
+                        }
+
+//                        println("normal handle: sbuf: ${sbuf.length} + msg:${msg.length}")
+
+                        // 正常处理
+                        sbuf += msg
                     }
+
+                    callOnBatchedOutput(sbuf.take())
                 }
-
-                // 进行消息合批
-                val buffered = StringBuffer()
-                while (buffered.length < truncation && buffer.isNotEmpty())
-                {
-                    val msg = buffer.poll() ?: break
-
-                    if(!msg.isTruncation)
-                        buffered.append(msg.content)
-                    else
-                        break
-
-                    // 处理队列中最后一条消息后，才开始等待
-                    if(buffer.isEmpty())
-                        delay(batchingTimeout)
-                }
-
-                // 发送合批后的消息
-                val str = buffered.toString().trim().replace(AnsiEscapeUtil.pattern, "")
-                if(str.isNotEmpty())
-                    onBatchedOutput(str)
             }
         }
     }
 
     /**
-     * 等待合批协程结束
+     * 等待合并协程结束
      */
     suspend fun wait()
     {
@@ -75,29 +105,35 @@ class BatchingWriter(
 
     override fun close()
     {
-        if(coBatching.isActive)
-            coBatching.cancel()
+        exitFlag = true
 
-//        if(onClose != null)
-//            onClose!!()
+        onNewDataArrive()
     }
 
     override fun flush()
     {
-        buffer += MessageBuffered()
+        buffer += "" // 空字符串表示显式隔断
 
-        onNewDataArrive { it() }
+        onNewDataArrive()
     }
 
     override fun write(cbuf: CharArray, off: Int, len: Int)
     {
         try {
-            buffer += MessageBuffered(String(cbuf, off, len))
+            val str = String(cbuf, off, len).trim().replace(AnsiEscapeUtil.pattern, "")
+            if (str.isNotEmpty())
+                buffer += str
         } catch (e: IllegalStateException) {
             throw BatchingBwriterBufferOverflowException("The buffer of BatchingWriter overflows")
         }
 
-        onNewDataArrive { it() }
+        onNewDataArrive()
+    }
+
+    fun shutdown()
+    {
+        if(coBatching.isActive)
+            coBatching.cancel()
     }
 
     operator fun plusAssign(str: String)
@@ -105,15 +141,70 @@ class BatchingWriter(
         this.append(str)
     }
 
-    class MessageBuffered(message: CharSequence? =null)
+    /**
+     * 挂起协程，直到有数据到来
+     * @return 等待了多长时间，单位毫秒
+     */
+    private suspend fun waitUntilDataArrive(timeoutMs: Int = 0): Long
     {
-        val content: CharSequence
-        val isTruncation: Boolean
+        val startTime = System.currentTimeMillis()
 
-        init {
-            content = message ?: ""
-            isTruncation = content.isEmpty()
+        var continuation: Continuation<Unit>? = null
+
+        var listener: Event.Listener? = null
+        var job: Job? = null
+
+        suspendCoroutine<Unit> {
+            // 更新Continuation对象
+            val isReIn = continuation != null
+            continuation = it
+
+            if (isReIn)
+                return@suspendCoroutine
+
+            // 条件恢复协程
+            listener = onNewDataArrive.once {
+                job?.cancel()
+                continuation!!.resume(Unit)
+            }
+
+            // 超时恢复协程
+            if (timeoutMs != 0)
+            {
+                job = GlobalScope.launch {
+                    delay(timeoutMs.toLong())
+                    if (listener != null)
+                        onNewDataArrive -= listener!!
+                    continuation!!.resume(Unit)
+                }
+            }
         }
+
+        return System.currentTimeMillis() - startTime
+    }
+
+    private suspend fun callOnBatchedOutput(str: String)
+    {
+        if (str.isNotEmpty())
+        {
+            onBatchedOutput(str)
+//            println("send(${str.length}): ${str.replace(Regex("(\\n|\\r|\\r\\n)"), "/n")}")
+        }
+    }
+
+    private class SendingBuffer
+    {
+        var sb = StringBuffer()
+
+        val length get() = sb.length
+
+        fun clear() { sb = StringBuffer() }
+
+        fun take(): String = toString().also { clear() }
+
+        operator fun plusAssign(str: String) { sb.append(str) }
+
+        override fun toString(): String = sb.toString()
     }
 
     class BatchingBwriterBufferOverflowException(message: String) : Exception(message)

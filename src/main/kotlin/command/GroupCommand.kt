@@ -48,9 +48,9 @@ object GroupCommand : CompositeCommand(
                 throw UsingInConsoleNotAllowedException("/mshellg open")
 
             val groupUser = getSessionUser(groupId)
-            val session = SessionManager.connect(groupUser, pid)
+            val conn = SessionManager.connect(groupUser, pid)
 
-            sendMessage("会话(pid: ${session.pid})已连接到 ${groupUser.group.id}(${groupUser.group.name})")
+            sendMessage("会话(pid: ${conn.session.pid})已连接到 ${groupUser.group.id}(${groupUser.group.name})")
         }
     }
 
@@ -63,9 +63,9 @@ object GroupCommand : CompositeCommand(
                 throw UsingInConsoleNotAllowedException("/mshellg disconnect")
 
             val groupUser = getSessionUser(groupId)
-            val session = SessionManager.disconnect(groupUser)
+            val conn = SessionManager.disconnect(groupUser)
 
-            sendMessage("会话(pid: ${session.pid})已断开 ${groupUser.group.id}(${groupUser.group.name})")
+            sendMessage("会话(pid: ${conn.session.pid})已断开 ${groupUser.group.id}(${groupUser.group.name})")
         }
     }
 

@@ -1,35 +1,37 @@
 package com.github.asforest.mshell.session
 
-import com.github.asforest.mshell.event.Event
-import com.github.asforest.mshell.exception.system.SessionNotRegisteredException
-import com.github.asforest.mshell.exception.business.PresetIsIncompeleteException
-import com.github.asforest.mshell.exception.business.TerminalColumnRowsOutOfRangeException
-import com.github.asforest.mshell.exception.business.UnsupportedCharsetException
+import com.github.asforest.mshell.event.AsyncEvent
+import com.github.asforest.mshell.exception.business.*
 import com.github.asforest.mshell.model.Preset
 import com.github.asforest.mshell.session.user.AbstractSessionUser
+import com.github.asforest.mshell.session.user.GroupUser
 import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.PrintWriter
 import java.nio.charset.Charset
+import java.text.SimpleDateFormat
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
+@DelicateCoroutinesApi
 class Session(
-    val manager: SessionManager,
+    val manager1: SessionManager,
     val preset: Preset,
+    userAutoConnect: AbstractSessionUser? = null
 ) {
     val process: PtyProcess
     val stdin: PrintWriter
-    val pid: Long get() = process.pid()
-    val lwm = SessionLastwillMessage(preset.lastwillCapacity)
+    var pid: Long = -1
+    val lwm = LastwillMessage(preset.lastwillCapacity)
     var isLive = true
+    val connectionManager = ConnectionManager(this)
 
-    val onProcessEnd = Event<Session, Session.() -> Unit>(this)
+    val onProcessExit = AsyncEvent()
 
     private var coStdoutCollector: Job
-    private var stdoutOpeningFlag = true
+    private var stdoutOpen = true
 
     init {
         validatePreset(preset)
@@ -47,11 +49,12 @@ class Session(
             .setInitialRows(preset.rows)
             .start()
 
+        pid = process.pid()
         stdin = PrintWriter(process.outputStream, true, charset)
 
         // stdout收集协程
         coStdoutCollector = GlobalScope.launch(Dispatchers.IO, CoroutineStart.LAZY) {
-            var len = 0
+            var len: Int
             val buffer = ByteArray(4 * 1024)
             while (true)
             {
@@ -61,18 +64,38 @@ class Session(
                 }
 
                 if(len != -1) { // 有消息时
-                    val message = String(buffer, 0, len, charset);
+                    val message = String(buffer, 0, len, charset)
+
+//                    println("msg: $message")
+
                     // 发送给所有连接上的用户
-                    connections.forEach { it.appendMessage(message) }
+                    connections.forEach { it.sendMessage(message) }
 
                     // 保留遗言
                     lwm.append(message)
                 } else {
                     process.inputStream.close()
-                    stdoutOpeningFlag = false
+                    stdoutOpen = false
+
+                    println("BBB: $isLive")
+//
+                    if(!isLive)
+                        cleanup()
+
                     break
                 }
             }
+        }
+
+        // 输入input
+        if(preset.input.isNotEmpty())
+            stdin.println(preset.input)
+
+        // 用户自动连接
+        if(userAutoConnect != null)
+        {
+            val conn = connect(userAutoConnect)
+            conn.sendMessage("会话已创建(pid: $pid)，环境预设(${preset.name})\n")
         }
     }
 
@@ -83,9 +106,29 @@ class Session(
 
         // 当进程退出
         process.onExit().thenRun {
-            onProcessEnd { it() }
             isLive = false
+
+            println("AAA: $stdoutOpen")
+
+            if (!stdoutOpen)
+                GlobalScope.launch { cleanup() }
         }
+    }
+
+    private suspend fun cleanup()
+    {
+        // 发送退出消息
+        broadcaseMessageTruncation()
+        broadcastMessageBatchly("会话已结束(pid: $pid)，环境预设(${preset.name})\n")
+        println("开始刷新缓冲区")
+
+        // 关掉所有连接
+        disconnectAll()
+
+        connectionManager.closeAndWait()
+
+        println("cleanup")
+        onProcessExit.invoke()
     }
 
     fun kill()
@@ -95,16 +138,53 @@ class Session(
 
     fun connect(user: AbstractSessionUser): Connection
     {
-        return manager.connect(user, this)
+        if(manager1.hasUserConnectedToAnySession(user))
+            throw SessionUserAlreadyConnectedException(pid)
+
+        val whenOnlineChanged = connectionManager.getConnection(user, true)?.whenOnlineChanged ?: -1
+        val (conn, isReconnection) = connectionManager.openConnection(user)
+
+        // 发送遗愿消息
+        if(whenOnlineChanged != -1L && lwm.hasMessage(whenOnlineChanged))
+        {
+            var last: Long = 0
+            val sb = StringBuffer()
+            for (msg in lwm.getAllLines(whenOnlineChanged))
+            {
+                sb.append(msg.message)
+                last = msg.time
+            }
+            sb.append("\n==========最后输出(${SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(last)})==========\n")
+
+            conn.sendTruncation()
+            conn.sendMessage(sb.toString())
+            conn.sendTruncation()
+        }
+
+        conn.sendMessage((if(isReconnection) "已重连" else "已连接")+"到会话(pid: $pid)，环境预设(${preset.name})\n")
+        conn.sendTruncation()
+
+        return conn
     }
 
     /**
      * 断开某个用户与当前会话的连接
      * @param user 要断开的用户
      */
-    fun disconnect(user: AbstractSessionUser)
+    fun disconnect(user: AbstractSessionUser): Connection
     {
-        manager.disconnect(user)
+        val connection = getConnection(user)
+            ?: if(user is GroupUser)
+                throw UserNotConnectedException(user)
+            else
+                throw UserNotConnectedException()
+
+        // 发送消息
+        connection.sendTruncation()
+        connection.sendMessage("已从会话断开(pid: $pid)，环境预设(${preset.name})\n")
+        connection.close()
+
+        return connection
     }
 
     /**
@@ -112,7 +192,8 @@ class Session(
      */
     fun disconnectAll()
     {
-        manager.disconnectAll(this)
+        for (user in usersOnline)
+            disconnect(user)
     }
 
     /**
@@ -121,7 +202,7 @@ class Session(
      */
     fun broadcastMessageBatchly(message: String)
     {
-        connections.forEach { it.appendMessage(message) }
+        connections.forEach { it.sendMessage(message) }
     }
 
     /**
@@ -129,18 +210,19 @@ class Session(
      */
     fun broadcaseMessageTruncation()
     {
-        connections.forEach { it.appendTruncation() }
+        connections.forEach { it.sendTruncation() }
     }
 
-    fun isUserConnected(user: AbstractSessionUser): Boolean = manager.getSessionByUserConnected(user) == this
+    fun getConnection(user: AbstractSessionUser): Connection? = connectionManager.getConnection(user, includeOffline = false)
 
-    val isConnected: Boolean get() = usersConnected.isNotEmpty()
+    fun isUserConnected(user: AbstractSessionUser): Boolean = getConnection(user) != null
 
-    val usersConnected: Collection<AbstractSessionUser> get() = manager.getUsersConnectedTo(this)
+    val usersOnline: Collection<AbstractSessionUser> get() = connectionManager.getConnections(includeOffline = false).map { it.user }
 
-    val connections: Collection<Connection> get() = manager.getConnectionManager(this)?.getConnections(false) ?: throw SessionNotRegisteredException(this)
+    val connections: Collection<Connection> get() = connectionManager.getConnections(includeOffline = false)
 
-    private fun validatePreset(preset: Preset)
+    @Suppress("NOTHING_TO_INLINE")
+    private inline fun validatePreset(preset: Preset)
     {
         if (preset.command.isEmpty())
             throw PresetIsIncompeleteException(preset)

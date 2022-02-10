@@ -8,10 +8,12 @@ import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.util.MShellUtils
+import kotlinx.coroutines.DelicateCoroutinesApi
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 
+@DelicateCoroutinesApi
 @ConsoleExperimentalApi
 object MainCommand : CompositeCommand(
     MShellPlugin,
@@ -27,7 +29,7 @@ object MainCommand : CompositeCommand(
         withCatch {
             val user = MShellUtils.getSessionUser(this)
 
-            SessionManager.getSessionByUserConnected(user)?.also {
+            SessionManager.getSession(user)?.also {
                 throw SessionUserAlreadyConnectedException(it.pid)
             }
 
@@ -42,7 +44,7 @@ object MainCommand : CompositeCommand(
         @Name("text") vararg text: String
     ) {
         withCatch {
-            val session = SessionManager.getSessionByPid(pid)
+            val session = SessionManager.getSession(pid)
                 ?: throw NoSuchSessionException(pid)
             session.stdin.print(text.joinToString(" ") + (if(newline) "\n" else ""))
         }
@@ -88,10 +90,10 @@ object MainCommand : CompositeCommand(
     suspend fun CommandSender.list()
     {
         var output = ""
-        for ((index, session) in SessionManager.getAllSessions().withIndex())
+        for ((index, session) in SessionManager.sessions.withIndex())
         {
             val pid = session.pid
-            val usersConnected = session.usersConnected
+            val usersConnected = session.usersOnline
             
             output += "[$index] ${session.preset.name} | $pid: $usersConnected\n"
         }
@@ -102,7 +104,7 @@ object MainCommand : CompositeCommand(
     suspend fun CommandSender.poke()
     {
         val user = MShellUtils.getSessionUser(this)
-        val session = SessionManager.getSessionByUserConnected(user)
+        val session = SessionManager.getSession(user)
 
         if(session != null)
         {
@@ -121,7 +123,7 @@ object MainCommand : CompositeCommand(
 
     private fun getSessionByPidWithThrow(pid: Long): Session
     {
-        return SessionManager.getSessionByPid(pid) ?: throw NoSuchSessionException(pid)
+        return SessionManager.getSession(pid) ?: throw NoSuchSessionException(pid)
     }
 
     private suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)

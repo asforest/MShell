@@ -6,6 +6,7 @@ import com.github.asforest.mshell.stream.BatchingWriter
 class Connection(
     val user: AbstractSessionUser,
     val session: Session,
+    val connectionManager: ConnectionManager
 ) {
     val sessionPid: Long get() = session.pid
     val batchingWriter = BatchingWriter(session.preset) { msg -> user.sendMessage(msg) }
@@ -14,7 +15,7 @@ class Connection(
      * 分包发送消息，发送间隔较短的消息会被合并成一条
      * @param message 要发送的消息
      */
-    fun appendMessage(message: String)
+    fun sendMessage(message: String)
     {
         batchingWriter += message
     }
@@ -22,7 +23,7 @@ class Connection(
     /**
      * 打断消息合并
      */
-    fun appendTruncation()
+    fun sendTruncation()
     {
         batchingWriter.flush()
     }
@@ -44,6 +45,14 @@ class Connection(
         }
 
     private var _isOnline = true
+
+    /**
+     * 关闭连接（设为离线状态）
+     */
+    fun close()
+    {
+        connectionManager.closeConnection(this)
+    }
 
     override fun equals(other: Any?): Boolean
     {

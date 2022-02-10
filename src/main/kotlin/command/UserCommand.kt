@@ -28,7 +28,7 @@ object UserCommand : CompositeCommand(
         withCatch {
             val user = getUserWithCheck("/mshellu open")
 
-            SessionManager.getSessionByUserConnected(user)?.also {
+            SessionManager.getSession(user)?.also {
                 throw SessionUserAlreadyConnectedException(it.pid)
             }
 
@@ -45,8 +45,8 @@ object UserCommand : CompositeCommand(
         withCatch {
             val user = getUserWithCheck("/mshellu write")
 
-            val session = SessionManager.getSessionByUserConnected(MShellUtils.getSessionUser(this))
-                ?: throw throw UserDidNotConnectedYetException()
+            val session = SessionManager.getSession(MShellUtils.getSessionUser(this))
+                ?: throw throw UserNotConnectedException()
             session.stdin.print(text.joinToString(" ") + (if(newline) "\n" else ""))
         }
     }
@@ -88,13 +88,13 @@ object UserCommand : CompositeCommand(
         withCatch {
             val user = getUserWithCheck("/mshellu list")
 
-            val sessions = SessionManager.getAllSessions()
+            val sessions = SessionManager.sessions
                 .filter { PresetGrants.testGrant(it.preset.name, user.user.id) }
 
             var output = ""
             for ((index, session) in sessions.withIndex()) {
                 val pid = session.pid
-                val usersConnected = session.usersConnected
+                val usersConnected = session.usersOnline
 
                 output += "[$index] pid: $pid: $usersConnected\n"
             }
@@ -130,7 +130,7 @@ object UserCommand : CompositeCommand(
 
     private fun getSessionByPidWithThrow(pid: Long): Session
     {
-        return SessionManager.getSessionByPid(pid) ?: throw NoSuchSessionException(pid)
+        return SessionManager.getSession(pid) ?: throw NoSuchSessionException(pid)
     }
 
     private suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)
