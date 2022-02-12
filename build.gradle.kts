@@ -34,10 +34,9 @@ tasks.withType<JavaCompile> {
     targetCompatibility = "11"
 }
 
+mirai {
+    configureShadow {
 
-tasks.whenTaskAdded {
-    if(this is BuildMiraiPluginTask && name == "buildPlugin")
-    {
         // 在manifest里添加信息
         manifest {
             attributes("Mirai-Plugin-Version" to archiveVersion.get())
@@ -48,10 +47,14 @@ tasks.whenTaskAdded {
 
         // 打包源代码
         sourceSets.main.get().allSource.sourceDirectories.map {
-            if(it.name != "resources")
-                from(it) {into("sources/"+it.name) }
+            from(it) {into("project-sources/"+it.name) }
         }
+    }
+}
 
+tasks.whenTaskAdded {
+    if(this is BuildMiraiPluginTask && name == "buildPlugin")
+    {
         // 注册开发任务
         tasks.register("develop", Copy::class) {
             dependsOn(tasks.named("buildPlugin"))
