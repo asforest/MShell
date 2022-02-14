@@ -168,7 +168,7 @@ object AuthCommand : CompositeCommand(
      */
     private val adminCount get() = grantings.filterIsInstance<AbstractPermitteeId.ExactFriend>().size
 
-    private val grantings: MutableCollection<PermitteeId> get() =
+    private val grantings: Collection<PermitteeId> get() =
         MShellPermissions.permissionMap
             .filter { it.key == MShellPermissions.all.id }
             .firstNotNullOfOrNull { it.value } ?: mutableListOf()
