@@ -1,4 +1,4 @@
-package com.github.asforest.mshell.command
+package com.github.asforest.mshell.command.mshell
 
 import com.github.asforest.mshell.MShellPlugin
 import com.github.asforest.mshell.exception.business.AmbiguousGroupIdException
