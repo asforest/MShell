@@ -57,11 +57,12 @@ abstract class AbstractSmartCommand
             .filter { it.javaField!!.isAnnotationPresent(NestedCommand::class.java) }
             .associate {
                 val jf = it.javaField!!
+                val name = jf.getAnnotation(NestedCommand::class.java).name.ifEmpty { jf.name}
                 val isStatic = Modifier.isStatic(jf.modifiers)
                 val isPrivate = Modifier.isPrivate(jf.modifiers)
                 if(isPrivate)
                     jf.isAccessible = true
-                it.name to it.javaField!!.get(if(isStatic) null else this) as AbstractSmartCommand
+                name to it.javaField!!.get(if(isStatic) null else this) as AbstractSmartCommand
             }
     }
 
@@ -130,5 +131,7 @@ abstract class AbstractSmartCommand
 
     @Target(AnnotationTarget.FIELD)
     @Retention(AnnotationRetention.RUNTIME)
-    protected annotation class NestedCommand
+    protected annotation class NestedCommand(
+        val name: String = ""
+    )
 }

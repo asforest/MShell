@@ -1,7 +1,7 @@
 package com.github.asforest.mshell
 
 import com.github.asforest.mshell.authentication.Authentication
-import com.github.asforest.mshell.command.*
+import com.github.asforest.mshell.command.mshell.MShellCommand
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.exception.AbstractBusinessException
@@ -15,12 +15,10 @@ import com.github.asforest.mshell.session.user.FriendUser
 import com.github.asforest.mshell.session.user.GroupUser
 import com.github.asforest.mshell.util.MShellUtils
 import com.github.asforest.mshell.util.MiraiUtil
-import net.mamoe.mirai.console.command.CommandManager
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandSender.Companion.asCommandSender
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.NormalMember
 import net.mamoe.mirai.contact.User
 import net.mamoe.mirai.contact.asFriend

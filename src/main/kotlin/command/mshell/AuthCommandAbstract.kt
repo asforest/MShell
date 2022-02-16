@@ -1,6 +1,6 @@
 package com.github.asforest.mshell.command.mshell
 
-import com.github.asforest.mshell.command.MShellCommand.Admin
+import com.github.asforest.mshell.command.mshell.MShellCommand.Admin
 import com.github.asforest.mshell.command.resolver.AbstractSmartCommand
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.permission.MShellPermissions
@@ -15,9 +15,7 @@ import net.mamoe.mirai.console.permission.PermissionService.Companion.cancel
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.permission.PermissionService.Companion.permit
 import net.mamoe.mirai.console.permission.PermitteeId
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 
-@ConsoleExperimentalApi
 object AuthCommandAbstract : AbstractSmartCommand()
 {
     @CommandFunc(desc = "添加管理员", permission = Admin)
@@ -25,7 +23,7 @@ object AuthCommandAbstract : AbstractSmartCommand()
     {
         val friend = getFriendNick(qqnumber)
         val permitte = AbstractPermitteeId.ExactFriend(qqnumber)
-        val permission = MShellPermissions.all
+        val permission = MShellPermissions.root
         if (!permitte.hasPermission(permission))
         {
             permitte.permit(permission)
@@ -40,7 +38,7 @@ object AuthCommandAbstract : AbstractSmartCommand()
     {
         val friend = getFriendNick(qqnumber)
         val permittee = AbstractPermitteeId.ExactFriend(qqnumber)
-        val permission = MShellPermissions.all
+        val permission = MShellPermissions.root
         if(permittee.hasPermission(permission))
         {
             // 实时断开链接
@@ -159,6 +157,6 @@ object AuthCommandAbstract : AbstractSmartCommand()
 
     private val grantings: Collection<PermitteeId> get() =
         MShellPermissions.permissionMap
-            .filter { it.key == MShellPermissions.all.id }
+            .filter { it.key == MShellPermissions.root.id }
             .firstNotNullOfOrNull { it.value } ?: mutableListOf()
 }

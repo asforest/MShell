@@ -3,6 +3,7 @@ package com.github.asforest.mshell.command.resolver
 import kotlin.reflect.*
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.jvm.jvmErasure
+import kotlin.streams.toList
 
 /**
  * @param name: 指令名字
@@ -28,7 +29,30 @@ data class CommandSignature(
     ) {
         val isPrimitiveArrayType: Boolean = type.classifier in primitiveArrayTypes
 
-        val identity: String = if(isOptional) "[${name}]" else if (isVararg) "[${name}...]" else "<${name}>"
+        val identity: String get() {
+            val reg = Regex("[A-Z]")
+            val _name = buildString {
+                val chars = name.toCharArray()
+                for ((index, char) in chars.withIndex())
+                {
+                    val str = char.toString()
+                    if (reg.matches(str))
+                    {
+                        if (index != 0)
+                            append("-")
+                        append(str.lowercase())
+                    } else {
+                        append(str)
+                    }
+                }
+            }
+            return if(isOptional)
+                "[${_name}]"
+            else if (isVararg)
+                "[${_name}...]"
+            else
+                "<${_name}>"
+        }
 
         init {
             if(isVararg)
@@ -50,8 +74,8 @@ data class CommandSignature(
 
         override fun toString(): String
         {
-            if (type.jvmErasure == Boolean::class)
-                return "true/false"
+//            if (type.jvmErasure == Boolean::class)
+//                return "true/false"
 
             val kc = type.jvmErasure
 

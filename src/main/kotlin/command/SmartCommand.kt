@@ -31,16 +31,7 @@ abstract class SmartCommand (
             buildString {
                 append(CommandManager.commandPrefix)
                 append("$primaryName $label ")
-
-                append(func.parameters.joinToString(" ") { parameter -> buildString {
-                    if(parameter.isOptional)
-                        append("[${parameter.name}] ")
-                    else if (parameter.isVararg)
-                        append("[${parameter.name}...] ")
-                    else
-                        append("<${parameter.name}> ")
-                }})
-
+                append(func.parameters.joinToString(" ") { parameter -> parameter.identity})
                 append("    # ${func.description}")
             }
         }
@@ -84,6 +75,14 @@ abstract class SmartCommand (
                 val arguments = call.rawValueArguments
                 sender.onCommand(buildMessageChain { arguments.forEach { +it.value } })
             }
+        } + CommandSignatureImpl(
+            receiverParameter = CommandReceiverParameter(false, typeOf<CommandSender>()),
+            valueParameters = listOf()
+        ) {
+            call ->
+            val sender = call.caller
+//            val arguments = call.rawValueArguments
+            sender.onDefaultCommand()
         }
     }
 
@@ -95,6 +94,8 @@ abstract class SmartCommand (
      * @see CommandManager.executeCommand 查看更多信息
      */
     abstract suspend fun CommandSender.onCommand(args: MessageChain)
+
+    abstract suspend fun CommandSender.onDefaultCommand()
 }
 
 

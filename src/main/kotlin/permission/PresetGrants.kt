@@ -103,7 +103,7 @@ object PresetGrants : Map<String, Collection<PermitteeId>>
         val permittee = AbstractPermitteeId.ExactFriend(qqnumber)
 
         // 管理员总算有权限
-        if(MShellPermissions.all.testPermission(permittee))
+        if(MShellPermissions.root.testPermission(permittee))
             return true
 
         return isGranted(preset, qqnumber)

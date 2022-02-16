@@ -19,7 +19,7 @@ object GroupCommand : CompositeCommand(
     primaryName = "mshellg",
     description = "MShell插件Group指令",
     secondaryNames = arrayOf("mg", "msg"),
-    parentPermission = MShellPermissions.all
+    parentPermission = MShellPermissions.root
 ) {
     @SubCommand @Description("开启一个会话并将这个会话连接到一个群聊")
     suspend fun CommandSender.open(

@@ -1,9 +1,8 @@
-package com.github.asforest.mshell.command
+package com.github.asforest.mshell.command.mshell
 
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.command.MShellCommand.Admin
-import com.github.asforest.mshell.command.MShellCommand.User
-import com.github.asforest.mshell.command.mshell.AuthCommandAbstract
+import com.github.asforest.mshell.command.mshell.MShellCommand.Admin
+import com.github.asforest.mshell.command.mshell.MShellCommand.User
 import com.github.asforest.mshell.command.resolver.AbstractSmartCommand
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.exception.business.NoSuchSessionException
@@ -15,8 +14,11 @@ import net.mamoe.mirai.console.command.CommandSender
 
 object MainCommand : AbstractSmartCommand()
 {
-    @NestedCommand
-    val auth = AuthCommandAbstract
+    @NestedCommand("auth")
+    val authCommand = AuthCommandAbstract
+
+    @NestedCommand("preset")
+    val presetCommand = PresetCommand
 
     @CommandFunc(desc = "插件帮助信息", permission = User or Admin)
     suspend fun CommandSender.help()
@@ -24,8 +26,11 @@ object MainCommand : AbstractSmartCommand()
         sendMessage(buildString {
             for ((label, func) in allCommandFunctions)
             {
-                append("/${MShellCommand.primaryName} $label ")
-                append(func.parameters.joinToString(" ") { p -> p.identity })
+                append(listOf(
+                    "/${MShellCommand.primaryName}",
+                    label,
+                    *func.parameters.map { p -> p.identity }.toTypedArray(),
+                ).joinToString(" "))
                 if(func.description.isNotEmpty())
                     append(": ${func.description}")
                 append("\n")
@@ -46,7 +51,6 @@ object MainCommand : AbstractSmartCommand()
             SessionManager.createSession(preset, user)
         }
     }
-
 
     @CommandFunc(desc = "向目标会话的stdin里输出内容", permission = Admin)
     suspend fun CommandSender.write(
