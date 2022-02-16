@@ -70,14 +70,6 @@ object MainCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "强制断开一个会话的所有连接", permission = Admin)
-    suspend fun CommandSender.disconnect(pid: Long)
-    {
-        withCatch {
-            pidToSession(pid).disconnectAll()
-        }
-    }
-
     @CommandFunc(desc = "强制结束一个会话", permission = Admin or User)
     suspend fun CommandSender.kill(pid: Long)
     {
@@ -112,6 +104,14 @@ object MainCommand : AbstractSmartCommand()
             val user = toSessionUser()
             val session = SessionManager.getSession(user) ?: throw UserNotConnectedException()
             session.disconnect(user)
+        }
+    }
+
+    @CommandFunc(desc = "强制断开一个会话的所有连接", permission = Admin)
+    suspend fun CommandSender.disconnect(pid: Long)
+    {
+        withCatch {
+            pidToSession(pid).disconnectAll()
         }
     }
 

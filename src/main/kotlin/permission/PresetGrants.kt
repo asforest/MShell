@@ -31,6 +31,9 @@ object PresetGrants : Map<String, Collection<PermitteeId>>
     override val values: Collection<Collection<PermitteeId>>
         get() = allPresetGrantings.values
 
+    /**
+     * 所有的预设授权列表（每个预设权限都授予哪些人了）
+     */
     val allPresetGrantings get() = MShellPermissions.permissionMap
             .filter { it.key.namespace == MShellPlugin.id && it.key.name.startsWith(Prefix) }
 

@@ -6,6 +6,7 @@ import com.github.asforest.mshell.command.mshell.MainCommand.help
 import com.github.asforest.mshell.command.resolver.AbstractArgumentParsers
 import com.github.asforest.mshell.command.resolver.AbstractSmartCommand
 import com.github.asforest.mshell.command.resolver.CommandSignature
+import com.github.asforest.mshell.command.resolver.PrefixCommandSignature
 import com.github.asforest.mshell.permission.MShellPermissions
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.permission.PermissionService.Companion.testPermission
@@ -23,8 +24,15 @@ object MShellCommand : SmartCommand(
     const val Admin = 1 shl 1
     const val All = User or Admin
 
-    override val subCommandFunctions: Map<String, CommandSignature> by lazy {
-        MainCommand.allCommandFunctions
+    override val subCommandFunctions: List<PrefixCommandSignature> by lazy {
+        val acf = MainCommand.allCommandFunctions
+
+        for ((label, func) in acf)
+        {
+            println("$label | ")
+        }
+
+        acf
     }
 
     override suspend fun CommandSender.onCommand(args: MessageChain)

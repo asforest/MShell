@@ -10,46 +10,48 @@ import kotlin.reflect.jvm.javaField
 
 abstract class AbstractSmartCommand
 {
+
+
     /**
      * 所有指令函数列表，包括子对象里的。通常用来生成指令列表供用户查看
      * Map<指令前缀, 函数签名>
      */
-    val allCommandFunctions: Map<String, CommandSignature> by lazy {
-        val functions = mutableListOf<Pair<String, CommandSignature>>()
+    val allCommandFunctions: List<PrefixCommandSignature> by lazy {
+        val functions = mutableListOf<PrefixCommandSignature>()
 
         for (commandFunction in commandFunctions)
         {
-            functions += commandFunction.key to commandFunction.value
+            functions += PrefixCommandSignature(commandFunction.prefix, commandFunction.signature)
         }
 
         fun findAllNestedCommands(parentObject: AbstractSmartCommand)
         {
             for (nestedCommandFunction in parentObject.nestedCommandFunctions)
-                for (nestFun in nestedCommandFunction.value.commandFunctions.values)
-                    functions += nestedCommandFunction.key + " " + nestFun.name to nestFun
+                for (nestFun in nestedCommandFunction.value.commandFunctions)
+                    functions += PrefixCommandSignature(nestedCommandFunction.key + " " + nestFun.prefix, nestFun.signature)
         }
 
         findAllNestedCommands(this)
 
-        functions.toMap()
+        functions
     }
 
     /**
      * 所有定义在本类里的指令函数列表
      * Map<函数名, 函数签名>
      */
-    protected val commandFunctions: Map<String, CommandSignature> by lazy {
+    protected val commandFunctions: List<PrefixCommandSignature> by lazy {
 //        val actualGenaricType = (javaClass.genericSuperclass as ParameterizedType).actualTypeArguments[0] as Class<*>
 
         this::class.functions
             .filter { it.isSubCommandFunction() }
             .onEach { it.checkModifiers() }
-            .associate { it.name to createCommandSignature(it) }
+            .map { PrefixCommandSignature(it.name, createCommandSignature(it)) }
     }
 
     /**
      * 所有定义在SmartCommand类型的子对象里的指令函数列表
-     * Map<对象名, 成员变量对象>
+     * Map<成员对象名, 成员变量对象>
      */
     protected val nestedCommandFunctions: Map<String, AbstractSmartCommand> by lazy {
         this::class.declaredMemberProperties
@@ -83,11 +85,20 @@ abstract class AbstractSmartCommand
         val label = splited[0]
         val arguments = splited.drop(1)
 
-        val resolved = if(commandFunctions[label] != null) {
-            CommandCallResolver.resolve(commandFunctions[label]!!, arguments, this)
+        val functions = commandFunctions.filter { it.prefix == label }
+
+        val resolved = if (functions.isNotEmpty())
+        {
+            functions.firstNotNullOfOrNull { function -> CommandCallResolver.resolve(function.signature, arguments, this) }
         } else {
             nestedCommandFunctions[label]?.resolveCommandText(arguments.joinToString(" "), callerPermission)
         }
+
+//        val resolved = if(commandFunctions[label] != null) {
+//            CommandCallResolver.resolve(commandFunctions[label]!!, arguments, this)
+//        } else {
+//            nestedCommandFunctions[label]?.resolveCommandText(arguments.joinToString(" "), callerPermission)
+//        }
 
         if(resolved != null && resolved.signature.permissionMask and callerPermission == 0)
             throw PermissionDeniedException(resolved)

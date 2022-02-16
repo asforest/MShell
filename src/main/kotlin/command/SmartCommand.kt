@@ -1,5 +1,6 @@
 package com.github.asforest.mshell.command
 
+import com.github.asforest.mshell.command.resolver.PrefixCommandSignature
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.permission.Permission
@@ -24,10 +25,13 @@ abstract class SmartCommand (
     override val prefixOptional: Boolean = false,
 ) : Command {
 
-    abstract val subCommandFunctions: Map<String, com.github.asforest.mshell.command.resolver.CommandSignature>
+    abstract val subCommandFunctions: List<PrefixCommandSignature>
 
     override val usage: String by lazy {
-        subCommandFunctions.entries.joinToString("\n") { (label, func) ->
+        subCommandFunctions.joinToString("\n") { pfun ->
+            val label = pfun.prefix
+            val func = pfun.signature
+
             buildString {
                 append(CommandManager.commandPrefix)
                 append("$primaryName $label ")

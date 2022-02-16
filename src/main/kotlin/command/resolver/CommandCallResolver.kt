@@ -6,6 +6,10 @@ import kotlin.reflect.jvm.jvmErasure
 
 object CommandCallResolver
 {
+    /**
+     * 解析具体函数并匹配参数
+     * @return 返回解析好的函数。如果失败，返回null
+     */
     fun resolve(signature: CommandSignature, arguments: List<String>, thisRef: Any): ArgumentedFunction?
     {
         val parameters = signature.parameters
@@ -22,10 +26,15 @@ object CommandCallResolver
         val argumentsToCall = mutableListOf<Any?>()
 
         // 合并可变参数
-        if(arguments.size > parameters.size && zipped.last().first.isVararg)
+        if(zipped.isNotEmpty() && arguments.size > parameters.size && zipped.last().first.isVararg)
         {
             val (vParameters, _) = zipped.removeLast()
             zipped.add(vParameters to arguments.drop(zipped.size).joinToString(" "))
+        } else {
+            // 不能有多余参数
+            val remainingArguments = arguments.drop(zipped.size)
+            if (remainingArguments.isNotEmpty())
+                return null
         }
 
         var argIndex = 0

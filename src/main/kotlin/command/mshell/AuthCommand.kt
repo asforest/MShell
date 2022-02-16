@@ -1,6 +1,7 @@
 package com.github.asforest.mshell.command.mshell
 
 import com.github.asforest.mshell.command.mshell.MShellCommand.Admin
+import com.github.asforest.mshell.command.mshell.MainCommand.presets
 import com.github.asforest.mshell.command.resolver.AbstractSmartCommand
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.permission.MShellPermissions
@@ -52,15 +53,24 @@ object AuthCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "列出所有管理员", permission = Admin)
+    @CommandFunc(desc = "列出所有管理员和授权用户", permission = Admin)
     suspend fun CommandSender.list() {
-        val f = grantings.filterIsInstance<AbstractPermitteeId.ExactFriend>()
-        var output = ""
-        for ((idx, p) in f.withIndex()) {
-            output += "[$idx] ${p.id}\n"
-        }
+        val f = adminGrantings.filterIsInstance<AbstractPermitteeId.ExactFriend>()
 
-        sendMessage(output.ifEmpty { "还没有任何管理员" })
+        sendMessage("-----管理员列表-----")
+
+        sendMessage(f.withIndex().joinToString("\n") { (index, user) ->
+            "[$index] ${getFriendNick(user.id)}\n"
+        }.ifEmpty { "还没有任何管理员" })
+
+        sendMessage("\n-----授权用户列表-----")
+
+        sendMessage(PresetGrants.allPresetGrantings.entries.withIndex().joinToString("\n") { (index, grants) ->
+            val _preset = grants.key.name.substring(PresetGrants.Prefix.length)
+            val friends = grants.value.filterIsInstance<AbstractPermitteeId.ExactFriend>()
+                .map { getFriendNick(it.id) }
+            "[$index] $_preset: $friends"
+        }.ifEmpty { "还没有任何授权用户" })
     }
 
     @CommandFunc(desc = "添加预设授权用户", permission = Admin)
@@ -153,9 +163,12 @@ object AuthCommand : AbstractSmartCommand()
     /**
      * 获取管理员的数量
      */
-    private val adminCount get() = grantings.filterIsInstance<AbstractPermitteeId.ExactFriend>().size
+    private val adminCount get() = adminGrantings.filterIsInstance<AbstractPermitteeId.ExactFriend>().size
 
-    private val grantings: Collection<PermitteeId> get() =
+    /**
+     * 获取所有管理员
+     */
+    private val adminGrantings: Collection<PermitteeId> get() =
         MShellPermissions.permissionMap
             .filter { it.key == MShellPermissions.root.id }
             .firstNotNullOfOrNull { it.value } ?: mutableListOf()
