@@ -1,6 +1,5 @@
 package com.github.asforest.mshell
 
-import com.github.asforest.mshell.authentication.Authentication
 import com.github.asforest.mshell.command.mshell.MShellCommand
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.configuration.PresetsConfig
@@ -10,9 +9,7 @@ import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
-import com.github.asforest.mshell.session.user.AbstractSessionUser
-import com.github.asforest.mshell.session.user.FriendUser
-import com.github.asforest.mshell.session.user.GroupUser
+import com.github.asforest.mshell.session.SessionUser
 import com.github.asforest.mshell.util.MShellUtils
 import com.github.asforest.mshell.util.MiraiUtil
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
@@ -47,11 +44,6 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
         PresetGrants.registerAllPresetPermissions()
 
         // 注册指令
-//        MainCommand.register()
-//        PresetCommand.register()
-//        AuthCommand.register()
-//        GroupCommand.register()
-//        UserCommand.register()
         MShellCommand.register()
 
         val botEvents = GlobalEventChannel.filter { it is BotEvent }
@@ -62,21 +54,16 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
                 if(sender !is NormalMember || !sender.isFriend)
                     return@subscribeAlways
 
+                val session = SessionManager.getSession(SessionUser.GroupUser(group)) ?: return@subscribeAlways
+
                 if (sender.asFriend().asCommandSender().hasPermission(MShellPermissions.root))
                 {
-                    val session = SessionManager.getSession(GroupUser(group))
-                    if(session != null)
-                        handleSessionInput(message, session)
+                    handleSessionInput(message, session)
                 } else {
                     // 当做普通用户处理
-                    val session = SessionManager.getSession(GroupUser(group))
-                    if(session != null)
-                    {
-                        // 授权用户
-                        val presetName = session.preset.name
-                        if (PresetGrants.testGrant(presetName, sender.id) || PresetGrants.testGrant(presetName, 0)) // 0: anyone
-                            handleSessionInput(message, session)
-                    }
+                    val presetName = session.preset.name
+                    if (PresetGrants.testGrant(presetName, sender.id) || PresetGrants.testGrant(presetName, 0)) // 0: anyone
+                        handleSessionInput(message, session)
                 }
             }
         }
@@ -84,15 +71,14 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
         // 订阅好友消息
         botEvents.subscribeAlways<FriendMessageEvent> {
             withCatch {
-                val fuser = FriendUser(user)
+                val fuser = SessionUser.FriendUser(user)
                 if (sender.asCommandSender().hasPermission(MShellPermissions.root))
                 {
                     val session = SessionManager.getSession(fuser)
-
                     handleMessage(message, session, fuser)
                 } else if (PresetGrants.isGranted(fuser.user.id)) { // 处理授权用户
                     val session = SessionManager.getSession(fuser)
-                    val preset = Authentication.useDefaultPreset(null, fuser.user.id)
+                    val preset = PresetGrants.useDefaultPreset(null, fuser)
                     handleMessage(message, session, fuser, preset)
                 }
             }
@@ -102,7 +88,7 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
     fun handleMessage(
         message: MessageChain,
         session: Session?,
-        user: AbstractSessionUser,
+        user: SessionUser,
         preset: Preset? = null
     ) {
         val pokePresent = message.anyIsInstance<PokeMessage>()

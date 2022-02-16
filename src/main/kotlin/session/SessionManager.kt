@@ -5,11 +5,7 @@ import com.github.asforest.mshell.exception.business.*
 import com.github.asforest.mshell.exception.system.SessionAlreadyRegisteredException
 import com.github.asforest.mshell.exception.system.SessionNotRegisteredException
 import com.github.asforest.mshell.model.Preset
-import com.github.asforest.mshell.session.user.AbstractSessionUser
-import com.github.asforest.mshell.session.user.GroupUser
-import kotlinx.coroutines.DelicateCoroutinesApi
 
-@DelicateCoroutinesApi
 object SessionManager
 {
     /**
@@ -22,8 +18,9 @@ object SessionManager
      * @param presetName 环境预设
      * @param user 会话启动后，要立即连接上来的用户
      * @return 创建的Session，也可能是复用的Session
+     * @throws SessionUserAlreadyConnectedException 用户已经连接到了另一个会话上了
      */
-    fun createSession(presetName: String?, user: AbstractSessionUser?): Session
+    fun createSession(presetName: String?, user: SessionUser?): Session
     {
         // user不能连接到任何会话，否则会抛异常
         if (user != null)
@@ -31,7 +28,7 @@ object SessionManager
             val session = getSession(user)
             if(session != null)
             {
-                if(user is GroupUser)
+                if(user is SessionUser.GroupUser)
                     throw SessionUserAlreadyConnectedException(user.group.id, session.pid)
                 else
                     throw SessionUserAlreadyConnectedException(session.pid)
@@ -64,8 +61,9 @@ object SessionManager
      * 尝试重连会话，如果无法重连，会创建一个新的会话
      * @param user 要重连/新建会话的用户
      * @param preset 可选的预设，只在创建新会话时生效
+     * @throws SessionUserAlreadyConnectedException 用户已经连接到了另一个会话上了
      */
-    fun reconnectOrCreate(user: AbstractSessionUser, preset: String? = null)
+    fun reconnectOrCreate(user: SessionUser, preset: String? = null)
     {
         getSession(user)?.also { throw SessionUserAlreadyConnectedException(it.pid) }
 
@@ -84,8 +82,9 @@ object SessionManager
      * 使一个用户通过pid连接到一个会话
      * @param user 用户
      * @param pid 子进程的pid
+     * @throws NoSuchSessionException 如果 pid 无效
      */
-    fun connect(user: AbstractSessionUser, pid: Long): Connection
+    fun connect(user: SessionUser, pid: Long): Connection
     {
         val session = getSession(pid) ?: throw NoSuchSessionException(pid)
         return session.connect(user)
@@ -94,8 +93,9 @@ object SessionManager
     /**
      * 使一个用户从当前会话上断开
      * @param user 用户
+     * @throws UserNotConnectedException 如果用户未连接到任何会话上
      */
-    fun disconnect(user: AbstractSessionUser): Connection
+    fun disconnect(user: SessionUser): Connection
     {
         val session = getSession(user) ?: throw UserNotConnectedException()
         return session.disconnect(user)
@@ -105,7 +105,7 @@ object SessionManager
      * 尝试将一个用户从所连接的会话上断开，如果用户没有连接到任何会话，则不做任何事情
      * @param user 要断开的用户
      */
-    fun tryToDisconnect(user: AbstractSessionUser)
+    fun tryToDisconnect(user: SessionUser)
     {
         if(hasUserConnectedToAnySession(user))
             disconnect(user)
@@ -122,7 +122,7 @@ object SessionManager
     /**
      * 根据User获取相应已经连接的Session
      */
-    fun getSession(user: AbstractSessionUser): Session?
+    fun getSession(user: SessionUser): Session?
     {
         return sessions.firstOrNull { it.isUserConnected(user) }
     }
@@ -130,13 +130,15 @@ object SessionManager
     /**
      * 检查一个User是否连接到了任意一个Session上
      */
-    fun hasUserConnectedToAnySession(user: AbstractSessionUser): Boolean
+    fun hasUserConnectedToAnySession(user: SessionUser): Boolean
     {
         return sessions.any { it.isUserConnected(user) }
     }
 
     /**
-     * 使用默认环境预设
+     * 使用指定环境预设或者默认环境预设
+     * @throws NoDefaultPresetException 默认预设不存在或者无效
+     * @throws PresetNotFoundException 指定的环境预设不存在
      */
     fun useDefaultPreset(preset: String?): Preset
     {
@@ -156,6 +158,7 @@ object SessionManager
 
     /**
      * 注册一个Session
+     * @throws SessionAlreadyRegisteredException 会话已经被注册过了
      */
     private fun registerSession(session: Session)
     {
@@ -169,6 +172,7 @@ object SessionManager
 
     /**
      * 取消注册一个Session
+     * @throws SessionNotRegisteredException 会话从未注册过
      */
     private fun unregisterSession(session: Session)
     {

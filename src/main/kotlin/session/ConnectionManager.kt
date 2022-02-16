@@ -2,10 +2,7 @@ package com.github.asforest.mshell.session
 
 import com.github.asforest.mshell.exception.system.SessionConnectionNotFoundException
 import com.github.asforest.mshell.exception.system.SessionConnectionNotMatchException
-import com.github.asforest.mshell.session.user.AbstractSessionUser
-import kotlinx.coroutines.DelicateCoroutinesApi
 
-@DelicateCoroutinesApi
 class ConnectionManager (
     val session: Session
 ) {
@@ -16,7 +13,7 @@ class ConnectionManager (
      * @param user 发起连接的用户
      * @return <连接对象, 是否是重连的回话>
      */
-    fun openConnection(user: AbstractSessionUser): Pair<Connection, Boolean>
+    fun openConnection(user: SessionUser): Pair<Connection, Boolean>
     {
         var connection = getConnection(user, true)
         val isReconnection = connection != null
@@ -35,7 +32,7 @@ class ConnectionManager (
     /**
      * 关闭一个用户的连接
      */
-    fun closeConnection(user: AbstractSessionUser)
+    fun closeConnection(user: SessionUser)
     {
         val connection = getConnection(user, includeOffline = false)
             ?: throw SessionConnectionNotFoundException(user.toString())
@@ -59,7 +56,7 @@ class ConnectionManager (
      * @param user 用户
      * @param includeOffline 是否包括离线连接
      */
-    fun getConnection(user: AbstractSessionUser, includeOffline: Boolean): Connection?
+    fun getConnection(user: SessionUser, includeOffline: Boolean): Connection?
     {
         for (conn in connections)
             if(conn.user == user && (includeOffline || conn.isOnline))

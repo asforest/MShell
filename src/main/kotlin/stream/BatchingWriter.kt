@@ -13,7 +13,6 @@ import kotlin.coroutines.suspendCoroutine
 /**
  * BatchingWriter 用来将时间相近的两条消息合并成一条发送
  */
-@DelicateCoroutinesApi
 class BatchingWriter(
     val preset: Preset,
     var onBatchedOutput: suspend (text: String)->Unit,

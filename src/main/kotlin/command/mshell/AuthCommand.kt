@@ -6,7 +6,7 @@ import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.SessionManager
-import com.github.asforest.mshell.session.user.FriendUser
+import com.github.asforest.mshell.session.SessionUser
 import com.github.asforest.mshell.util.MShellUtils.getFriendNick
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.CommandSender
@@ -16,7 +16,7 @@ import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermiss
 import net.mamoe.mirai.console.permission.PermissionService.Companion.permit
 import net.mamoe.mirai.console.permission.PermitteeId
 
-object AuthCommandAbstract : AbstractSmartCommand()
+object AuthCommand : AbstractSmartCommand()
 {
     @CommandFunc(desc = "添加管理员", permission = Admin)
     suspend fun CommandSender.add(qqnumber: Long)
@@ -76,9 +76,9 @@ object AuthCommandAbstract : AbstractSmartCommand()
 
         if(PresetGrants.addGrant(preset, qqnumber))
         {
-            sendMessage("已添加预设授权用户${friend}，当前共有${getUsersCount(preset)}位预设授权用户")
+            sendMessage("已添加预设授权用户${friend}，预设${preset}当前共有${getUsersCount(preset)}位预设授权用户")
         } else {
-            sendMessage("预设授权用户添加失败，${friend}已是${preset}预设的授权用户")
+            sendMessage("预设授权用户添加失败，${friend}已是预设${preset}的授权用户")
         }
     }
 
@@ -95,9 +95,9 @@ object AuthCommandAbstract : AbstractSmartCommand()
 
         if(PresetGrants.removeGrant(preset, qqnumber))
         {
-            sendMessage("已移除预设授权用户${friend}，当前共有${getUsersCount(preset)}位预设授权用户")
+            sendMessage("已移除预设授权用户${friend}，预设${preset}当前共有${getUsersCount(preset)}位预设授权用户")
         } else {
-            sendMessage("预设授权用户移除失败，${friend}不是${preset}预设的授权用户")
+            sendMessage("预设授权用户移除失败，${friend}不是预设${preset}的授权用户")
         }
     }
 
@@ -130,16 +130,16 @@ object AuthCommandAbstract : AbstractSmartCommand()
         sendMessage(output.ifEmpty { "还没有任何预设授权用户" })
     }
 
-    private fun CommandSender.getFriendUser(qqnumber: Long): FriendUser?
+    private fun CommandSender.getFriendUser(qqnumber: Long): SessionUser.FriendUser?
     {
         val _bot = bot
         if(_bot != null)
-            return FriendUser(_bot.getFriend(qqnumber) ?: return null)
+            return SessionUser.FriendUser(_bot.getFriend(qqnumber) ?: return null)
 
         Bot.instances.forEach { bot ->
             val friend = bot.getFriend(qqnumber)
             if(friend != null)
-                return FriendUser(friend)
+                return SessionUser.FriendUser(friend)
         }
 
         return null

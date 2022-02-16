@@ -2,6 +2,10 @@ package com.github.asforest.mshell.permission
 
 import com.github.asforest.mshell.MShellPlugin
 import com.github.asforest.mshell.configuration.PresetsConfig
+import com.github.asforest.mshell.exception.business.NoPermissionToUsePresetExcetption
+import com.github.asforest.mshell.model.Preset
+import com.github.asforest.mshell.session.SessionManager
+import com.github.asforest.mshell.session.SessionUser
 import net.mamoe.mirai.console.permission.*
 import net.mamoe.mirai.console.permission.PermissionService.Companion.cancel
 import net.mamoe.mirai.console.permission.PermissionService.Companion.permit
@@ -9,7 +13,6 @@ import net.mamoe.mirai.console.permission.PermissionService.Companion.testPermis
 import net.mamoe.mirai.console.plugin.id
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 
-@ConsoleExperimentalApi
 object PresetGrants : Map<String, Collection<PermitteeId>>
 {
     const val Prefix = "preset."
@@ -135,6 +138,75 @@ object PresetGrants : Map<String, Collection<PermitteeId>>
             }
     }
 
+    /**
+     * 获取所有可用的环境预设
+     */
+    fun getAvailablePresets(user: SessionUser): List<Preset>
+    {
+        if (user is SessionUser.GroupUser)
+            return listOf()
+
+        if (user is SessionUser.ConsoleUser)
+            return PresetsConfig.presets.values.toList()
+
+        val friendUser = user as SessionUser.FriendUser
+
+        return PresetsConfig.presets.values.filter {
+            testGrant(it.name, friendUser.user.id)
+        }
+    }
+
+    /**
+     * 判断用户是否拥有某个预设的权限
+     */
+    fun isPresetAvailable(preset: Preset, user: SessionUser): Boolean
+    {
+        // GroupUser 没有任何权限
+        if (user is SessionUser.GroupUser)
+            return false
+
+        // ConsoleUser 拥有所有权限
+        if (user is SessionUser.ConsoleUser)
+            return true
+
+        val friendUser = user as SessionUser.FriendUser
+        return testGrant(preset.name, friendUser.user.id)
+    }
+
+    /**
+     * 检查一个用户是否能使用**指定环境预设**或者**默认的环境预设**
+     * @throws NoPermissionToUsePresetExcetption 当没有权限使用这个预设时
+     */
+    fun useDefaultPreset(preset: String?, user: SessionUser): Preset
+    {
+        val _preset = SessionManager.useDefaultPreset(preset)
+
+        // GroupUser 没有任何权限
+        if (user is SessionUser.GroupUser)
+            throw NoPermissionToUsePresetExcetption(preset)
+
+        // ConsoleUser 拥有所有权限
+        if (user is SessionUser.ConsoleUser)
+            return _preset
+
+        // FriendUser 需要进一步鉴权
+        val presetsAvailable = PresetGrants.getAvailablePresets(user)
+        val qq = (user as SessionUser.FriendUser).user.id
+
+        // 如果指定的预设是没有权限的话，再检查一下有没有其它可用的预设
+        if(!PresetGrants.testGrant(_preset.name, qq))
+        {
+            // 如果默认预设不可用，则选取唯一可用的Preset，如果没有或者是可用数量的大于2，抛异常
+            // 如果明确指定了一个Preset，则抛异常
+            if(presetsAvailable.size == 1 && preset == null)
+                return presetsAvailable.first()
+
+            throw NoPermissionToUsePresetExcetption(_preset.name)
+        }
+
+        // 如果有权限则直接返回
+        return _preset
+    }
 
     /**
      * 注册所有preset.yml里面有的preset使用权限

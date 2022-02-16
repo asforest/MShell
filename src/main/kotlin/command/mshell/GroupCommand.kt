@@ -1,36 +1,26 @@
 package com.github.asforest.mshell.command.mshell
 
 import com.github.asforest.mshell.MShellPlugin
+import com.github.asforest.mshell.command.resolver.AbstractSmartCommand
 import com.github.asforest.mshell.exception.business.AmbiguousGroupIdException
 import com.github.asforest.mshell.exception.business.QQGroupNotFoundException
 import com.github.asforest.mshell.exception.business.UsingInConsoleNotAllowedException
-import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.SessionManager
-import com.github.asforest.mshell.session.user.GroupUser
+import com.github.asforest.mshell.session.SessionUser
 import net.mamoe.mirai.console.command.CommandSender
-import net.mamoe.mirai.console.command.CompositeCommand
 import net.mamoe.mirai.console.command.isConsole
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.contact.Group
 
-@ConsoleExperimentalApi
-object GroupCommand : CompositeCommand(
-    MShellPlugin,
-    primaryName = "mshellg",
-    description = "MShell插件Group指令",
-    secondaryNames = arrayOf("mg", "msg"),
-    parentPermission = MShellPermissions.root
-) {
-    @SubCommand @Description("开启一个会话并将这个会话连接到一个群聊")
-    suspend fun CommandSender.open(
-        @Name("group") groupId: Long,
-        @Name("preset") preset: String? = null
-    ) {
+object GroupCommand : AbstractSmartCommand()
+{
+    @CommandFunc(desc = "开启一个会话并将这个会话连接到一个群聊", permission = MShellCommand.Admin)
+    suspend fun CommandSender.open(group: Long, preset: String? = null)
+    {
         withCatch {
             if(isConsole())
                 throw UsingInConsoleNotAllowedException("/mshellg open")
 
-            val groupUser = getSessionUser(groupId)
+            val groupUser = getSessionUser(group)
 
             val session = SessionManager.createSession(preset, groupUser)
 
@@ -38,38 +28,35 @@ object GroupCommand : CompositeCommand(
         }
     }
 
-    @SubCommand @Description("将一个群聊连接到一个会话上")
-    suspend fun CommandSender.connect(
-        @Name("group") groupId: Long,
-        @Name("pid") pid: Long
-    ) {
+    @CommandFunc(desc = "将一个群聊连接到一个会话上", permission = MShellCommand.Admin)
+    suspend fun CommandSender.connect(group: Long, pid: Long)
+    {
         withCatch {
             if(isConsole())
                 throw UsingInConsoleNotAllowedException("/mshellg open")
 
-            val groupUser = getSessionUser(groupId)
+            val groupUser = getSessionUser(group)
             val conn = SessionManager.connect(groupUser, pid)
 
             sendMessage("会话 ${conn.session.identity} 已连接到群聊 $groupUser")
         }
     }
 
-    @SubCommand @Description("断开一个群聊的会话")
-    suspend fun CommandSender.disconnect(
-        @Name("group") groupId: Long
-    ) {
+    @CommandFunc(desc = "断开一个群聊的会话", permission = MShellCommand.Admin)
+    suspend fun CommandSender.disconnect(group: Long)
+    {
         withCatch {
             if(isConsole())
                 throw UsingInConsoleNotAllowedException("/mshellg disconnect")
 
-            val groupUser = getSessionUser(groupId)
+            val groupUser = getSessionUser(group)
             val conn = SessionManager.disconnect(groupUser)
 
             sendMessage("会话 ${conn.session.identity} 已从群聊 $groupUser 上断开")
         }
     }
 
-    private fun CommandSender.getSessionUser(groupId: Long): GroupUser
+    private fun CommandSender.getSessionUser(groupId: Long): SessionUser.GroupUser
     {
         val _bot = bot ?: throw QQGroupNotFoundException(groupId)
         val groupIdStr = groupId.toString()
@@ -92,7 +79,7 @@ object GroupCommand : CompositeCommand(
         if(groupMatched == null)
             throw QQGroupNotFoundException(groupId)
 
-        return GroupUser(groupMatched)
+        return SessionUser.GroupUser(groupMatched)
     }
 
     private suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)

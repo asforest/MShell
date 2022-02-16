@@ -3,8 +3,6 @@ package com.github.asforest.mshell.session
 import com.github.asforest.mshell.event.AsyncEvent
 import com.github.asforest.mshell.exception.business.*
 import com.github.asforest.mshell.model.Preset
-import com.github.asforest.mshell.session.user.AbstractSessionUser
-import com.github.asforest.mshell.session.user.GroupUser
 import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
 import kotlinx.coroutines.*
@@ -19,11 +17,10 @@ import kotlin.coroutines.suspendCoroutine
  * Session 代表一个会话对象，会话对象就是对一个子进程进行封装和管理的对象，
  * 可以粗略地认为一个会话就是一个子进程
  */
-@DelicateCoroutinesApi
 class Session(
     val manager: SessionManager,
     val preset: Preset,
-    userAutoConnect: AbstractSessionUser? = null
+    userAutoConnect: SessionUser? = null
 ) {
     val process: PtyProcess
     val stdin: PrintWriter
@@ -138,7 +135,7 @@ class Session(
      * @param user 要连接的用户
      * @return Connection 对象
      */
-    fun connect(user: AbstractSessionUser): Connection
+    fun connect(user: SessionUser): Connection
     {
         if(manager.hasUserConnectedToAnySession(user))
             throw SessionUserAlreadyConnectedException(pid)
@@ -177,10 +174,10 @@ class Session(
      * 断开某个用户与当前会话的连接
      * @param user 要断开的用户
      */
-    fun disconnect(user: AbstractSessionUser): Connection
+    fun disconnect(user: SessionUser): Connection
     {
         val connection = getConnection(user)
-            ?: if(user is GroupUser)
+            ?: if(user is SessionUser.GroupUser)
                 throw UserNotConnectedException(user)
             else
                 throw UserNotConnectedException()
@@ -223,17 +220,17 @@ class Session(
     /**
      * 获取一个用户的连接
      */
-    fun getConnection(user: AbstractSessionUser): Connection? = connectionManager.getConnection(user, includeOffline = false)
+    fun getConnection(user: SessionUser): Connection? = connectionManager.getConnection(user, includeOffline = false)
 
     /**
      * 判断用户是否连接到了当前会话上
      */
-    fun isUserConnected(user: AbstractSessionUser): Boolean = getConnection(user) != null
+    fun isUserConnected(user: SessionUser): Boolean = getConnection(user) != null
 
     /**
      * 所有的在线用户
      */
-    val users: Collection<AbstractSessionUser> get() = connectionManager.getConnections(includeOffline = false).map { it.user }
+    val users: Collection<SessionUser> get() = connectionManager.getConnections(includeOffline = false).map { it.user }
 
     /**
      * 所有在线的连接

@@ -1,6 +1,5 @@
 package com.github.asforest.mshell.session
 
-import com.github.asforest.mshell.session.user.AbstractSessionUser
 import com.github.asforest.mshell.stream.BatchingWriter
 
 /**
@@ -10,7 +9,7 @@ import com.github.asforest.mshell.stream.BatchingWriter
  * 以便当用户重新连接上来时，向用户发送遗愿消息
  */
 class Connection(
-    val user: AbstractSessionUser,
+    val user: SessionUser,
     val session: Session,
     val connectionManager: ConnectionManager
 ) {

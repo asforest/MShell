@@ -1,9 +1,6 @@
 package com.github.asforest.mshell.util
 
-import com.github.asforest.mshell.session.user.AbstractSessionUser
-import com.github.asforest.mshell.session.user.ConsoleUser
-import com.github.asforest.mshell.session.user.FriendUser
-import com.github.asforest.mshell.session.user.GroupUser
+import com.github.asforest.mshell.session.SessionUser
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.ConsoleCommandSender
@@ -40,24 +37,28 @@ object MShellUtils
     }
 
     /**
-     * 根据指令发送人获取对应类型的SessionUser
+     * 向MiraiUser或者Console发送消息（user为null时代表是Console）
      */
-    fun getSessionUser(commandSender: CommandSender): AbstractSessionUser
-    {
-        val group = commandSender.getGroupOrNull()
-
-        // 目前Mirai好像无法在群聊里执行指令，那么永远不会进入此if分支
-        if (group != null)
-            return GroupUser(group)
-
-        if (commandSender.isConsole())
-            return ConsoleUser()
-
-        return FriendUser(commandSender.user!!)
-    }
-
     suspend fun sendMessage2(user: User?, message: String)
     {
         user?.sendMessage(message) ?: ConsoleCommandSender.sendMessage(message)
+    }
+
+    /**
+     * 根据指令发送人获取对应类型的SessionUser
+     * @return GroupUser or ConsoleUser or GroupUser
+     */
+    fun CommandSender.toSessionUser(): SessionUser
+    {
+        val group = getGroupOrNull()
+
+        // 目前Mirai好像无法在群聊里执行指令，那么永远不会进入此if分支
+        if (group != null)
+            return SessionUser.GroupUser(group)
+
+        if (isConsole())
+            return SessionUser.ConsoleUser()
+
+        return SessionUser.FriendUser(user!!)
     }
 }
