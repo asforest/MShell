@@ -11,8 +11,8 @@ import kotlin.reflect.jvm.isAccessible
 
 object MShellPermissions
 {
-    val all by lazy { PermissionService.INSTANCE.register(MShellPlugin.permissionId("all"), "MShell插件主权限") }
-    val use by lazy { PermissionService.INSTANCE.register(MShellPlugin.permissionId("use"), "MShell插件部分使用权限", all) }
+    val root by lazy { MShellPlugin.parentPermission }
+    val use by lazy { PermissionService.INSTANCE.register(MShellPlugin.permissionId("use"), "MShell插件部分使用权限", root) }
 
     /**
      * 获取权限授权表，用来判断某个权限都给到了哪些用户

@@ -35,7 +35,6 @@ import net.mamoe.mirai.message.data.PokeMessage
 import net.mamoe.mirai.message.data.anyIsInstance
 import net.mamoe.mirai.message.data.content
 
-@ConsoleExperimentalApi
 object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
 {
     override fun onEnable()
@@ -45,7 +44,7 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
         PresetsConfig.read()
 
         // 注册权限
-        MShellPermissions.all
+        MShellPermissions.root
         MShellPermissions.use
         PresetGrants.registerAllPresetPermissions()
 
@@ -65,7 +64,7 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
                 if(sender !is NormalMember || !sender.isFriend)
                     return@subscribeAlways
 
-                if (sender.asFriend().asCommandSender().hasPermission(MShellPermissions.all))
+                if (sender.asFriend().asCommandSender().hasPermission(MShellPermissions.root))
                 {
                     val session = SessionManager.getSession(GroupUser(group))
                     if(session != null)
@@ -88,7 +87,7 @@ object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
         botEvents.subscribeAlways<FriendMessageEvent> {
             withCatch {
                 val fuser = FriendUser(user)
-                if (sender.asCommandSender().hasPermission(MShellPermissions.all))
+                if (sender.asCommandSender().hasPermission(MShellPermissions.root))
                 {
                     val session = SessionManager.getSession(fuser)
 

@@ -70,7 +70,7 @@ tasks.whenTaskAdded {
             {
 //                Runtime.getRuntime().exec("cmd /C \"copy /Y $archive $outputPath\"")
                 from(archive).into(outputPath)
-                println("Copied $archive -> $outputPath")
+                println("Copy $archive -> $outputPath")
             }
         }
     }

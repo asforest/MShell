@@ -8,7 +8,7 @@ import kotlin.reflect.jvm.jvmErasure
  * @param name: 指令名字
  * @param callable: 指令KFunction对象
  * @param parameters: value parameter
- * @param exReParameter: extension receiver parameter
+ * @param extensionReceiverParameter: extension receiver parameter
  * @param permissionMask: 执行指令所需要的权限
  * @param description: 函数的描述
  */
@@ -16,7 +16,7 @@ data class CommandSignature(
     val name: String,
     val callable: KFunction<*>,
     val parameters: List<Parameter>,
-    val exReParameter: KParameter?,
+    val extensionReceiverParameter: KParameter?,
     val permissionMask: Int,
     val description: String
 ) {
@@ -26,12 +26,14 @@ data class CommandSignature(
         val isVararg: Boolean,
         val type: KType
     ) {
-        val isBasicArrayType: Boolean = type.classifier in basicArrayTypes
+        val isPrimitiveArrayType: Boolean = type.classifier in primitiveArrayTypes
+
+        val identity: String = if(isOptional) "[${name}]" else if (isVararg) "[${name}...]" else "<${name}>"
 
         init {
             if(isVararg)
             {
-                check(type.isSubtypeOf(typeOf<Array<out Any?>>()) || isBasicArrayType) {
+                check(type.isSubtypeOf(typeOf<Array<out Any?>>()) || isPrimitiveArrayType) {
                     "type must be subtype of Array if vararg. Given $type."
                 }
             }
@@ -40,7 +42,7 @@ data class CommandSignature(
         val genaricType: KClass<*> by lazy {
             check(isVararg) { "can not access 'varargGenaricType' because paramter '$name' is not a Vararg" }
 
-            if (isBasicArrayType)
+            if (isPrimitiveArrayType)
                 type.jvmErasure.java.componentType.kotlin
             else
                 type.arguments.first()::class
@@ -63,7 +65,7 @@ data class CommandSignature(
 
         companion object {
             @JvmStatic
-            private val basicArrayTypes = listOf<KClass<*>>(
+            private val primitiveArrayTypes = listOf<KClass<*>>(
                 ByteArray::class,
                 CharArray::class,
                 ShortArray::class,

@@ -8,8 +8,32 @@ import kotlin.reflect.KVisibility
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.javaField
 
-abstract class SmartCommand
+abstract class AbstractSmartCommand
 {
+    /**
+     * 所有指令函数列表，包括子对象里的。通常用来生成指令列表供用户查看
+     * Map<指令前缀, 函数签名>
+     */
+    val allCommandFunctions: Map<String, CommandSignature> by lazy {
+        val functions = mutableListOf<Pair<String, CommandSignature>>()
+
+        for (commandFunction in commandFunctions)
+        {
+            functions += commandFunction.key to commandFunction.value
+        }
+
+        fun findAllNestedCommands(parentObject: AbstractSmartCommand)
+        {
+            for (nestedCommandFunction in parentObject.nestedCommandFunctions)
+                for (nestFun in nestedCommandFunction.value.commandFunctions.values)
+                    functions += nestedCommandFunction.key + " " + nestFun.name to nestFun
+        }
+
+        findAllNestedCommands(this)
+
+        functions.toMap()
+    }
+
     /**
      * 所有定义在本类里的指令函数列表
      * Map<函数名, 函数签名>
@@ -27,9 +51,9 @@ abstract class SmartCommand
      * 所有定义在SmartCommand类型的子对象里的指令函数列表
      * Map<对象名, 成员变量对象>
      */
-    protected val nestedCommandFunctions: Map<String, SmartCommand> by lazy {
+    protected val nestedCommandFunctions: Map<String, AbstractSmartCommand> by lazy {
         this::class.declaredMemberProperties
-            .filter { it.returnType.classifier.safeCast<KClass<*>>()?.isSubclassOf(SmartCommand::class) == true }
+            .filter { it.returnType.classifier.safeCast<KClass<*>>()?.isSubclassOf(AbstractSmartCommand::class) == true }
             .filter { it.javaField!!.isAnnotationPresent(NestedCommand::class.java) }
             .associate {
                 val jf = it.javaField!!
@@ -37,32 +61,8 @@ abstract class SmartCommand
                 val isPrivate = Modifier.isPrivate(jf.modifiers)
                 if(isPrivate)
                     jf.isAccessible = true
-                it.name to it.javaField!!.get(if(isStatic) null else this) as SmartCommand
+                it.name to it.javaField!!.get(if(isStatic) null else this) as AbstractSmartCommand
             }
-    }
-
-    /**
-     * 所有指令函数列表，包括子对象里的。通常用来生成指令列表供用户查看
-     * Map<指令前缀, 函数签名>
-     */
-    protected val allCommandFunctions: Map<String, CommandSignature> by lazy {
-        val functions = mutableListOf<Pair<String, CommandSignature>>()
-
-        for (commandFunction in commandFunctions)
-        {
-            functions += commandFunction.key to commandFunction.value
-        }
-
-        fun findAllNestedCommands(parentObject: SmartCommand)
-        {
-            for (nestedCommandFunction in parentObject.nestedCommandFunctions)
-                for (nestFun in nestedCommandFunction.value.commandFunctions.values)
-                    functions += nestedCommandFunction.key + " " + nestFun.name to nestFun
-        }
-
-        findAllNestedCommands(this)
-
-        functions.toMap()
     }
 
     /**
@@ -73,7 +73,7 @@ abstract class SmartCommand
      * @throws AbstractArgumentParsers.ArgumentParserException 解析成功，但参数类型不正确（不匹配）时
      * @throws PermissionDeniedException 解析成功，但权限不够时
      */
-    protected fun resolveCommandText(commandText: String, callerPermission: Int): CommandCallResolver.ArgumentedFunction?
+    fun resolveCommandText(commandText: String, callerPermission: Int): CommandCallResolver.ArgumentedFunction?
     {
         if(commandText.isEmpty())
             return null
@@ -125,7 +125,7 @@ abstract class SmartCommand
     @Retention(AnnotationRetention.RUNTIME)
     protected annotation class CommandFunc(
         val desc: String,
-        val permission: Int,
+        val permission: Int = 0,
     )
 
     @Target(AnnotationTarget.FIELD)

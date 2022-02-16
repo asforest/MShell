@@ -1,8 +1,7 @@
 package com.github.asforest.mshell.command.mshell
 
-import com.github.asforest.mshell.command.MShellCommand
-import com.github.asforest.mshell.command.MShellCommand.MshellAdmin
-import com.github.asforest.mshell.command.resolver.SmartCommand
+import com.github.asforest.mshell.command.MShellCommand.Admin
+import com.github.asforest.mshell.command.resolver.AbstractSmartCommand
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.permission.PresetGrants
@@ -19,9 +18,9 @@ import net.mamoe.mirai.console.permission.PermitteeId
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 
 @ConsoleExperimentalApi
-object AuthCommand : SmartCommand()
+object AuthCommandAbstract : AbstractSmartCommand()
 {
-    @CommandFunc(desc = "添加管理员", permission = MshellAdmin)
+    @CommandFunc(desc = "添加管理员", permission = Admin)
     suspend fun CommandSender.add(qqnumber: Long)
     {
         val friend = getFriendNick(qqnumber)
@@ -36,7 +35,7 @@ object AuthCommand : SmartCommand()
         }
     }
 
-    @CommandFunc(desc = "移除管理员", permission = MshellAdmin)
+    @CommandFunc(desc = "移除管理员", permission = Admin)
     suspend fun CommandSender.remove(qqnumber: Long)
     {
         val friend = getFriendNick(qqnumber)
@@ -55,7 +54,7 @@ object AuthCommand : SmartCommand()
         }
     }
 
-    @CommandFunc(desc = "列出所有管理员", permission = MshellAdmin)
+    @CommandFunc(desc = "列出所有管理员", permission = Admin)
     suspend fun CommandSender.list() {
         val f = grantings.filterIsInstance<AbstractPermitteeId.ExactFriend>()
         var output = ""
@@ -66,7 +65,7 @@ object AuthCommand : SmartCommand()
         sendMessage(output.ifEmpty { "还没有任何管理员" })
     }
 
-    @CommandFunc(desc = "添加预设授权用户", permission = MshellAdmin)
+    @CommandFunc(desc = "添加预设授权用户", permission = Admin)
     suspend fun CommandSender.adduser(preset: String, qqnumber: Long)
     {
         if(preset !in PresetsConfig.presets)
@@ -85,7 +84,7 @@ object AuthCommand : SmartCommand()
         }
     }
 
-    @CommandFunc(desc = "移除预设授权用户", permission = MshellAdmin)
+    @CommandFunc(desc = "移除预设授权用户", permission = Admin)
     suspend fun CommandSender.removeuser(preset: String, qqnumber: Long)
     {
         if(preset !in PresetsConfig.presets)
@@ -104,7 +103,7 @@ object AuthCommand : SmartCommand()
         }
     }
 
-    @CommandFunc(desc = "列出所有预设授权用户", permission = MshellAdmin)
+    @CommandFunc(desc = "列出所有预设授权用户", permission = Admin)
     suspend fun CommandSender.listuser(preset: String? = null)
     {
         if(preset != null && preset !in PresetsConfig.presets)

@@ -40,7 +40,7 @@ object CommandCallResolver
                 val parser = BuiltinArgumentParsers.parsers[parameter.genaricType]
                 if (parser != null)
                 {
-                    if (parameter.isBasicArrayType)
+                    if (parameter.isPrimitiveArrayType)
                     {
                         val varargs = argument.split(" ").map { parser.parse(it, argIndex, signature) }
                         val array = Array.newInstance(parameter.type.jvmErasure.java.componentType, varargs.size)
@@ -107,7 +107,7 @@ object CommandCallResolver
         val arguments: List<Any?>,
         val thisRef: Any
     ) {
-        private val isExtensionFunction: Boolean = signature.exReParameter != null
+        private val isExtensionFunction: Boolean = signature.extensionReceiverParameter != null
 
         private fun buildArgs(extensionReceiver: Any?): kotlin.Array<Any?>
         {
