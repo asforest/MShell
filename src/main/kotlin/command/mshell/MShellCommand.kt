@@ -1,17 +1,16 @@
 package com.github.asforest.mshell.command.mshell
 
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.command.SmartCommand
-import com.github.asforest.mshell.command.mshell.MainCommand.help
+import com.github.asforest.mshell.command.MiraiTreeCommand
 import com.github.asforest.mshell.command.resolver.AbstractArgumentParsers
-import com.github.asforest.mshell.command.resolver.AbstractSmartCommand
-import com.github.asforest.mshell.command.resolver.PrefixCommandSignature
+import com.github.asforest.mshell.command.resolver.TreeCommand
+import com.github.asforest.mshell.command.resolver.PrefixedCommandSignature
 import com.github.asforest.mshell.permission.MShellPermissions
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.permission.PermissionService.Companion.testPermission
 import net.mamoe.mirai.message.data.MessageChain
 
-object MShellCommand : SmartCommand(
+object MShellCommand : MiraiTreeCommand(
     owner = MShellPlugin,
     primaryName = "mshell",
     secondaryNames = arrayOf("ms"),
@@ -23,8 +22,8 @@ object MShellCommand : SmartCommand(
     const val Admin = 1 shl 1
     const val All = User or Admin
 
-    override val subCommandFunctions: List<PrefixCommandSignature> by lazy {
-        MainCommand.allCommandFunctions
+    override val subCommandFunctions: List<PrefixedCommandSignature> by lazy {
+        MainCommand.allCommands
     }
 
     override suspend fun CommandSender.onCommand(args: MessageChain)
@@ -43,7 +42,7 @@ object MShellCommand : SmartCommand(
                     Nobody
             }
 
-            val afun = MainCommand.resolveCommandText(commandText, senderPermission)
+            val afun = MainCommand.resolveCommandText(commandText.split(" "), senderPermission)
             if (afun != null) {
                 afun.callSuspend(this)
             } else {
@@ -54,7 +53,7 @@ object MShellCommand : SmartCommand(
             }
         } catch (e: AbstractArgumentParsers.ArgumentParserException) {
             sendMessage("参数#${e.argIndex + 3} '${e.raw}'不是${e.typeExcepted.simpleName}类型")
-        } catch (e: AbstractSmartCommand.PermissionDeniedException) {
+        } catch (e: TreeCommand.PermissionDeniedException) {
             sendMessage("权限不够")
         }
     }

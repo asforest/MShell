@@ -3,34 +3,32 @@ package com.github.asforest.mshell.command.mshell
 import com.github.asforest.mshell.MShellPlugin
 import com.github.asforest.mshell.command.mshell.MShellCommand.Admin
 import com.github.asforest.mshell.command.mshell.MShellCommand.User
-import com.github.asforest.mshell.command.resolver.AbstractSmartCommand
+import com.github.asforest.mshell.command.resolver.TreeCommand
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.exception.business.*
 import com.github.asforest.mshell.model.Preset
 import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
-import com.github.asforest.mshell.session.SessionUser
-import com.github.asforest.mshell.util.MShellUtils
 import com.github.asforest.mshell.util.MShellUtils.toSessionUser
 import net.mamoe.mirai.console.command.CommandSender
 
-object MainCommand : AbstractSmartCommand()
+object MainCommand : TreeCommand()
 {
-    @NestedCommand("auth")
+    @Tree(name = "auth", aliases = ["a"])
     val authCommand = AuthCommand
 
-    @NestedCommand("preset")
+    @Tree(name = "preset", aliases = ["p"])
     val presetCommand = PresetCommand
 
-    @NestedCommand("group")
+    @Tree(name = "group", aliases = ["g"])
     val groupCommand = GroupCommand
 
-    @CommandFunc(desc = "插件帮助信息", permission = User or Admin)
+    @Command(desc = "插件帮助信息", permission = User or Admin)
     suspend fun CommandSender.help()
     {
         sendMessage(buildString {
-            for ((label, func) in allCommandFunctions)
+            for ((label, func) in allCommands)
             {
                 append(listOf(
                     "/${MShellCommand.primaryName}",
@@ -44,7 +42,7 @@ object MainCommand : AbstractSmartCommand()
         })
     }
 
-    @CommandFunc(desc = "开启一个会话并将当前用户连接到这个会话", permission = Admin or User)
+    @Command(desc = "开启一个会话并将当前用户连接到这个会话", permission = Admin or User)
     suspend fun CommandSender.open(preset: String? = null)
     {
         withCatch {
@@ -58,7 +56,7 @@ object MainCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "向目标会话的stdin里输出内容", permission = Admin or User)
+    @Command(desc = "向目标会话的stdin里输出内容", permission = Admin or User)
     suspend fun CommandSender.write(pid: Long, newline: Boolean, vararg text: String)
     {
         withCatch {
@@ -70,7 +68,7 @@ object MainCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "强制结束一个会话", permission = Admin or User)
+    @Command(desc = "强制结束一个会话", permission = Admin or User)
     suspend fun CommandSender.kill(pid: Long)
     {
         withCatch {
@@ -84,7 +82,7 @@ object MainCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "连接到一个会话", permission = Admin or User)
+    @Command(desc = "连接到一个会话", permission = Admin or User)
     suspend fun CommandSender.connect(pid: Long)
     {
         withCatch {
@@ -97,7 +95,7 @@ object MainCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "断开当前会话", permission = Admin or User)
+    @Command(desc = "断开当前会话", permission = Admin or User)
     suspend fun CommandSender.disconnect()
     {
         withCatch {
@@ -107,7 +105,7 @@ object MainCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "强制断开一个会话的所有连接", permission = Admin)
+    @Command(desc = "强制断开一个会话的所有连接", permission = Admin)
     suspend fun CommandSender.disconnect(pid: Long)
     {
         withCatch {
@@ -115,7 +113,7 @@ object MainCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "显示所有会话", permission = Admin or User)
+    @Command(desc = "显示所有会话", permission = Admin or User)
     suspend fun CommandSender.list()
     {
         val presetsAvailable = PresetGrants.getAvailablePresets(toSessionUser())
@@ -128,7 +126,7 @@ object MainCommand : AbstractSmartCommand()
         }.ifEmpty { "当前没有运行中的会话" })
     }
 
-    @CommandFunc(desc = "列出所有可用的环境预设", permission = Admin or User)
+    @Command(desc = "列出所有可用的环境预设", permission = Admin or User)
     suspend fun CommandSender.presets()
     {
         val presetsAvailable = PresetGrants.getAvailablePresets(toSessionUser())
@@ -138,7 +136,7 @@ object MainCommand : AbstractSmartCommand()
         }.ifEmpty { "没有可用的环境预设" })
     }
 
-    @CommandFunc(desc = "模拟戳一戳(窗口抖动)消息", permission = Admin)
+    @Command(desc = "模拟戳一戳(窗口抖动)消息", permission = Admin)
     suspend fun CommandSender.poke()
     {
         val user = toSessionUser()
@@ -152,7 +150,7 @@ object MainCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "重新加载config.yml配置文件", permission = Admin)
+    @Command(desc = "重新加载config.yml配置文件", permission = Admin)
     suspend fun CommandSender.reload()
     {
         MShellConfig.read()

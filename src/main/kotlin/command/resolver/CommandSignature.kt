@@ -3,7 +3,6 @@ package com.github.asforest.mshell.command.resolver
 import kotlin.reflect.*
 import kotlin.reflect.full.isSubtypeOf
 import kotlin.reflect.jvm.jvmErasure
-import kotlin.streams.toList
 
 /**
  * @param name: 指令名字
@@ -71,6 +70,8 @@ data class CommandSignature(
             else
                 type.arguments.first()::class
         }
+
+//        val actualGenaricType = (javaClass.genericSuperclass as ParameterizedType).actualTypeArguments[0] as Class<*>
 
         override fun toString(): String
         {

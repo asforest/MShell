@@ -1,9 +1,9 @@
 package com.github.asforest.mshell.command.resolver
 
 /**
- * 带前缀的CommandSignature
+ * 带前缀版本的CommandSignature
  */
-data class PrefixCommandSignature(
+data class PrefixedCommandSignature(
     val prefix: String,
     val signature: CommandSignature,
 )

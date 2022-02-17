@@ -1,7 +1,7 @@
 package com.github.asforest.mshell.command.mshell
 
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.command.resolver.AbstractSmartCommand
+import com.github.asforest.mshell.command.resolver.TreeCommand
 import com.github.asforest.mshell.exception.business.AmbiguousGroupIdException
 import com.github.asforest.mshell.exception.business.QQGroupNotFoundException
 import com.github.asforest.mshell.exception.business.UsingInConsoleNotAllowedException
@@ -11,9 +11,9 @@ import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.command.isConsole
 import net.mamoe.mirai.contact.Group
 
-object GroupCommand : AbstractSmartCommand()
+object GroupCommand : TreeCommand()
 {
-    @CommandFunc(desc = "开启一个会话并将这个会话连接到一个群聊", permission = MShellCommand.Admin)
+    @Command(desc = "开启一个会话并将这个会话连接到一个群聊", permission = MShellCommand.Admin)
     suspend fun CommandSender.open(group: Long, preset: String? = null)
     {
         withCatch {
@@ -28,7 +28,7 @@ object GroupCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "将一个群聊连接到一个会话上", permission = MShellCommand.Admin)
+    @Command(desc = "将一个群聊连接到一个会话上", permission = MShellCommand.Admin)
     suspend fun CommandSender.connect(group: Long, pid: Long)
     {
         withCatch {
@@ -42,7 +42,7 @@ object GroupCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "断开一个群聊的会话", permission = MShellCommand.Admin)
+    @Command(desc = "断开一个群聊的会话", permission = MShellCommand.Admin)
     suspend fun CommandSender.disconnect(group: Long)
     {
         withCatch {

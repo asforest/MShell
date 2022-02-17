@@ -1,6 +1,6 @@
 package com.github.asforest.mshell.command
 
-import com.github.asforest.mshell.command.resolver.PrefixCommandSignature
+import com.github.asforest.mshell.command.resolver.PrefixedCommandSignature
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.permission.Permission
@@ -8,10 +8,9 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.message.data.buildMessageChain
-import kotlin.reflect.full.starProjectedType
 import kotlin.reflect.typeOf
 
-abstract class SmartCommand (
+abstract class MiraiTreeCommand (
     /** 指令拥有者. */
     override val owner: CommandOwner,
     /** 主指令名. */
@@ -26,7 +25,7 @@ abstract class SmartCommand (
     override val prefixOptional: Boolean = false,
 ) : Command {
 
-    abstract val subCommandFunctions: List<PrefixCommandSignature>
+    abstract val subCommandFunctions: List<PrefixedCommandSignature>
 
     override val usage: String by lazy {
         subCommandFunctions.joinToString("\n") { pfun ->

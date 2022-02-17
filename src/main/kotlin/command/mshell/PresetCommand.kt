@@ -2,7 +2,7 @@ package com.github.asforest.mshell.command.mshell
 
 import com.github.asforest.mshell.MShellPlugin
 import com.github.asforest.mshell.command.mshell.MShellCommand.Admin
-import com.github.asforest.mshell.command.resolver.AbstractSmartCommand
+import com.github.asforest.mshell.command.resolver.TreeCommand
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.exception.business.MissingParamaterException
 import com.github.asforest.mshell.exception.business.PresetAlreadyExistedYetException
@@ -14,11 +14,11 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import java.nio.charset.Charset
 
 @ConsoleExperimentalApi
-object PresetCommand : AbstractSmartCommand()
+object PresetCommand : TreeCommand()
 {
     val ep: PresetsConfig by lazy { PresetsConfig }
 
-    @CommandFunc(desc = "创建一个环境预设", permission = Admin)
+    @Command(desc = "创建一个环境预设", permission = Admin)
     suspend fun CommandSender.add(preset: String, charset: String, vararg shell: String)
     {
         withCatch {
@@ -44,7 +44,7 @@ object PresetCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "删除一个环境预设", permission = Admin)
+    @Command(desc = "删除一个环境预设", permission = Admin)
     suspend fun CommandSender.remove(preset: String)
     {
         withCatch {
@@ -55,7 +55,7 @@ object PresetCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "列出所有环境预设配置", permission = Admin)
+    @Command(desc = "列出所有环境预设配置", permission = Admin)
     suspend fun CommandSender.list(preset: String? = null)
     {
         var output = ""
@@ -65,7 +65,7 @@ object PresetCommand : AbstractSmartCommand()
         sendMessage(output.ifEmpty { "还没有任何环境预设" })
     }
 
-    @CommandFunc(desc = "设置会话的启动程序", permission = Admin)
+    @Command(desc = "设置会话的启动程序", permission = Admin)
     suspend fun CommandSender.shell(preset: String, vararg shell: String)
     {
         withCatch {
@@ -84,7 +84,7 @@ object PresetCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "设置会话的工作目录", permission = Admin)
+    @Command(desc = "设置会话的工作目录", permission = Admin)
     suspend fun CommandSender.cwd(preset: String, vararg dir: String)
     {
         withCatch {
@@ -103,7 +103,7 @@ object PresetCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "设置会话的环境变量", permission = Admin)
+    @Command(desc = "设置会话的环境变量", permission = Admin)
     suspend fun CommandSender.env(preset: String, key: String = "", vararg value: String)
     {
         withCatch {
@@ -125,7 +125,7 @@ object PresetCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "设置会话的初始化命令", permission = Admin)
+    @Command(desc = "设置会话的初始化命令", permission = Admin)
     suspend fun CommandSender.exec(preset: String, vararg exec: String)
     {
         withCatch {
@@ -144,7 +144,7 @@ object PresetCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "设置会话标准输入输出使用的字符集", permission = Admin)
+    @Command(desc = "设置会话标准输入输出使用的字符集", permission = Admin)
     suspend fun CommandSender.charset(preset: String, charset: String ="")
     {
         withCatch {
@@ -163,7 +163,7 @@ object PresetCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "设置会话单实例约束", permission = Admin)
+    @Command(desc = "设置会话单实例约束", permission = Admin)
     suspend fun CommandSender.singleins(preset: String, singleins: Boolean)
     {
         withCatch {
@@ -179,7 +179,7 @@ object PresetCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "设置会话的终端宽度", permission = Admin)
+    @Command(desc = "设置会话的终端宽度", permission = Admin)
     suspend fun CommandSender.columns(preset: String, columns: Int)
     {
         withCatch {
@@ -190,7 +190,7 @@ object PresetCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "设置会话的终端高度", permission = Admin)
+    @Command(desc = "设置会话的终端高度", permission = Admin)
     suspend fun CommandSender.rows(preset: String, rows: Int)
     {
         withCatch {
@@ -201,7 +201,7 @@ object PresetCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "设置会话的stdout合并字符数上限", permission = Admin)
+    @Command(desc = "设置会话的stdout合并字符数上限", permission = Admin)
     suspend fun CommandSender.truncation(preset: String, thresholdInChars: Int)
     {
         withCatch {
@@ -212,7 +212,7 @@ object PresetCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "设置会话的stdout合并间隔", permission = Admin)
+    @Command(desc = "设置会话的stdout合并间隔", permission = Admin)
     suspend fun CommandSender.batch(preset: String, intevalInMs: Int)
     {
         withCatch {
@@ -223,7 +223,7 @@ object PresetCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "设置会话的遗愿消息缓冲区大小", permission = Admin)
+    @Command(desc = "设置会话的遗愿消息缓冲区大小", permission = Admin)
     suspend fun CommandSender.lastwill(preset: String, capacityInChars: Int)
     {
         withCatch {
@@ -234,7 +234,7 @@ object PresetCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "设置默认的环境预设方案", permission = Admin)
+    @Command(desc = "设置默认的环境预设方案", permission = Admin)
     suspend fun CommandSender.def(preset: String? =null)
     {
         withCatch {
@@ -251,7 +251,7 @@ object PresetCommand : AbstractSmartCommand()
         }
     }
 
-    @CommandFunc(desc = "从配置文件重新加载环境预设方案", permission = Admin)
+    @Command(desc = "从配置文件重新加载环境预设方案", permission = Admin)
     suspend fun CommandSender.reload() {
         withCatch {
             ep.read()
