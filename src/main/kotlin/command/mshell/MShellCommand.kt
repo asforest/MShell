@@ -14,8 +14,8 @@ import net.mamoe.mirai.message.data.MessageChain
 object MShellCommand : SmartCommand(
     owner = MShellPlugin,
     primaryName = "mshell",
-    description = "MShell插件指令",
     secondaryNames = arrayOf("ms"),
+    description = "MShell插件指令",
     permission = MShellPermissions.use
 ) {
     const val Nobody = 0
@@ -44,17 +44,19 @@ object MShellCommand : SmartCommand(
             }
 
             val afun = MainCommand.resolveCommandText(commandText, senderPermission)
-            if (afun != null) afun.callSuspend(this) else this.help()
+            if (afun != null) {
+                afun.callSuspend(this)
+            } else {
+                if (commandText.isEmpty())
+                    sendMessage("输入 /$primaryName help 来查看帮助信息")
+                else
+                    sendMessage("未知指令。输入 /$primaryName help 来查看帮助信息")
+            }
         } catch (e: AbstractArgumentParsers.ArgumentParserException) {
             sendMessage("参数#${e.argIndex + 3} '${e.raw}'不是${e.typeExcepted.simpleName}类型")
         } catch (e: AbstractSmartCommand.PermissionDeniedException) {
             sendMessage("权限不够")
         }
-    }
-
-    override suspend fun CommandSender.onDefaultCommand()
-    {
-        this.help()
     }
 
 }

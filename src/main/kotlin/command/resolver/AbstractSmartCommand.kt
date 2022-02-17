@@ -87,18 +87,11 @@ abstract class AbstractSmartCommand
 
         val functions = commandFunctions.filter { it.prefix == label }
 
-        val resolved = if (functions.isNotEmpty())
-        {
+        val resolved = if (functions.isNotEmpty()) {
             functions.firstNotNullOfOrNull { function -> CommandCallResolver.resolve(function.signature, arguments, this) }
         } else {
             nestedCommandFunctions[label]?.resolveCommandText(arguments.joinToString(" "), callerPermission)
         }
-
-//        val resolved = if(commandFunctions[label] != null) {
-//            CommandCallResolver.resolve(commandFunctions[label]!!, arguments, this)
-//        } else {
-//            nestedCommandFunctions[label]?.resolveCommandText(arguments.joinToString(" "), callerPermission)
-//        }
 
         if(resolved != null && resolved.signature.permissionMask and callerPermission == 0)
             throw PermissionDeniedException(resolved)
@@ -138,6 +131,7 @@ abstract class AbstractSmartCommand
     protected annotation class CommandFunc(
         val desc: String,
         val permission: Int = 0,
+        val aliases: Array<String> = []
     )
 
     @Target(AnnotationTarget.FIELD)

@@ -5,6 +5,7 @@ import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.permission.Permission
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
+import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.message.data.buildMessageChain
 import kotlin.reflect.full.starProjectedType
@@ -42,53 +43,55 @@ abstract class SmartCommand (
     }
 
     // 纯 vararg String 版本
-//    @ExperimentalCommandDescriptors
-//    override val overloads: List<@JvmWildcard CommandSignature> = listOf(
-//        CommandSignatureImpl(
-//            receiverParameter = CommandReceiverParameter(false, typeOf<CommandSender>()),
-//            valueParameters = listOf(
-//                AbstractCommandValueParameter.UserDefinedType.createRequired<Array<out Message>>(
-//                    "args",
-//                    true
-//                )
-//            )
-//        ) { call ->
-//            val sender = call.caller
-//            val arguments = call.rawValueArguments
-//            sender.onCommand(buildMessageChain { arguments.forEach { +it.value } })
-//        }
-//    )
-
     @ConsoleExperimentalApi
     @ExperimentalCommandDescriptors
-    override val overloads: List<CommandSignature> by lazy {
-        subCommandFunctions.map { (label, func) ->
-
-            val valueParameters = label.split(' ').mapIndexed { idx, s -> AbstractCommandValueParameter.StringConstant("#$idx", s, false) } +
-                    func.parameters.map { param ->
-                        AbstractCommandValueParameter.UserDefinedType<Any?>(
-                            param.name, param.isOptional, param.isVararg, if(!param.isVararg) String::class.starProjectedType else Array<String>::class.starProjectedType
-                        )
-                    }
-
-            CommandSignatureImpl(
-                receiverParameter = CommandReceiverParameter(false, typeOf<CommandSender>()),
-                valueParameters = valueParameters
-            ) { call ->
-                val sender = call.caller
-                val arguments = call.rawValueArguments
-                sender.onCommand(buildMessageChain { arguments.forEach { +it.value } })
-            }
-        } + CommandSignatureImpl(
+    override val overloads: List<@JvmWildcard CommandSignature> = listOf(
+        CommandSignatureImpl(
             receiverParameter = CommandReceiverParameter(false, typeOf<CommandSender>()),
-            valueParameters = listOf()
-        ) {
-            call ->
+            valueParameters = listOf(
+                AbstractCommandValueParameter.UserDefinedType.createRequired<Array<out Message>>(
+                    "args",
+                    true
+                )
+            )
+        ) { call ->
             val sender = call.caller
-//            val arguments = call.rawValueArguments
-            sender.onDefaultCommand()
+            val arguments = call.rawValueArguments
+            sender.onCommand(buildMessageChain { arguments.forEach { +it.value } })
         }
-    }
+    )
+
+// 按实际参数类型解析的版本
+//    @ConsoleExperimentalApi
+//    @ExperimentalCommandDescriptors
+//    override val overloads: List<CommandSignature> by lazy {
+//        subCommandFunctions.map { (label, func) ->
+//
+//            val valueParameters = label.split(' ').mapIndexed { idx, s -> AbstractCommandValueParameter.StringConstant("#$idx", s, false) } +
+//                    func.parameters.map { param ->
+//                        AbstractCommandValueParameter.UserDefinedType<Any?>(
+//                            param.name, param.isOptional, param.isVararg, if(!param.isVararg) String::class.starProjectedType else Array<String>::class.starProjectedType
+//                        )
+//                    }
+//
+//            CommandSignatureImpl(
+//                receiverParameter = CommandReceiverParameter(false, typeOf<CommandSender>()),
+//                valueParameters = valueParameters
+//            ) { call ->
+//                val sender = call.caller
+//                val arguments = call.rawValueArguments
+//                sender.onCommand(buildMessageChain { arguments.forEach { +it.value } })
+//            }
+//        } + CommandSignatureImpl(
+//            receiverParameter = CommandReceiverParameter(false, typeOf<CommandSender>()),
+//            valueParameters = listOf()
+//        ) {
+//            call ->
+//            val sender = call.caller
+////            val arguments = call.rawValueArguments
+//            sender.onDefaultCommand()
+//        }
+//    }
 
     /**
      * 在指令被执行时调用.
@@ -99,7 +102,10 @@ abstract class SmartCommand (
      */
     abstract suspend fun CommandSender.onCommand(args: MessageChain)
 
-    abstract suspend fun CommandSender.onDefaultCommand()
+    /**
+     * 当指令没有附带任何参数时（执行指令本身），要执行的默认指令或者输出的帮助信息
+     */
+//    abstract suspend fun CommandSender.onDefaultCommand()
 }
 
 
