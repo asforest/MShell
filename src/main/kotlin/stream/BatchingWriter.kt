@@ -1,11 +1,14 @@
 package com.github.asforest.mshell.stream
 
 import com.github.asforest.mshell.event.Event
+import com.github.asforest.mshell.exception.system.ListenerNotFoundException
 import com.github.asforest.mshell.model.Preset
 import com.github.asforest.mshell.util.AnsiEscapeUtil
+import com.github.asforest.mshell.util.MShellUtils
 import com.github.asforest.mshell.util.StringUtils.splitAndReplace
 import kotlinx.coroutines.*
 import java.io.Writer
+import java.lang.RuntimeException
 import java.util.concurrent.LinkedBlockingDeque
 import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
@@ -179,13 +182,12 @@ class BatchingWriter(
             {
                 job = GlobalScope.launch {
                     delay(timeoutMs.toLong())
-                    if (listener != null)
+                    
+                    if (listener in onNewDataArrive)
                     {
-                        println(onNewDataArrive.listeners)
-                        println(listener)
                         onNewDataArrive -= listener!!
+                        continuation!!.resume(null)
                     }
-                    continuation!!.resume(null)
                 }
             }
         }
