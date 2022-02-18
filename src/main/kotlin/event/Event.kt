@@ -77,7 +77,7 @@ class Event : Iterable<Event.Listener>
         return listeners.iterator()
     }
 
-    data class Listener(
+    class Listener(
         var callback: () -> Unit,
         var type: ListenerType,
     )

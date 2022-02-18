@@ -75,7 +75,7 @@ class AsyncEvent : Iterable<AsyncEvent.Listener>
         return listeners.iterator()
     }
 
-    data class Listener(
+    class Listener(
         var callback: suspend () -> Unit,
         var type: ListenerType,
     )
