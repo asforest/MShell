@@ -7,6 +7,7 @@ import com.github.asforest.mshell.exception.business.AmbiguousGroupIdException
 import com.github.asforest.mshell.exception.business.QQGroupNotFoundException
 import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.session.SessionUser
+import net.mamoe.mirai.Bot
 import net.mamoe.mirai.contact.Group
 
 object GroupCommand : TreeCommand()
@@ -47,12 +48,13 @@ object GroupCommand : TreeCommand()
 
     private fun CallContext.getGroupUser(groupId: Long): SessionUser.GroupUser
     {
-        val _bot = sender.bot ?: throw QQGroupNotFoundException(groupId)
         val groupIdStr = groupId.toString()
 
         // 群聊号码简写支持
         val groups = mutableMapOf<String, Group>()
-        _bot.groups.forEach { groups[it.id.toString()] = it }
+        for (bot in Bot.instances)
+            for (group in bot.groups)
+                groups[group.id.toString()] = group
 
         var groupMatched: Group? = null
         for (key in groups.keys)
