@@ -3,6 +3,7 @@ package com.github.asforest.mshell.command.mshell
 import com.github.asforest.mshell.MShellPlugin
 import com.github.asforest.mshell.command.mshell.MShellCommand.Admin
 import com.github.asforest.mshell.command.mshell.MShellCommand.User
+import com.github.asforest.mshell.command.mshell.MShellCommand.CallContext
 import com.github.asforest.mshell.command.resolver.TreeCommand
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.exception.business.*
@@ -10,8 +11,6 @@ import com.github.asforest.mshell.model.Preset
 import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
-import com.github.asforest.mshell.util.MShellUtils.toSessionUser
-import net.mamoe.mirai.console.command.CommandSender
 
 object MainCommand : TreeCommand()
 {
@@ -25,11 +24,14 @@ object MainCommand : TreeCommand()
     val groupCommand = GroupCommand
 
     @Command(desc = "插件帮助信息", permission = User or Admin)
-    suspend fun CommandSender.help()
+    suspend fun CallContext.help()
     {
         sendMessage(buildString {
             for ((label, func) in allCommands)
             {
+                if (func.permissionMask and permission == 0)
+                    continue
+
                 append(listOf(
                     "/${MShellCommand.primaryName}",
                     label,
@@ -43,7 +45,7 @@ object MainCommand : TreeCommand()
     }
 
     @Command(desc = "开启一个会话并将当前用户连接到这个会话", permission = Admin or User)
-    suspend fun CommandSender.open(preset: String? = null)
+    suspend fun CallContext.open(preset: String? = null)
     {
         withCatch {
             val user = toSessionUser()
@@ -57,7 +59,7 @@ object MainCommand : TreeCommand()
     }
 
     @Command(desc = "向目标会话的stdin里输出内容", permission = Admin or User)
-    suspend fun CommandSender.write(pid: Long, newline: Boolean, vararg text: String)
+    suspend fun CallContext.write(pid: Long, newline: Boolean, vararg text: String)
     {
         withCatch {
             val session = pidToSession(pid)
@@ -69,7 +71,7 @@ object MainCommand : TreeCommand()
     }
 
     @Command(desc = "强制结束一个会话", permission = Admin or User)
-    suspend fun CommandSender.kill(pid: Long)
+    suspend fun CallContext.kill(pid: Long)
     {
         withCatch {
             val session = pidToSession(pid)
@@ -83,7 +85,7 @@ object MainCommand : TreeCommand()
     }
 
     @Command(desc = "连接到一个会话", permission = Admin or User)
-    suspend fun CommandSender.connect(pid: Long)
+    suspend fun CallContext.connect(pid: Long)
     {
         withCatch {
             val session = pidToSession(pid)
@@ -96,7 +98,7 @@ object MainCommand : TreeCommand()
     }
 
     @Command(desc = "断开当前会话", permission = Admin or User)
-    suspend fun CommandSender.disconnect()
+    suspend fun CallContext.disconnect()
     {
         withCatch {
             val user = toSessionUser()
@@ -106,7 +108,7 @@ object MainCommand : TreeCommand()
     }
 
     @Command(desc = "强制断开一个会话的所有连接", permission = Admin)
-    suspend fun CommandSender.disconnect(pid: Long)
+    suspend fun CallContext.disconnect(pid: Long)
     {
         withCatch {
             pidToSession(pid).disconnectAll()
@@ -114,7 +116,7 @@ object MainCommand : TreeCommand()
     }
 
     @Command(desc = "显示所有会话", permission = Admin or User)
-    suspend fun CommandSender.list()
+    suspend fun CallContext.list()
     {
         val presetsAvailable = PresetGrants.getAvailablePresets(toSessionUser())
         val sessionsVisible = SessionManager.sessions.filter { it.preset in presetsAvailable }
@@ -127,7 +129,7 @@ object MainCommand : TreeCommand()
     }
 
     @Command(desc = "列出所有可用的环境预设", permission = Admin or User)
-    suspend fun CommandSender.presets()
+    suspend fun CallContext.presets()
     {
         val presetsAvailable = PresetGrants.getAvailablePresets(toSessionUser())
 
@@ -137,7 +139,7 @@ object MainCommand : TreeCommand()
     }
 
     @Command(desc = "模拟戳一戳(窗口抖动)消息", permission = Admin)
-    suspend fun CommandSender.poke()
+    suspend fun CallContext.poke()
     {
         val user = toSessionUser()
         val session = SessionManager.getSession(user)
@@ -151,7 +153,7 @@ object MainCommand : TreeCommand()
     }
 
     @Command(desc = "重新加载config.yml配置文件", permission = Admin)
-    suspend fun CommandSender.reload()
+    suspend fun CallContext.reload()
     {
         MShellConfig.read()
         sendMessage("config.yml配置文件重载完成")
@@ -171,13 +173,13 @@ object MainCommand : TreeCommand()
      * 检查指定用户有没有一个预设的使用权限
      */
     @Suppress("NOTHING_TO_INLINE")
-    private inline fun CommandSender.check(preset: Preset): Preset?
+    private inline fun CallContext.check(preset: Preset): Preset?
     {
         return if (PresetGrants.isPresetAvailable(preset, toSessionUser())) preset else null
     }
 
-    private suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)
+    private suspend inline fun CallContext.withCatch(block: CallContext.() -> Unit)
     {
-        MShellPlugin.catchException(user) { block() }
+        MShellPlugin.catchException(sender.user) { block() }
     }
 }

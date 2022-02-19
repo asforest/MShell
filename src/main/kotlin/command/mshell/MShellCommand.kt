@@ -6,8 +6,12 @@ import com.github.asforest.mshell.command.resolver.AbstractArgumentParsers
 import com.github.asforest.mshell.command.resolver.TreeCommand
 import com.github.asforest.mshell.command.resolver.PrefixedCommandSignature
 import com.github.asforest.mshell.permission.MShellPermissions
+import com.github.asforest.mshell.session.SessionUser
+import com.github.asforest.mshell.util.MShellUtils.toSessionUser
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.permission.PermissionService.Companion.testPermission
+import net.mamoe.mirai.contact.Contact
+import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.MessageChain
 
 object MShellCommand : MiraiTreeCommand(
@@ -44,7 +48,7 @@ object MShellCommand : MiraiTreeCommand(
 
             val afun = MainCommand.resolveCommandText(commandText.split(" "), senderPermission)
             if (afun != null) {
-                afun.callSuspend(this)
+                afun.callSuspend(CallContext(this, senderPermission))
             } else {
                 if (commandText.isEmpty())
                     sendMessage("输入 /$primaryName help 来查看帮助信息")
@@ -56,6 +60,16 @@ object MShellCommand : MiraiTreeCommand(
         } catch (e: TreeCommand.PermissionDeniedException) {
             sendMessage("权限不够")
         }
+    }
+
+    data class CallContext(val sender: CommandSender, val permission: Int)
+    {
+        val isUser = permission and User
+        val isAdmin = permission and Admin
+
+        suspend fun sendMessage(message: String): MessageReceipt<Contact>? = sender.sendMessage(message)
+
+        fun toSessionUser(): SessionUser = sender.toSessionUser()
     }
 
 }

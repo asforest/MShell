@@ -2,6 +2,7 @@ package com.github.asforest.mshell.command.mshell
 
 import com.github.asforest.mshell.MShellPlugin
 import com.github.asforest.mshell.command.mshell.MShellCommand.Admin
+import com.github.asforest.mshell.command.mshell.MShellCommand.CallContext
 import com.github.asforest.mshell.command.resolver.TreeCommand
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.exception.business.MissingParamaterException
@@ -9,7 +10,6 @@ import com.github.asforest.mshell.exception.business.PresetAlreadyExistedYetExce
 import com.github.asforest.mshell.exception.business.PresetNotFoundException
 import com.github.asforest.mshell.exception.business.UnsupportedCharsetException
 import com.github.asforest.mshell.model.Preset
-import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import java.nio.charset.Charset
 
@@ -19,7 +19,7 @@ object PresetCommand : TreeCommand()
     val ep: PresetsConfig by lazy { PresetsConfig }
 
     @Command(desc = "创建一个环境预设", permission = Admin)
-    suspend fun CommandSender.add(preset: String, charset: String, vararg shell: String)
+    suspend fun CallContext.add(preset: String, charset: String, vararg shell: String)
     {
         withCatch {
             if (preset in ep.presets.keys)
@@ -45,7 +45,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "删除一个环境预设", permission = Admin)
-    suspend fun CommandSender.remove(preset: String)
+    suspend fun CallContext.remove(preset: String)
     {
         withCatch {
             getPresetWithThrow(preset)
@@ -56,7 +56,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "列出所有环境预设配置", permission = Admin)
-    suspend fun CommandSender.list(preset: String? = null)
+    suspend fun CallContext.list(preset: String? = null)
     {
         var output = ""
         ep.presets.filter { preset==null || preset in it.key }.forEach {
@@ -66,7 +66,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话的启动程序", permission = Admin)
-    suspend fun CommandSender.shell(preset: String, vararg shell: String)
+    suspend fun CallContext.shell(preset: String, vararg shell: String)
     {
         withCatch {
             getPresetWithThrow(preset)
@@ -85,7 +85,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话的工作目录", permission = Admin)
-    suspend fun CommandSender.cwd(preset: String, vararg dir: String)
+    suspend fun CallContext.cwd(preset: String, vararg dir: String)
     {
         withCatch {
             getPresetWithThrow(preset)
@@ -104,7 +104,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话的环境变量", permission = Admin)
-    suspend fun CommandSender.env(preset: String, key: String = "", vararg value: String)
+    suspend fun CallContext.env(preset: String, key: String = "", vararg value: String)
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
@@ -126,7 +126,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话的初始化命令", permission = Admin)
-    suspend fun CommandSender.exec(preset: String, vararg exec: String)
+    suspend fun CallContext.exec(preset: String, vararg exec: String)
     {
         withCatch {
             getPresetWithThrow(preset)
@@ -145,7 +145,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话标准输入输出使用的字符集", permission = Admin)
-    suspend fun CommandSender.charset(preset: String, charset: String ="")
+    suspend fun CallContext.charset(preset: String, charset: String ="")
     {
         withCatch {
             getPresetWithThrow(preset)
@@ -164,7 +164,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话单实例约束", permission = Admin)
-    suspend fun CommandSender.singleins(preset: String, singleins: Boolean)
+    suspend fun CallContext.singleins(preset: String, singleins: Boolean)
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
@@ -180,7 +180,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话的终端宽度", permission = Admin)
-    suspend fun CommandSender.columns(preset: String, columns: Int)
+    suspend fun CallContext.columns(preset: String, columns: Int)
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
@@ -191,7 +191,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话的终端高度", permission = Admin)
-    suspend fun CommandSender.rows(preset: String, rows: Int)
+    suspend fun CallContext.rows(preset: String, rows: Int)
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
@@ -202,7 +202,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话的stdout合并字符数上限", permission = Admin)
-    suspend fun CommandSender.truncation(preset: String, thresholdInChars: Int)
+    suspend fun CallContext.truncation(preset: String, thresholdInChars: Int)
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
@@ -213,7 +213,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话的stdout合并间隔", permission = Admin)
-    suspend fun CommandSender.batch(preset: String, intevalInMs: Int)
+    suspend fun CallContext.batch(preset: String, intevalInMs: Int)
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
@@ -224,7 +224,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话的遗愿消息缓冲区大小", permission = Admin)
-    suspend fun CommandSender.lastwill(preset: String, capacityInChars: Int)
+    suspend fun CallContext.lastwill(preset: String, capacityInChars: Int)
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
@@ -235,7 +235,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置默认的环境预设方案", permission = Admin)
-    suspend fun CommandSender.def(preset: String? =null)
+    suspend fun CallContext.def(preset: String? =null)
     {
         withCatch {
             if(preset != null)
@@ -252,7 +252,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "从配置文件重新加载环境预设方案", permission = Admin)
-    suspend fun CommandSender.reload() {
+    suspend fun CallContext.reload() {
         withCatch {
             ep.read()
             sendMessage("环境预设配置文件重载完成")
@@ -266,8 +266,8 @@ object PresetCommand : TreeCommand()
         return ep.presets[presetName] ?: throw PresetNotFoundException(presetName)
     }
 
-    suspend inline fun CommandSender.withCatch(block: CommandSender.() -> Unit)
+    suspend inline fun CallContext.withCatch(block: CallContext.() -> Unit)
     {
-        MShellPlugin.catchException(user) { block() }
+        MShellPlugin.catchException(sender.user) { block() }
     }
 }
