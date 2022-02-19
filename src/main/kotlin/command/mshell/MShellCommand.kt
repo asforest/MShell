@@ -46,15 +46,24 @@ object MShellCommand : MiraiTreeCommand(
                     Nobody
             }
 
-            val afun = MainCommand.resolveCommandText(commandText.split(" "), senderPermission)
-            if (afun != null) {
-                afun.callSuspend(CallContext(this, senderPermission))
-            } else {
-                if (commandText.isEmpty())
-                    sendMessage("输入 /$primaryName help 来查看帮助信息")
-                else
-                    sendMessage("未知指令。输入 /$primaryName help 来查看帮助信息")
-            }
+            val afun = MainCommand.resolveCommandText(commandText.split(" "), senderPermission, "")
+            afun.callSuspend(CallContext(this, senderPermission))
+
+        } catch (e: TreeCommand.NoFunctionMatchedException) {
+            if (commandText.isEmpty())
+                sendMessage("输入 /${secondaryNames.first()} help 来查看帮助信息")
+            else
+                sendMessage("未知指令。输入 /${secondaryNames.first()} help 来查看帮助信息")
+        } catch (e: TreeCommand.TooFewArgumentsException) {
+            val signature = listOf("/${secondaryNames.first()}", e.prefix, e.signature.name, e.signature.params)
+                .filter { it.isNotEmpty() }
+                .joinToString(" ")
+            sendMessage("参数太少。正确的参数列表：$signature")
+        } catch (e: TreeCommand.TooManyArgumentsException) {
+            val signature = listOf("/${secondaryNames.first()}", e.prefix, e.signature.name, e.signature.params)
+                .filter { it.isNotEmpty() }
+                .joinToString(" ")
+            sendMessage("参数太多。正确的参数列表：$signature")
         } catch (e: AbstractArgumentParsers.ArgumentParserException) {
             sendMessage("参数#${e.argIndex + 3} '${e.raw}'不是${e.typeExcepted.simpleName}类型")
         } catch (e: TreeCommand.PermissionDeniedException) {

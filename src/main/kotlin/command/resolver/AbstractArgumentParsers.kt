@@ -10,6 +10,10 @@ abstract class AbstractArgumentParsers<TTarget>
     var raw = ""
     lateinit var signature: CommandSignature
 
+    /**
+     * 尝试解析一个实参
+     * @throws ArgumentParserException 如果参数类型对不上
+     */
     fun parse(raw: String, argumentIndex: Int, signature: CommandSignature): TTarget
     {
         this.raw = raw

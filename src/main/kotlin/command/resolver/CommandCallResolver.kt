@@ -9,8 +9,9 @@ object CommandCallResolver
     /**
      * 解析具体函数并匹配参数
      * @return 返回解析好的函数。如果失败，返回null
+     * @throws AbstractArgumentParsers 如果参数类型对不上
      */
-    fun resolve(signature: CommandSignature, arguments: List<String>, thisRef: Any): ArgumentedFunction?
+    fun resolve(signature: CommandSignature, arguments: List<String>, thisRef: Any): ResolveResult
     {
         val parameters = signature.parameters
 //        println(arguments)
@@ -20,7 +21,7 @@ object CommandCallResolver
 
         // 缺少参数
         if (remainingParameters.any { !it.isOptional && !it.isVararg })
-            return null
+            return ResolveResult.TooFewArguments(signature)
 
         // 最终实参
         val argumentsToCall = mutableListOf<Any?>()
@@ -34,7 +35,7 @@ object CommandCallResolver
             // 不能有多余参数
             val remainingArguments = arguments.drop(zipped.size)
             if (remainingArguments.isNotEmpty())
-                return null
+                return ResolveResult.TooManyArguments(signature)
         }
 
         var argIndex = 0
@@ -88,7 +89,7 @@ object CommandCallResolver
 
 //        println(argumentsToCall.toString2())
 
-        return ArgumentedFunction(signature, argumentsToCall, thisRef)
+        return ResolveResult.ResolveCorrect(ArgumentedFunction(signature, argumentsToCall, thisRef))
     }
 
     private fun MutableList<Any?>.toString2(): String
@@ -106,38 +107,12 @@ object CommandCallResolver
         return "[$list]"
     }
 
-    /**
-     * @param signature: 函数签名
-     * @param arguments: 调用函数时要用到的实参
-     * @param thisRef: Function的this引用
-     */
-    data class ArgumentedFunction(
-        val signature: CommandSignature,
-        val arguments: List<Any?>,
-        val thisRef: Any
-    ) {
-        private val isExtensionFunction: Boolean = signature.extensionReceiverParameter != null
+    sealed class ResolveResult()
+    {
+        class TooFewArguments(val signature: CommandSignature) : ResolveResult()
 
-        private fun buildArgs(extensionReceiver: Any?): kotlin.Array<Any?>
-        {
-            return (if(extensionReceiver != null && isExtensionFunction)
-                listOf(extensionReceiver, *arguments.toTypedArray())
-            else
-                listOf(*arguments.toTypedArray())).toTypedArray()
-        }
+        class TooManyArguments(val signature: CommandSignature) : ResolveResult()
 
-        @JvmOverloads
-        suspend fun callSuspend(extensionReceiver: Any? = null)
-        {
-            val args = buildArgs(extensionReceiver)
-            signature.callable.callSuspend(thisRef, *args)
-        }
-
-        @JvmOverloads
-        suspend fun call(extensionReceiver: Any? = null)
-        {
-            val args = buildArgs(extensionReceiver)
-            signature.callable.callSuspend(thisRef, *args)
-        }
+        class ResolveCorrect(val afunction: ArgumentedFunction) : ResolveResult()
     }
 }

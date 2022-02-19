@@ -20,6 +20,8 @@ data class CommandSignature(
     val permissionMask: Int,
     val description: String
 ) {
+    val params = parameters.joinToString(" ") { p -> p.identity }
+
     data class Parameter(
         val name: String,
         val isOptional: Boolean,

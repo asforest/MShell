@@ -32,11 +32,7 @@ object MainCommand : TreeCommand()
                 if (func.permissionMask and permission == 0)
                     continue
 
-                append(listOf(
-                    "/${MShellCommand.primaryName}",
-                    label,
-                    *func.parameters.map { p -> p.identity }.toTypedArray(),
-                ).joinToString(" "))
+                append(listOf("/${MShellCommand.primaryName}", label, func.params).joinToString(" "))
                 if(func.description.isNotEmpty())
                     append(": ${func.description}")
                 append("\n")
