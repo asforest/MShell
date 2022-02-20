@@ -1,5 +1,6 @@
 package com.github.asforest.mshell.util
 
+import com.github.asforest.mshell.command.resolver.CommandSignature
 import com.github.asforest.mshell.session.SessionUser
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.CommandSender
@@ -60,5 +61,15 @@ object MShellUtils
             return SessionUser.ConsoleUser()
 
         return SessionUser.FriendUser(user!!)
+    }
+
+    fun buildUsage(prefix: String, function: CommandSignature, separator: String = ":"): String
+    {
+        return listOf(
+            prefix,
+            function.name,
+            function.params,
+        ).filter { it.isNotEmpty() }
+            .joinToString(" ") + if(function.description.isNotEmpty()) "$separator ${function.description}" else ""
     }
 }

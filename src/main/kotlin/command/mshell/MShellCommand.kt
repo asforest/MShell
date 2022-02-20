@@ -3,10 +3,11 @@ package com.github.asforest.mshell.command.mshell
 import com.github.asforest.mshell.MShellPlugin
 import com.github.asforest.mshell.command.MiraiTreeCommand
 import com.github.asforest.mshell.command.resolver.AbstractArgumentParsers
+import com.github.asforest.mshell.command.resolver.CommandSignature
 import com.github.asforest.mshell.command.resolver.TreeCommand
-import com.github.asforest.mshell.command.resolver.PrefixedCommandSignature
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.session.SessionUser
+import com.github.asforest.mshell.util.MShellUtils.buildUsage
 import com.github.asforest.mshell.util.MShellUtils.toSessionUser
 import net.mamoe.mirai.console.command.CommandSender
 import net.mamoe.mirai.console.permission.PermissionService.Companion.testPermission
@@ -21,12 +22,14 @@ object MShellCommand : MiraiTreeCommand(
     description = "MShell插件指令",
     permission = MShellPermissions.use
 ) {
+    val rootLabal = secondaryNames.first()
+
     const val Nobody = 0
     const val User = 1 shl 0
     const val Admin = 1 shl 1
     const val All = User or Admin
 
-    override val subCommandFunctions: List<PrefixedCommandSignature> by lazy {
+    override val subCommandFunctions: List<TreeCommand.PrefixedCommandSignature> by lazy {
         MainCommand.allCommands
     }
 
@@ -46,21 +49,27 @@ object MShellCommand : MiraiTreeCommand(
                     Nobody
             }
 
-            val afun = MainCommand.resolveCommandText(commandText.split(" "), senderPermission, "")
-            afun.callSuspend(CallContext(this, senderPermission))
+            val prefix = rootLabal
+            val arguments = commandText.split(" ").filter { it.isNotEmpty() }
 
+            if (arguments.isNotEmpty())
+            {
+                val afun = MainCommand.resolveCommandText(prefix, arguments, senderPermission)
+                afun.callSuspend(CallContext(this, senderPermission))
+            } else {
+                sendMessage("输入 /$prefix help 来查看帮助信息")
+            }
+        } catch (e: TreeCommand.MissingSubCommandException) {
+            sendMessage("可用的子指令：\n${e.availables.generateUsage(e.prefix)}")
         } catch (e: TreeCommand.NoFunctionMatchedException) {
-            if (commandText.isEmpty())
-                sendMessage("输入 /${secondaryNames.first()} help 来查看帮助信息")
-            else
-                sendMessage("未知指令。输入 /${secondaryNames.first()} help 来查看帮助信息")
+            sendMessage("未知子指令 ${e.label} 。可用的子指令：${e.availables.joinToString(", ") { it.name }}")
         } catch (e: TreeCommand.TooFewArgumentsException) {
-            val signature = listOf("/${secondaryNames.first()}", e.prefix, e.signature.name, e.signature.params)
+            val signature = listOf(e.prefix, e.signature.name, e.signature.params)
                 .filter { it.isNotEmpty() }
                 .joinToString(" ")
             sendMessage("参数太少。正确的参数列表：$signature")
         } catch (e: TreeCommand.TooManyArgumentsException) {
-            val signature = listOf("/${secondaryNames.first()}", e.prefix, e.signature.name, e.signature.params)
+            val signature = listOf(e.prefix, e.signature.name, e.signature.params)
                 .filter { it.isNotEmpty() }
                 .joinToString(" ")
             sendMessage("参数太多。正确的参数列表：$signature")
@@ -69,6 +78,18 @@ object MShellCommand : MiraiTreeCommand(
         } catch (e: TreeCommand.PermissionDeniedException) {
             sendMessage("权限不够")
         }
+    }
+
+    private fun List<CommandSignature>.generateUsage(prefix: String): String
+    {
+        return buildString {
+            for (funcation in this@generateUsage)
+            {
+                append("/")
+                append(buildUsage(prefix, funcation))
+                append("\n")
+            }
+        }.trim()
     }
 
     data class CallContext(val sender: CommandSender, val permission: Int)

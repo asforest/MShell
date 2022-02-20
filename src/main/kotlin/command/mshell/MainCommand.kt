@@ -2,8 +2,8 @@ package com.github.asforest.mshell.command.mshell
 
 import com.github.asforest.mshell.MShellPlugin
 import com.github.asforest.mshell.command.mshell.MShellCommand.Admin
-import com.github.asforest.mshell.command.mshell.MShellCommand.User
 import com.github.asforest.mshell.command.mshell.MShellCommand.CallContext
+import com.github.asforest.mshell.command.mshell.MShellCommand.User
 import com.github.asforest.mshell.command.resolver.TreeCommand
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.exception.business.*
@@ -11,6 +11,7 @@ import com.github.asforest.mshell.model.Preset
 import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
+import com.github.asforest.mshell.util.MShellUtils.buildUsage
 
 object MainCommand : TreeCommand()
 {
@@ -27,17 +28,16 @@ object MainCommand : TreeCommand()
     suspend fun CallContext.help()
     {
         sendMessage(buildString {
-            for ((label, func) in allCommands)
+            for ((prefix, func) in allCommands)
             {
                 if (func.permissionMask and permission == 0)
                     continue
 
-                append(listOf("/${MShellCommand.primaryName}", label, func.params).joinToString(" "))
-                if(func.description.isNotEmpty())
-                    append(": ${func.description}")
+                append("/")
+                append(buildUsage(MShellCommand.rootLabal + if (prefix.isNotEmpty()) " $prefix" else "", func))
                 append("\n")
             }
-        })
+        }.trim())
     }
 
     @Command(desc = "开启一个会话并将当前用户连接到这个会话", permission = Admin or User)

@@ -1,6 +1,8 @@
 package com.github.asforest.mshell.command
 
-import com.github.asforest.mshell.command.resolver.PrefixedCommandSignature
+import com.github.asforest.mshell.command.mshell.MShellCommand
+import com.github.asforest.mshell.command.resolver.TreeCommand
+import com.github.asforest.mshell.util.MShellUtils.buildUsage
 import net.mamoe.mirai.console.command.*
 import net.mamoe.mirai.console.command.descriptor.*
 import net.mamoe.mirai.console.permission.Permission
@@ -25,18 +27,16 @@ abstract class MiraiTreeCommand (
     override val prefixOptional: Boolean = false,
 ) : Command {
 
-    abstract val subCommandFunctions: List<PrefixedCommandSignature>
+    abstract val subCommandFunctions: List<TreeCommand.PrefixedCommandSignature>
 
     override val usage: String by lazy {
         subCommandFunctions.joinToString("\n") { pfun ->
-            val label = pfun.prefix
+            val prefix = pfun.prefix
             val func = pfun.signature
 
             buildString {
                 append(CommandManager.commandPrefix)
-                append("$primaryName $label ")
-                append(func.parameters.joinToString(" ") { parameter -> parameter.identity})
-                append("    # ${func.description}")
+                append(buildUsage(MShellCommand.rootLabal + if (prefix.isNotEmpty()) " $prefix" else "", func))
             }
         }
     }

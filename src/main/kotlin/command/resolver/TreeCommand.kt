@@ -8,6 +8,14 @@ import kotlin.reflect.KVisibility
 import kotlin.reflect.full.*
 import kotlin.reflect.jvm.javaField
 
+/**
+ * 指令指令的抽象类（一些变量命名说明：
+ *
+ * labal：指命令字符串用空格分割后的第一个元素，比如ms auth add中的ms。用来匹配方法标识符
+ *
+ * arguments：指命令字符串用空格分割后从第二个开始的后面的所有元素，比如ms auth add 123中的auth add 123。用来匹配方法形参
+ *
+ */
 abstract class TreeCommand
 {
     /**
@@ -17,18 +25,11 @@ abstract class TreeCommand
         val functions = mutableListOf<PrefixedCommandSignature>()
 
         for (command in this.commands)
-        {
-            functions += PrefixedCommandSignature(command.prefix, command.signature)
-        }
+            functions += PrefixedCommandSignature("", command)
 
-        fun collectFromMemberProperty(parent: TreeCommand)
-        {
-            for (subCommand in parent.subCommandObjects.filter { !it.isAlias })
-                for (command in subCommand.subtree.commands)
-                    functions += PrefixedCommandSignature(subCommand.field + " " + command.prefix, command.signature)
-        }
-
-        collectFromMemberProperty(this)
+        for (subCommand in subCommandObjects.filter { !it.isAlias })
+            for (command in subCommand.subtree.commands)
+                functions += PrefixedCommandSignature(subCommand.field + " " + command.name, command)
 
         functions
     }
@@ -36,18 +37,13 @@ abstract class TreeCommand
     /**
      * 所有定义在本类/子类里的指令函数列表
      */
-    protected val commands: List<PrefixedCommandSignature> by lazy {
+    protected val commands: List<CommandSignature> by lazy {
         this::class.functions
             .filter { it.isSubCommandFunction() }
             .onEach { it.checkModifiers() }
-            .map { func ->
-                val annotation = func.findAnnotation<Command>()!!
-
-                val signature = CommandSignature(func.name, func, func.valueParameters.map {
-                    CommandSignature.Parameter(it.name ?: "", it.isOptional, it.isVararg, it.type)
-                }, func.extensionReceiverParameter, annotation.permission, annotation.desc)
-
-                PrefixedCommandSignature(func.name, signature)
+            .map { funcation ->
+                val annotation = funcation.findAnnotation<Command>()!!
+                CommandSignature.CreateFromKF(funcation, funcation.name, annotation.permission, annotation.desc)
             }
     }
 
@@ -74,31 +70,32 @@ abstract class TreeCommand
 
     /**
      * 尝试解析Arguments
-     * @param commands 要被解析的Arguments字符串列表
-     * @param callerPermission 调用者拥有的权限，用来判断有无权限执行指令
      * @param prefix 指令前缀。用来知道当前函数是第几层子指令
+     * @param arguments 要被解析的Arguments字符串列表
+     * @param callerPermission 调用者拥有的权限，用来判断有无权限执行指令
      * @return 解析结果
+     * @throws MissingSubCommandException 没有任何实参被传进来
      * @throws NoFunctionMatchedException 没有对应的函数（解析失败）
      * @throws TooFewArgumentsException 实参太少
      * @throws TooManyArgumentsException 实参太多
      * @throws AbstractArgumentParsers.ArgumentParserException 解析成功，但参数类型不正确（不匹配）时
      * @throws PermissionDeniedException 解析成功，但权限不够时
      */
-    fun resolveCommandText(commands: List<String>, callerPermission: Int, prefix: String): ArgumentedFunction
+    fun resolveCommandText(prefix: String, arguments: List<String>, callerPermission: Int): ArgumentedFunction
     {
-        if(commands.isEmpty())
-            throw NoFunctionMatchedException()
+        if(arguments.isEmpty())
+            throw MissingSubCommandException(prefix, this.commands)
 
-        val label = commands[0]
-        val arguments = commands.drop(1)
+        val label = arguments[0]
+        val arguments = arguments.drop(1)
 
         val resolveResult = resolveWithinSelf(label, arguments)
 
         if (resolveResult == null)
         {
-            val subCommand = subCommandObjects.firstOrNull { it.field == label } ?: throw NoFunctionMatchedException()
+            val subCommand = subCommandObjects.firstOrNull { it.field == label } ?: throw NoFunctionMatchedException(prefix, label, this.commands)
             val pfx = prefix + (if(prefix.isNotEmpty()) " " else "") + subCommand.field
-            return subCommand.subtree.resolveCommandText(arguments, callerPermission, pfx)
+            return subCommand.subtree.resolveCommandText(pfx, arguments, callerPermission)
         }
 
         when(resolveResult)
@@ -118,9 +115,9 @@ abstract class TreeCommand
     {
         var tempResult: CommandCallResolver.ResolveResult? = null
 
-        for (function in this.commands.filter { it.prefix == label })
+        for (function in this.commands.filter { it.name == label })
         {
-            tempResult = CommandCallResolver.resolve(function.signature, arguments, this)
+            tempResult = CommandCallResolver.resolve(function, arguments, this)
 
             if (tempResult is CommandCallResolver.ResolveResult.ResolveCorrect)
                 return tempResult
@@ -140,13 +137,23 @@ abstract class TreeCommand
 
     class IllegalDeclarationException(message: String) : Exception(message)
 
-    class NoFunctionMatchedException : Exception()
+    class NoFunctionMatchedException(val prefix: String, val label: String, val availables: List<CommandSignature>) : Exception()
+
+    class MissingSubCommandException(val prefix: String, val availables: List<CommandSignature>) : Exception()
 
     class TooFewArgumentsException(val prefix: String, val signature: CommandSignature) : Exception()
 
     class TooManyArgumentsException(val prefix: String, val signature: CommandSignature) : Exception()
 
     class PermissionDeniedException(val prefix: String, val function: ArgumentedFunction) : Exception()
+
+    /**
+     * 带前缀版本的CommandSignature
+     */
+    data class PrefixedCommandSignature(
+        val prefix: String,
+        val signature: CommandSignature,
+    )
 
     /**
      * 代表一个定义在子对象里的指令函数列表

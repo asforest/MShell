@@ -1,11 +1,13 @@
 package com.github.asforest.mshell.command.resolver
 
 import kotlin.reflect.*
+import kotlin.reflect.full.extensionReceiverParameter
 import kotlin.reflect.full.isSubtypeOf
+import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.jvmErasure
 
 /**
- * @param name: 指令名字
+ * @param name: callable 标识符名字
  * @param callable: 指令KFunction对象
  * @param parameters: value parameter
  * @param extensionReceiverParameter: extension receiver parameter
@@ -20,7 +22,20 @@ data class CommandSignature(
     val permissionMask: Int,
     val description: String
 ) {
+    /**
+     * 字符串化后的parameters
+     */
     val params = parameters.joinToString(" ") { p -> p.identity }
+
+    companion object {
+        @JvmStatic
+        fun CreateFromKF(kf: KFunction<*>, prefix: String, permissionMask: Int, description: String): CommandSignature
+        {
+            val parameters = kf.valueParameters.map { Parameter(it.name ?: "", it.isOptional, it.isVararg, it.type) }
+
+            return CommandSignature(prefix, kf, parameters, kf.extensionReceiverParameter, permissionMask, description)
+        }
+    }
 
     data class Parameter(
         val name: String,
