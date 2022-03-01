@@ -115,7 +115,7 @@ class Session(
     {
         // 发送退出消息
         broadcaseMessageTruncation()
-        broadcastMessageBatchly("已从会话断开 $identity 因为会话已结束\n")
+        broadcastMessageBatchly("已从会话断开 $identity 因为会话已结束。返回码为 ${process.exitValue()}\n")
 //        println("开始刷新缓冲区")
 
         // 关掉连接管理器
