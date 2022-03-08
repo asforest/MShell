@@ -10,8 +10,8 @@ import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.session.SessionUser
+import com.github.asforest.mshell.util.EnvUtil
 import com.github.asforest.mshell.util.MShellUtils
-import com.github.asforest.mshell.util.MiraiUtil
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandSender.Companion.asCommandSender
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
@@ -30,7 +30,7 @@ import net.mamoe.mirai.message.data.PokeMessage
 import net.mamoe.mirai.message.data.anyIsInstance
 import net.mamoe.mirai.message.data.content
 
-object MShellPlugin : KotlinPlugin(MiraiUtil.pluginDescription)
+object MShellPlugin : KotlinPlugin(EnvUtil.pluginDescription)
 {
     override fun onEnable()
     {
