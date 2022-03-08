@@ -80,12 +80,12 @@ data class CommandSignature(
         }
 
         val genaricType: KClass<*> by lazy {
-            check(isVararg) { "can not access 'varargGenaricType' because paramter '$name' is not a Vararg" }
+            check(isVararg) { "can not access 'genaricType' because paramter '$name' is not a Vararg" }
 
             if (isPrimitiveArrayType)
                 type.jvmErasure.java.componentType.kotlin
             else
-                type.arguments.first()::class
+                type.arguments.first().type!!.classifier as KClass<*>
         }
 
 //        val actualGenaricType = (javaClass.genericSuperclass as ParameterizedType).actualTypeArguments[0] as Class<*>

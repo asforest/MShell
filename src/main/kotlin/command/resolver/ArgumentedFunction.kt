@@ -14,18 +14,20 @@ data class ArgumentedFunction(
 ) {
     private val isExtensionFunction: Boolean = signature.extensionReceiverParameter != null
 
-    private fun buildArgs(extensionReceiver: Any?): kotlin.Array<Any?>
+    @Suppress("UNCHECKED_CAST", "NOTHING_TO_INLINE")
+    private inline fun buildArgs(extensionReceiver: Any?): Array<Any?>
     {
-        return (if(extensionReceiver != null && isExtensionFunction)
-            listOf(extensionReceiver, *arguments.toTypedArray())
+        return if(extensionReceiver != null && isExtensionFunction)
+            arrayOf(extensionReceiver, *arguments.toTypedArray())
         else
-            listOf(*arguments.toTypedArray())).toTypedArray()
+            arguments.toTypedArray()
     }
 
     @JvmOverloads
     suspend fun callSuspend(extensionReceiver: Any? = null)
     {
         val args = buildArgs(extensionReceiver)
+//        println("call: ${args.map { it.toString() }} | value args:  $arguments")
         signature.callable.callSuspend(thisRef, *args)
     }
 

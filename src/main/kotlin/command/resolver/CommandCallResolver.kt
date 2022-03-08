@@ -1,7 +1,7 @@
 package com.github.asforest.mshell.command.resolver
 
+import com.github.asforest.mshell.exception.system.NoApplicableParserException
 import java.lang.reflect.Array
-import kotlin.reflect.full.callSuspend
 import kotlin.reflect.jvm.jvmErasure
 
 object CommandCallResolver
@@ -38,36 +38,36 @@ object CommandCallResolver
                 return ResolveResult.TooManyArguments(signature)
         }
 
+//        println("common args: ${zipped.size}, varargs: ${remainingParameters.size}")
+
         var argIndex = 0
 
         // 解析普通参数
         for ((parameter, argument) in zipped)
         {
-//            println(">> ${parameter.name} => $parameter    ${parameter.isOptional}     ${parameter.isVararg}")
+//            println(">> ${parameter.name} => $parameter    ${parameter.isOptional}     ${parameter.isVararg}, arg: $argument")
 
             if (parameter.isVararg)
             {
                 val parser = BuiltinArgumentParsers.parsers[parameter.genaricType]
                 if (parser != null)
                 {
-                    if (parameter.isPrimitiveArrayType)
-                    {
-                        val varargs = argument.split(" ").map { parser.parse(it, argIndex, signature) }
-                        val array = Array.newInstance(parameter.type.jvmErasure.java.componentType, varargs.size)
+                    val varargs = argument.split(" ").map { parser.parse(it, argIndex, signature) }
+                    val array = Array.newInstance(parameter.type.jvmErasure.java.componentType, varargs.size)
 
-                        for (i in varargs.indices)
-                            Array.set(array, i, varargs[i])
+                    for (i in varargs.indices)
+                        Array.set(array, i, varargs[i])
 
-                        argumentsToCall.add(array)
-                    } else {
-                        for (el in argument.split(" "))
-                            argumentsToCall += parser.parse(el, argIndex, signature)
-                    }
+                    argumentsToCall.add(array)
+                } else {
+                    throw NoApplicableParserException(signature, argIndex, parameter)
                 }
             } else {
                 val parser = BuiltinArgumentParsers.parsers[parameter.type.jvmErasure]
                 if (parser != null)
                     argumentsToCall += parser.parse(argument, argIndex, signature)
+                else
+                    throw NoApplicableParserException(signature, argIndex, parameter)
             }
 
             argIndex += 1
@@ -81,13 +81,16 @@ object CommandCallResolver
                 argumentsToCall += Array.newInstance(remainingParameter.type.jvmErasure.java.componentType, 0)
 
             // 使用null
-            if (remainingParameter.isOptional)
+            else if (remainingParameter.isOptional)
                 argumentsToCall += null
 
             // 不会再有第三种情况出现
+            else
+                throw RuntimeException("unknown error")
+
         }
 
-//        println(argumentsToCall.toString2())
+//        println("arg built: "+argumentsToCall.toString2())
 
         return ResolveResult.ResolveCorrect(ArgumentedFunction(signature, argumentsToCall, thisRef))
     }
