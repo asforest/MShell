@@ -24,7 +24,6 @@ repositories {
 }
 
 dependencies {
-//    implementation("com.esotericsoftware.yamlbeans:yamlbeans:1.15")
     implementation("org.yaml:snakeyaml:1.30")
     implementation("org.jetbrains.pty4j:pty4j:0.12.7")
 }
@@ -36,7 +35,6 @@ tasks.withType<JavaCompile> {
 
 mirai {
     configureShadow {
-
         // 在manifest里添加信息
         manifest {
             attributes("Mirai-Plugin-Version" to archiveVersion.get())
@@ -52,26 +50,21 @@ mirai {
     }
 }
 
-tasks.whenTaskAdded {
-    if(this is BuildMiraiPluginTask && name == "buildPlugin")
+// 注册开发任务
+tasks.register<Copy>("develop") {
+    val buildMiraiPluginTask = tasks.withType<BuildMiraiPluginTask>()
+    dependsOn(buildMiraiPluginTask)
+
+    val archive = buildMiraiPluginTask.first().archiveFile.get().asFile
+
+    val outputPath = System.getenv()["DBG"]?.replace("/", "\\")
+    val outputDir = outputPath
+        ?.run { File(this) }
+        ?.run { if(!exists() || !isDirectory) null else this }
+
+    if(outputDir != null)
     {
-        // 注册开发任务
-        tasks.register("develop", Copy::class) {
-            dependsOn(tasks.named("buildPlugin"))
-
-            val archive = project.buildDir.path + File.separator + "mirai" + File.separator + project.name + "-" + archiveVersion.get() + ".mirai.jar"
-
-            val outputPath = System.getenv()["OutputDir"]?.replace("/", "\\")
-            val outputDir = outputPath
-                ?.run { File(this) }
-                ?.run { if(!exists() || !isDirectory) null else this }
-
-            if(outputDir != null)
-            {
-//                Runtime.getRuntime().exec("cmd /C \"copy /Y $archive $outputPath\"")
-                from(archive).into(outputPath)
-                println("Copy $archive -> $outputPath")
-            }
-        }
+        from(archive).into(outputPath)
+        println("Copy $archive -> $outputPath")
     }
 }
