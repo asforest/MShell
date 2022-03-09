@@ -1,5 +1,9 @@
 # MShell
 
+![GitHub top language](https://img.shields.io/github/languages/top/asforest/MShell)
+![Release](https://img.shields.io/github/v/release/asforest/MShell)
+![GitHub all releases](https://img.shields.io/github/downloads/asforest/MShell/total)
+
 > 一个[Mirai](https://github.com/mamoe/mirai)机器人插件，用来连接QQ聊天窗口和系统Shell
 
 > 整篇文档篇幅较长，请善用目录功能
