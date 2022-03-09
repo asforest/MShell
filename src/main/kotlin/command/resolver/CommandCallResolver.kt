@@ -49,7 +49,7 @@ object CommandCallResolver
 
             if (parameter.isVararg)
             {
-                val parser = BuiltinArgumentParsers.parsers[parameter.genaricType]
+                val parser = BuiltinArgumentParsers.parsers[parameter.genericType]
                 if (parser != null)
                 {
                     val varargs = argument.split(" ").map { parser.parse(it, argIndex, signature) }

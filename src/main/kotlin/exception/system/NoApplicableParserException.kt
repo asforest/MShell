@@ -9,6 +9,6 @@ class NoApplicableParserException(function: CommandSignature, index: Int, parame
             "function '${function.name}'(${function.description}), " +
             "paramter index: $index, " +
             "paramter type: ${parameter.type}, " +
-            "genaric type(if has): ${if (parameter.isVararg) parameter.genaricType.toString() else "not a Vararg"}, " +
+            "generic type(if has): ${if (parameter.isVararg) parameter.genericType.toString() else "not a Vararg"}, " +
             "is paramter primitiveArrayType: ${parameter.isPrimitiveArrayType}"
 )

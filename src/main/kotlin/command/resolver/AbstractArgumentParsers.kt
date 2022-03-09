@@ -26,8 +26,8 @@ abstract class AbstractArgumentParsers<TTarget>
     @Suppress("NOTHING_TO_INLINE")
     protected inline fun fail(): Nothing
     {
-        val actualGenaricType = (javaClass.genericSuperclass as ParameterizedType).actualTypeArguments[0] as Class<*>
-        throw ArgumentParserException(argumentIndex, raw, actualGenaricType, signature)
+        val actualGenericType = (javaClass.genericSuperclass as ParameterizedType).actualTypeArguments[0] as Class<*>
+        throw ArgumentParserException(argumentIndex, raw, actualGenericType, signature)
     }
 
     class ArgumentParserException(
