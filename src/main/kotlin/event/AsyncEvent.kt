@@ -8,10 +8,11 @@ class AsyncEvent : Iterable<AsyncEvent.Listener>
 {
     val listeners = mutableListOf<Listener>()
 
-    fun always(cb: suspend () -> Unit)
-    {
-        addListener(cb, ListenerType.ALWAYS)
-    }
+    // 千万别用，有无限循环的bug
+//    fun always(cb: suspend () -> Unit)
+//    {
+//        addListener(cb, ListenerType.ALWAYS)
+//    }
 
     fun once(cb: suspend () -> Unit)
     {

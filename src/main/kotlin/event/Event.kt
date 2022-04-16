@@ -8,10 +8,11 @@ class Event : Iterable<Event.Listener>
 {
     val listeners = mutableListOf<Listener>()
 
-    fun always(cb: () -> Unit): Listener
-    {
-        return addListener(cb, ListenerType.ALWAYS)
-    }
+//    // 千万别用，有无限循环的bug
+//    fun always(cb: () -> Unit): Listener
+//    {
+//        return addListener(cb, ListenerType.ALWAYS)
+//    }
 
     fun once(cb: () -> Unit): Listener
     {
