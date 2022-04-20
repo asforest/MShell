@@ -34,6 +34,8 @@ object MShellPlugin : KotlinPlugin(EnvUtil.pluginDescription)
 {
     override fun onEnable()
     {
+        logger.info("本插件开源仓库: https://github.com/asforest/MShell 如果喜欢，请给我一颗Star")
+
         // 加载配置文件
         MShellConfig.read(saveDefault = true)
         PresetsConfig.read()
