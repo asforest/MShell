@@ -13,9 +13,10 @@ version = gitTagName?.run { getVersionName(this) } ?: System.getenv("VERSION") ?
 
 plugins {
     val kotlinVersion = "1.6.10"
+    val miraiVersion = "2.11.0-RC"
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.serialization") version kotlinVersion
-    id("net.mamoe.mirai-console") version "2.10.0"
+    id("net.mamoe.mirai-console") version miraiVersion
 }
 
 repositories {
@@ -26,26 +27,20 @@ repositories {
 dependencies {
     implementation("org.yaml:snakeyaml:1.30")
     implementation("org.jetbrains.pty4j:pty4j:0.12.7")
-}
 
-tasks.withType<JavaCompile> {
-    sourceCompatibility = "11"
-    targetCompatibility = "11"
+    // 告知 mirai-console 在打包插件时包含此依赖，不要剥离掉此依赖；无需包含版本号
+    "shadowLink"("org.jetbrains.pty4j:pty4j")
 }
 
 mirai {
+    jvmTarget = JavaVersion.VERSION_11
+
     configureShadow {
         // 在manifest里添加信息
         manifest {
             attributes("Mirai-Plugin-Version" to archiveVersion.get())
             attributes("Git-Commit" to (gitCommitSha ?: ""))
             attributes("Compile-Time" to timestamp)
-            attributes("Compile-Time-Ms" to System.currentTimeMillis())
-        }
-
-        // 打包源代码
-        sourceSets.main.get().allSource.sourceDirectories.map {
-            from(it) {into("project-sources/"+it.name) }
         }
     }
 }
@@ -56,10 +51,8 @@ tasks.register<Copy>("develop") {
     dependsOn(buildMiraiPluginTask)
 
     val archive = buildMiraiPluginTask.first().archiveFile.get().asFile
-
     val outputPath = System.getenv()["DBG"]?.replace("/", "\\")
-    val outputDir = outputPath
-        ?.run { File(this) }
+    val outputDir = outputPath?.run { File(this) }
         ?.run { if(!exists() || !isDirectory) null else this }
 
     if(outputDir != null)
