@@ -1,6 +1,5 @@
 package com.github.asforest.mshell.event
 
-import com.github.asforest.mshell.exception.system.EventLoopReachCountLimitException
 import com.github.asforest.mshell.exception.system.ListenerAlreadyAddedException
 import com.github.asforest.mshell.exception.system.ListenerNotFoundException
 
@@ -43,9 +42,9 @@ class Event : Iterable<Event.Listener>
 
     operator fun invoke()
     {
-        val vaildListeners = listeners.filter { it.type != ListenerType.NEVER }
+        val validListeners = listeners.filter { it.type != ListenerType.NEVER }
 
-        for (listener in vaildListeners)
+        for (listener in validListeners)
         {
             listener.callback()
 
