@@ -41,25 +41,14 @@ class AsyncEvent : Iterable<AsyncEvent.Listener>
 
     suspend fun invoke()
     {
-        var limit = 100000
+        val vaildListeners = listeners.filter { it.type != ListenerType.NEVER }
 
-        while (true)
+        for (listener in vaildListeners)
         {
-            val listenersToTrigger = listeners.filter { it.type != ListenerType.NEVER }
+            listener.callback()
 
-            for (listener in listenersToTrigger)
-            {
-                listener.callback()
-
-                if(listener.type == ListenerType.ONCE)
-                    listener.type = ListenerType.NEVER
-            }
-
-            if(listenersToTrigger.isEmpty())
-                break
-
-            if(limit-- <= 0)
-                throw EventLoopReachCountLimitException(100000)
+            if(listener.type == ListenerType.ONCE)
+                listener.type = ListenerType.NEVER
         }
 
         listeners.removeIf { it.type == ListenerType.NEVER }
