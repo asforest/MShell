@@ -29,7 +29,7 @@ abstract class TreeCommand
 
         for (subCommand in subCommandObjects.filter { !it.isAlias })
             for (command in subCommand.subtree.commands)
-                functions += PrefixedCommandSignature(subCommand.field + " " + command.name, command)
+                functions += PrefixedCommandSignature(subCommand.field, command)
 
         functions
     }
