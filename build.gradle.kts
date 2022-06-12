@@ -1,7 +1,6 @@
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.io.File
-import net.mamoe.mirai.console.gradle.BuildMiraiPluginTask
+import net.mamoe.mirai.console.gradle.BuildMiraiPluginV2
 
 fun getVersionName(tagName: String) = if(tagName.startsWith("v")) tagName.substring(1) else tagName
 val gitTagName: String? get() = Regex("(?<=refs/tags/).*").find(System.getenv("GITHUB_REF") ?: "")?.value
@@ -13,7 +12,7 @@ version = gitTagName?.run { getVersionName(this) } ?: System.getenv("VERSION") ?
 
 plugins {
     val kotlinVersion = "1.6.10"
-    val miraiVersion = "2.11.0-RC"
+    val miraiVersion = "2.11.0"
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.serialization") version kotlinVersion
     id("net.mamoe.mirai-console") version miraiVersion
@@ -34,8 +33,10 @@ dependencies {
 
 mirai {
     jvmTarget = JavaVersion.VERSION_11
+}
 
-    configureShadow {
+afterEvaluate {
+    tasks.named<BuildMiraiPluginV2>("buildPlugin") {
         // 在manifest里添加信息
         manifest {
             attributes("Mirai-Plugin-Version" to archiveVersion.get())
@@ -47,10 +48,10 @@ mirai {
 
 // 注册开发任务
 tasks.register<Copy>("develop") {
-    val buildMiraiPluginTask = tasks.withType<BuildMiraiPluginTask>()
+    val buildMiraiPluginTask = tasks.named<BuildMiraiPluginV2>("buildPlugin")
     dependsOn(buildMiraiPluginTask)
 
-    val archive = buildMiraiPluginTask.first().archiveFile.get().asFile
+    val archive = buildMiraiPluginTask.get().archiveFile.get().asFile
     val outputPath = System.getenv()["DBG"]?.replace("/", "\\")
     val outputDir = outputPath?.run { File(this) }
         ?.run { if(!exists() || !isDirectory) null else this }
