@@ -12,7 +12,7 @@ version = gitTagName?.run { getVersionName(this) } ?: System.getenv("VERSION") ?
 
 plugins {
     val kotlinVersion = "1.6.10"
-    val miraiVersion = "2.11.0"
+    val miraiVersion = "2.12.0"
     kotlin("jvm") version kotlinVersion
     kotlin("plugin.serialization") version kotlinVersion
     id("net.mamoe.mirai-console") version miraiVersion
@@ -37,7 +37,6 @@ mirai {
 
 afterEvaluate {
     tasks.named<BuildMiraiPluginV2>("buildPlugin") {
-        // 在manifest里添加信息
         manifest {
             attributes("Mirai-Plugin-Version" to archiveVersion.get())
             attributes("Git-Commit" to (gitCommitSha ?: ""))

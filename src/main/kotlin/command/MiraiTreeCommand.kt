@@ -46,7 +46,7 @@ abstract class MiraiTreeCommand (
     @ExperimentalCommandDescriptors
     override val overloads: List<@JvmWildcard CommandSignature> = listOf(
         CommandSignatureImpl(
-            receiverParameter = CommandReceiverParameter(false, typeOf<CommandSender>()),
+            receiverParameter = CommandReceiverParameter.Context(false),
             valueParameters = listOf(
                 AbstractCommandValueParameter.UserDefinedType.createRequired<Array<out Message>>(
                     "args",
