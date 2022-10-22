@@ -114,45 +114,52 @@ object MainCommand : TreeCommand()
     @Command(desc = "显示所有会话", permission = Admin or User)
     suspend fun CallContext.list()
     {
-        val presetsAvailable = PresetGrants.getAvailablePresets(toSessionUser())
-        val sessionsVisible = SessionManager.sessions.filter { it.preset in presetsAvailable }
+        withCatch {
+            val presetsAvailable = PresetGrants.getAvailablePresets(toSessionUser())
+            val sessionsVisible = SessionManager.sessions.filter { it.preset in presetsAvailable }
 
-        sendMessage(sessionsVisible.withIndex().joinToString("\n") { (index, session) ->
-            val pid = session.pid
-            val usersConnected = session.users
-            "[$index] ${session.preset.name} | $pid: $usersConnected"
-        }.ifEmpty { "当前没有运行中的会话" })
+            sendMessage(sessionsVisible.withIndex().joinToString("\n") { (index, session) ->
+                val pid = session.pid
+                val usersConnected = session.users
+                "[$index] ${session.preset.name} | $pid: $usersConnected"
+            }.ifEmpty { "当前没有运行中的会话" })
+        }
     }
 
     @Command(desc = "列出所有可用的环境预设", permission = Admin or User)
     suspend fun CallContext.presets()
     {
-        val presetsAvailable = PresetGrants.getAvailablePresets(toSessionUser())
+        withCatch {
+            val presetsAvailable = PresetGrants.getAvailablePresets(toSessionUser())
 
-        sendMessage(presetsAvailable.withIndex().joinToString("\n") { (index, preset) ->
-            "$index. ${preset.name}"
-        }.ifEmpty { "没有可用的环境预设" })
+            sendMessage(presetsAvailable.withIndex().joinToString("\n") { (index, preset) ->
+                "$index. ${preset.name}"
+            }.ifEmpty { "没有可用的环境预设" })
+        }
     }
 
     @Command(desc = "模拟戳一戳(窗口抖动)消息", permission = Admin)
     suspend fun CallContext.poke()
     {
-        val user = toSessionUser()
-        val session = SessionManager.getSession(user)
+        withCatch {
+            val user = toSessionUser()
+            val session = SessionManager.getSession(user)
 
-        if(session != null)
-        {
-            session.disconnect(user)
-        } else {
-            SessionManager.reconnectOrCreate(user)
+            if (session != null) {
+                session.disconnect(user)
+            } else {
+                SessionManager.reconnectOrCreate(user)
+            }
         }
     }
 
     @Command(desc = "重新加载config.yml配置文件", permission = Admin)
     suspend fun CallContext.reload()
     {
-        MShellConfig.read()
-        sendMessage("config.yml配置文件重载完成")
+        withCatch {
+            MShellConfig.read()
+            sendMessage("config.yml配置文件重载完成")
+        }
     }
 
     /**
