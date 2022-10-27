@@ -1,6 +1,5 @@
 package com.github.asforest.mshell.command
 
-import com.github.asforest.mshell.command.mshell.MShellCommand
 import com.github.asforest.mshell.command.resolver.TreeCommand
 import com.github.asforest.mshell.util.MShellUtils.buildUsage
 import net.mamoe.mirai.console.command.*
@@ -10,9 +9,8 @@ import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import net.mamoe.mirai.message.data.Message
 import net.mamoe.mirai.message.data.MessageChain
 import net.mamoe.mirai.message.data.buildMessageChain
-import kotlin.reflect.typeOf
 
-abstract class MiraiTreeCommand (
+abstract class AbstractMiraiTreeCommand (
     /** 指令拥有者. */
     override val owner: CommandOwner,
     /** 主指令名. */
@@ -36,7 +34,7 @@ abstract class MiraiTreeCommand (
 
             buildString {
                 append(CommandManager.commandPrefix)
-                append(buildUsage(MShellCommand.rootLabal + if (prefix.isNotEmpty()) " $prefix" else "", func))
+                append(buildUsage(MShellCommandAbstract.rootLabal + if (prefix.isNotEmpty()) " $prefix" else "", func))
             }
         }
     }

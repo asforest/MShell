@@ -1,7 +1,7 @@
-package com.github.asforest.mshell.command.mshell
+package com.github.asforest.mshell.command
 
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.command.mshell.MShellCommand.CallContext
+import com.github.asforest.mshell.command.MShellCommandAbstract.CallContext
 import com.github.asforest.mshell.command.resolver.TreeCommand
 import com.github.asforest.mshell.exception.business.AmbiguousGroupIdException
 import com.github.asforest.mshell.exception.business.QQGroupNotFoundException
@@ -12,19 +12,18 @@ import net.mamoe.mirai.contact.Group
 
 object GroupCommand : TreeCommand()
 {
-    @Command(desc = "开启一个会话并将这个会话连接到一个群聊", permission = MShellCommand.Admin)
+    @Command(desc = "开启一个会话并将这个会话连接到一个群聊", permission = MShellCommandAbstract.Admin)
     suspend fun CallContext.open(group: Long, preset: String? = null)
     {
         withCatch {
             val groupUser = getGroupUser(group)
-
             val session = SessionManager.createSession(preset, groupUser)
 
             sendMessage("会话 ${session.identity} 已创建到群聊 $groupUser")
         }
     }
 
-    @Command(desc = "将一个群聊连接到一个会话上", permission = MShellCommand.Admin)
+    @Command(desc = "将一个群聊连接到一个会话上", permission = MShellCommandAbstract.Admin)
     suspend fun CallContext.connect(group: Long, pid: Long)
     {
         withCatch {
@@ -35,7 +34,7 @@ object GroupCommand : TreeCommand()
         }
     }
 
-    @Command(desc = "断开一个群聊的会话", permission = MShellCommand.Admin)
+    @Command(desc = "断开一个群聊的会话", permission = MShellCommandAbstract.Admin)
     suspend fun CallContext.disconnect(group: Long)
     {
         withCatch {

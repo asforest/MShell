@@ -1,7 +1,6 @@
-package com.github.asforest.mshell.command.mshell
+package com.github.asforest.mshell.command
 
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.command.MiraiTreeCommand
 import com.github.asforest.mshell.command.resolver.AbstractArgumentParsers
 import com.github.asforest.mshell.command.resolver.CommandSignature
 import com.github.asforest.mshell.command.resolver.TreeCommand
@@ -15,7 +14,7 @@ import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.MessageChain
 
-object MShellCommand : MiraiTreeCommand(
+object MShellCommandAbstract : AbstractMiraiTreeCommand(
     owner = MShellPlugin,
     primaryName = "mshell",
     secondaryNames = arrayOf("ms"),

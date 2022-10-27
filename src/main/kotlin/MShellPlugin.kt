@@ -1,6 +1,6 @@
 package com.github.asforest.mshell
 
-import com.github.asforest.mshell.command.mshell.MShellCommand
+import com.github.asforest.mshell.command.MShellCommandAbstract
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.exception.AbstractBusinessException
@@ -44,7 +44,7 @@ object MShellPlugin : KotlinPlugin(EnvUtil.pluginDescription)
         PresetGrants.registerAllPresetPermissions()
 
         // 注册指令
-        MShellCommand.register()
+        MShellCommandAbstract.register()
 
         val botEvents = GlobalEventChannel.filter { it is BotEvent }
 

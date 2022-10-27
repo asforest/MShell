@@ -1,8 +1,8 @@
-package com.github.asforest.mshell.command.mshell
+package com.github.asforest.mshell.command
 
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.command.mshell.MShellCommand.Admin
-import com.github.asforest.mshell.command.mshell.MShellCommand.CallContext
+import com.github.asforest.mshell.command.MShellCommandAbstract.Admin
+import com.github.asforest.mshell.command.MShellCommandAbstract.CallContext
 import com.github.asforest.mshell.command.resolver.TreeCommand
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.exception.business.MissingParamaterException

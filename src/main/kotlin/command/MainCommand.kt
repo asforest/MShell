@@ -1,9 +1,9 @@
-package com.github.asforest.mshell.command.mshell
+package com.github.asforest.mshell.command
 
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.command.mshell.MShellCommand.Admin
-import com.github.asforest.mshell.command.mshell.MShellCommand.CallContext
-import com.github.asforest.mshell.command.mshell.MShellCommand.User
+import com.github.asforest.mshell.command.MShellCommandAbstract.Admin
+import com.github.asforest.mshell.command.MShellCommandAbstract.CallContext
+import com.github.asforest.mshell.command.MShellCommandAbstract.User
 import com.github.asforest.mshell.command.resolver.TreeCommand
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.exception.business.*
@@ -34,7 +34,7 @@ object MainCommand : TreeCommand()
                     continue
 
                 append("/")
-                append(buildUsage(MShellCommand.rootLabal + if (prefix.isNotEmpty()) " $prefix" else "", func))
+                append(buildUsage(MShellCommandAbstract.rootLabal + if (prefix.isNotEmpty()) " $prefix" else "", func))
                 append("\n")
             }
         }.trim())
