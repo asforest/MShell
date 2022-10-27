@@ -43,7 +43,7 @@ abstract class TreeCommand
             .onEach { it.checkModifiers() }
             .map { funcation ->
                 val annotation = funcation.findAnnotation<Command>()!!
-                CommandSignature.CreateFromKF(funcation, funcation.name, annotation.permission, annotation.desc)
+                CommandSignature.CreateFromKF(funcation, funcation.name, annotation.permission, annotation.desc, annotation.aliases.toList())
             }
     }
 
@@ -89,7 +89,7 @@ abstract class TreeCommand
         val label = arguments[0]
         val arguments = arguments.drop(1)
 
-        val resolveResult = resolveWithinSelf(label, arguments)
+        val resolveResult = resolveWithinSelf2(label, arguments)
 
         if (resolveResult == null)
         {
@@ -102,28 +102,69 @@ abstract class TreeCommand
         {
             is CommandCallResolver.ResolveResult.TooFewArguments -> throw TooFewArgumentsException(prefix, resolveResult.signature)
             is CommandCallResolver.ResolveResult.TooManyArguments -> throw TooManyArgumentsException(prefix, resolveResult.signature)
-            else -> {
-                val result = resolveResult as CommandCallResolver.ResolveResult.ResolveCorrect
-                if(result.afunction.signature.permissionMask and callerPermission == 0)
-                    throw PermissionDeniedException(prefix, result.afunction)
-                return result.afunction
+            is CommandCallResolver.ResolveResult.ResolveCorrect -> {
+                if (resolveResult.afunction.signature.permissionMask and callerPermission == 0)
+                    throw PermissionDeniedException(prefix, resolveResult.afunction)
+                return resolveResult.afunction
             }
         }
     }
 
+    /**
+     * 尝试匹配一个命令
+     * @param label 命令的名字
+     * @param arguments 命令的实参
+     * @return 未找到任何匹配的命令返回null，否则返回ResolveCorrect、TooFewArguments、TooManyArguments之一
+     */
     private fun resolveWithinSelf(label: String, arguments: List<String>): CommandCallResolver.ResolveResult?
     {
-        var tempResult: CommandCallResolver.ResolveResult? = null
+        var result: CommandCallResolver.ResolveResult? = null
 
+        // it is possiable that multiple methods with the same name occur
         for (function in this.commands.filter { it.name == label })
         {
-            tempResult = CommandCallResolver.resolve(function, arguments, this)
+            result = CommandCallResolver.resolve(function, arguments, this)
 
-            if (tempResult is CommandCallResolver.ResolveResult.ResolveCorrect)
-                return tempResult
+            if (result is CommandCallResolver.ResolveResult.ResolveCorrect)
+                return result
         }
 
-        return tempResult
+        return result
+    }
+
+    private fun resolveWithinSelf2(label: String, arguments: List<String>): CommandCallResolver.ResolveResult?
+    {
+        val exactMatches = this.commands.filter { it.name == label }
+        if (exactMatches.isNotEmpty())
+        {
+            var result: CommandCallResolver.ResolveResult? = null
+
+            for (function in exactMatches)
+            {
+                result = CommandCallResolver.resolve(function, arguments, this)
+                if (result is CommandCallResolver.ResolveResult.ResolveCorrect)
+                    return result
+            }
+
+            return result
+        }
+
+        val aliasMatches = this.commands.filter { label in it.aliases }
+        if (aliasMatches.isNotEmpty())
+        {
+            var result: CommandCallResolver.ResolveResult? = null
+
+            for (function in aliasMatches)
+            {
+                result = CommandCallResolver.resolve(function, arguments, this)
+                if (result is CommandCallResolver.ResolveResult.ResolveCorrect)
+                    return result
+            }
+
+            return result
+        }
+
+        return null
     }
 
     private fun KFunction<*>.isSubCommandFunction(): Boolean = hasAnnotation<Command>()
@@ -164,13 +205,20 @@ abstract class TreeCommand
         val isAlias: Boolean
     )
 
+    /**
+     * 注册一个子命令
+     */
     @Target(AnnotationTarget.FUNCTION)
     @Retention(AnnotationRetention.RUNTIME)
     protected annotation class Command(
         val desc: String,
         val permission: Int = 0,
+        val aliases: Array<String> = []
     )
 
+    /**
+     * 注册一个嵌套的多层指令，支持嵌套任意层
+     */
     @Target(AnnotationTarget.FIELD)
     @Retention(AnnotationRetention.RUNTIME)
     protected annotation class Tree(

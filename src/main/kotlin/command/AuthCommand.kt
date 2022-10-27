@@ -1,7 +1,7 @@
 package com.github.asforest.mshell.command
 
-import com.github.asforest.mshell.command.MShellCommandAbstract.Admin
-import com.github.asforest.mshell.command.MShellCommandAbstract.CallContext
+import com.github.asforest.mshell.command.MShellCommand.Admin
+import com.github.asforest.mshell.command.MShellCommand.CallingContext
 import com.github.asforest.mshell.command.resolver.TreeCommand
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.permission.MShellPermissions
@@ -19,7 +19,7 @@ import net.mamoe.mirai.console.permission.PermitteeId
 object AuthCommand : TreeCommand()
 {
     @Command(desc = "添加管理员", permission = Admin)
-    suspend fun CallContext.add(qqnumber: Long)
+    suspend fun CallingContext.add(qqnumber: Long)
     {
         val friend = sender.getFriendNick(qqnumber)
         val permitte = AbstractPermitteeId.ExactFriend(qqnumber)
@@ -34,7 +34,7 @@ object AuthCommand : TreeCommand()
     }
 
     @Command(desc = "移除管理员", permission = Admin)
-    suspend fun CallContext.remove(qqnumber: Long)
+    suspend fun CallingContext.remove(qqnumber: Long)
     {
         val friend = sender.getFriendNick(qqnumber)
         val permittee = AbstractPermitteeId.ExactFriend(qqnumber)
@@ -53,7 +53,7 @@ object AuthCommand : TreeCommand()
     }
 
     @Command(desc = "列出所有管理员和授权用户", permission = Admin)
-    suspend fun CallContext.list() {
+    suspend fun CallingContext.list() {
         val f = adminGrantings.filterIsInstance<AbstractPermitteeId.ExactFriend>()
 
         sendMessage("-----管理员列表-----")
@@ -73,7 +73,7 @@ object AuthCommand : TreeCommand()
     }
 
     @Command(desc = "添加预设授权用户", permission = Admin)
-    suspend fun CallContext.adduser(preset: String, qqnumber: Long)
+    suspend fun CallingContext.adduser(preset: String, qqnumber: Long)
     {
         if(preset !in PresetsConfig.presets)
         {
@@ -92,7 +92,7 @@ object AuthCommand : TreeCommand()
     }
 
     @Command(desc = "移除预设授权用户", permission = Admin)
-    suspend fun CallContext.removeuser(preset: String, qqnumber: Long)
+    suspend fun CallingContext.removeuser(preset: String, qqnumber: Long)
     {
         if(preset !in PresetsConfig.presets)
         {
@@ -111,7 +111,7 @@ object AuthCommand : TreeCommand()
     }
 
     @Command(desc = "列出所有预设授权用户", permission = Admin)
-    suspend fun CallContext.listuser(preset: String? = null)
+    suspend fun CallingContext.listuser(preset: String? = null)
     {
         if(preset != null && preset !in PresetsConfig.presets)
         {
@@ -139,7 +139,7 @@ object AuthCommand : TreeCommand()
         sendMessage(output.ifEmpty { "还没有任何预设授权用户" })
     }
 
-    private fun CallContext.getFriendUser(qqnumber: Long): SessionUser.FriendUser?
+    private fun CallingContext.getFriendUser(qqnumber: Long): SessionUser.FriendUser?
     {
         val _bot = sender.bot
         if(_bot != null)

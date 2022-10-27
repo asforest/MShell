@@ -285,7 +285,11 @@ MShell有4个大指令，分别是：
 3. `/ms auth`：负责管理MShell的权限授权（指令简写`/ms a`）
 4. `/ms group`：负责管理MShell的群聊会话（指令简写`/ms g`）
 
-参数说明：以尖括号`<>`包裹的参数为必填参数，以方括号`[]`包裹的参数为选填参数，以`...`结尾为剩余参数全部有效
+参数说明：
+
+1. 以尖括号`<>`包裹的参数为必填参数
+2. 以方括号`[]`包裹的参数为选填参数
+3. 以`...`结尾为剩余参数全部有效
 
 如果你忘记指令了，可以随时使用`/ms help`来查看帮助
 
@@ -294,38 +298,53 @@ MShell有4个大指令，分别是：
 主指令用于实现与MShell插件的大部分管理操作
 
 ```bash
-# 连接到一个会话，会话使用pid指定
-/ms connect <pid>
-
-# 断开当前会话
-/ms disconnect
-
-# 强制断开一个会话的所有连接
-/ms disconnect <pid>
-
-# 强制结束一个会话
-/ms kill <pid>
-
-# 显示所有运行中的会话
-/ms list
+# 输出插件的帮助信息
+# 简写：h
+/ms help
 
 # 开启一个会话并立即连接上去
 # 如果preset被省略了，则使用默认的环境预设，否则使用指定的环境预设
 # 如果aruments未被省略则会被追加到预设的shell选项的末尾作为额外参数
 # aruments参数仅适用open命令时有效，使用其它任何方式启动会话不会生效
+# 简写：o
 /ms open [preset] [aruments...]
+
+# 连接到一个会话，会话使用pid指定
+# 简写：c
+/ms connect <pid>
+
+# 断开当前会话
+# 简写：d
+/ms disconnect
+
+# 强制断开一个会话的所有连接
+# 简写：d
+/ms disconnect <pid>
+
+# 强制结束一个会话
+# 简写：k
+/ms kill <pid>
+
+# 显示所有运行中的会话
+# 简写：l
+/ms list
 
 # 向目标会话stdin里输出内容
 # newline只能是true/false，表示text的末尾是否跟上一个换行符\n
+# 简写：w
 /ms write <pid> <newline> [text...]
 
-# 模拟戳一戳(窗口抖动)消息，主要给是电脑端调试使用，因为电脑端发送窗口抖动消息有较长的冷却时间
-/ms poke
+# 模拟戳一戳(窗口抖动)消息，主要给是电脑端调试使用，
+# 因为电脑端发送窗口抖动消息有较长的冷却时间
+# 简写：s, poke
+/ms shake
 
 # 重新加载config.yml
+# 简写：r
 /ms reload
 
-# 查看可用的环境预设列表，这个指令主要是给MShell授权用户用的，管理员建议直接用/ms preset list
+# 查看可用的环境预设列表
+# 这个指令主要是给MShell授权用户用的，管理员建议直接用/ms preset list
 /ms presets
 ```
 
@@ -341,22 +360,41 @@ MShell有4个大指令，分别是：
 # charset: 字符集（Win选择gbk或者gb2312，Linux选择utf-8）
 # shell：具体启动的子程序，一般是cmd.exe或者bash、sh
 # 首次创建的预设会被设置为默认预设
+# 简写：a
 /ms preset add <preset> <charset> <shell...>
 
-# 设置一个环境的编码方式
-# 如果charset被省略，charset就会被清空
-# 清空后这个环境就不能正常启动了，需要重新设置一次charset才行
-/ms preset charset <preset> [charset]
+# 删除一个环境预设
+# 简写：r
+/ms preset remove <preset>
+
+# 列出所有环境预设配置
+# 列出当前都有哪些环境预设方案
+# 如果preset被省略，会显示所有环境预设方案
+# 如果preset没被省略，会显示预设名中包含preset的所有方案（可以理解为搜索）
+# 简写：l
+/ms preset list [preset]
+
+# 切换默认的环境预设方案
+# 如果preset被省略，就会输出当前使用的默认环境预设名
+# 如果preset没有省略，就会设置默认环境预设名（preset必须是已存在的预设）
+# 简写：d
+/ms preset def [preset]
+
+# 从配置文件重新加载环境预设方案
+# 如果你手动改了配置文件presets.yml，可以使用这个指令来强制重载
+# 一般不建议直接改配置文件，很容易出错
+# 简写：r
+/ms preset reload
+
+# 设置会话(子进程)的入口程序(一般是shell程序)
+# 如果shell被省略，shell就会被清空
+# 清空后这个环境就不能正常启动了，需要重新设置一次shell才行
+/ms preset cmd <preset> [shell...]
 
 # 设置环境的工作目录
 # 工作目录可以保持默认的空状态
 # 如果为空，工作目录默认就是mirai的目录
 /ms preset cwd <preset> [cwd...]
-
-# 切换默认的环境预设方案
-# 如果preset被省略，就会输出当前使用的默认环境预设名
-# 如果preset没有省略，就会设置默认环境预设名（preset必须是已存在的预设）
-/ms preset def [preset]
 
 # 设置环境的环境变量
 # 如果key被省略，会输出整个env的值
@@ -370,10 +408,10 @@ MShell有4个大指令，分别是：
 # 如果exec被省略，则会禁用这个功能
 /ms preset exec <preset> [exec...]
 
-# 设置会话(子进程)的入口程序(一般是shell程序)
-# 如果shell被省略，shell就会被清空
-# 清空后这个环境就不能正常启动了，需要重新设置一次shell才行
-/ms preset shell <preset> [shell...]
+# 设置一个环境的编码方式
+# 如果charset被省略，charset就会被清空
+# 清空后这个环境就不能正常启动了，需要重新设置一次charset才行
+/ms preset charset <preset> [charset]
 
 # 将会话为单实例会话，默认为false
 # 设置为单实例会话后，后创建的会话会直接连接到第一个会话上
@@ -386,12 +424,6 @@ MShell有4个大指令，分别是：
 # 设置会话PTY的高度，默认为24
 /ms preset rows <preset> <rows>
 
-# 列出所有环境预设配置
-# 列出当前都有哪些环境预设方案
-# 如果preset被省略，会显示所有环境预设方案
-# 如果preset没被省略，会显示预设名中包含preset的所有方案（可以理解为搜索）
-/ms preset list [preset]
-
 # 设置会话的stdout合并间隔，单位：毫秒
 /ms preset batch <preset> <inteval-in-ms>
 
@@ -400,14 +432,6 @@ MShell有4个大指令，分别是：
 
 # 设置会话的遗愿消息缓冲区大小，单位是字符数
 /ms preset lastwill <preset> <capacity-in-chars>
-
-# 从配置文件重新加载环境预设方案
-# 如果你手动改了配置文件presets.yml，可以使用这个指令来强制重载
-# 一般不建议直接改配置文件，很容易出错
-/ms preset reload
-
-# 删除一个环境预设
-/ms preset remove <preset>
 ```
 
 ### 3.权限管理指令 /ms auth
@@ -445,12 +469,15 @@ MShell有4个大指令，分别是：
 # 创建一个新的会话，并将指定的QQ群聊立即连接上去
 # 如果preset被省略了，则使用默认的环境预设，否则使用指定的环境预设
 # aruments参数用法同/ms open
+# 简写：o
 /ms group open <qq-group> [preset] [aruments...]
 
 # 断开一个QQ群聊与其会话的连接
+# 简写：d
 /ms group disconnect
 
 # 使一个QQ群聊连接到一个会话上
+# 简写：c
 /ms group connect <qq-group> <pid>
 ```
 

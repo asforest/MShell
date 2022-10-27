@@ -14,7 +14,7 @@ import net.mamoe.mirai.contact.Contact
 import net.mamoe.mirai.message.MessageReceipt
 import net.mamoe.mirai.message.data.MessageChain
 
-object MShellCommandAbstract : AbstractMiraiTreeCommand(
+object MShellCommand : AbstractMiraiTreeCommand(
     owner = MShellPlugin,
     primaryName = "mshell",
     secondaryNames = arrayOf("ms"),
@@ -54,7 +54,7 @@ object MShellCommandAbstract : AbstractMiraiTreeCommand(
             if (arguments.isNotEmpty())
             {
                 val afun = MainCommand.resolveCommandText(prefix, arguments, senderPermission)
-                afun.callSuspend(CallContext(this, senderPermission))
+                afun.callSuspend(CallingContext(this, senderPermission))
             } else {
                 sendMessage("输入 /$prefix help 来查看帮助信息")
             }
@@ -91,7 +91,7 @@ object MShellCommandAbstract : AbstractMiraiTreeCommand(
         }.trim()
     }
 
-    data class CallContext(val sender: CommandSender, val permission: Int)
+    data class CallingContext(val sender: CommandSender, val permission: Int)
     {
         val isUser = permission and User
         val isAdmin = permission and Admin

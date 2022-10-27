@@ -7,12 +7,14 @@ import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.jvmErasure
 
 /**
+ * 代表一个指令方法的签名
  * @param name: callable 标识符名字
  * @param callable: 指令KFunction对象
  * @param parameters: value parameter
  * @param extensionReceiverParameter: extension receiver parameter
  * @param permissionMask: 执行指令所需要的权限
- * @param description: 函数的描述
+ * @param description: 指令的描述
+ * @param aliases 指令别名
  */
 data class CommandSignature(
     val name: String,
@@ -20,7 +22,8 @@ data class CommandSignature(
     val parameters: List<Parameter>,
     val extensionReceiverParameter: KParameter?,
     val permissionMask: Int,
-    val description: String
+    val description: String,
+    val aliases: List<String>,
 ) {
     /**
      * 字符串化后的parameters
@@ -29,11 +32,11 @@ data class CommandSignature(
 
     companion object {
         @JvmStatic
-        fun CreateFromKF(kf: KFunction<*>, prefix: String, permissionMask: Int, description: String): CommandSignature
+        fun CreateFromKF(kf: KFunction<*>, prefix: String, permissionMask: Int, description: String, aliases: List<String>): CommandSignature
         {
             val parameters = kf.valueParameters.map { Parameter(it.name ?: "", it.isOptional, it.isVararg, it.type) }
 
-            return CommandSignature(prefix, kf, parameters, kf.extensionReceiverParameter, permissionMask, description)
+            return CommandSignature(prefix, kf, parameters, kf.extensionReceiverParameter, permissionMask, description, aliases)
         }
     }
 

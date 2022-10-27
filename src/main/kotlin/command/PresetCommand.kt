@@ -1,8 +1,8 @@
 package com.github.asforest.mshell.command
 
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.command.MShellCommandAbstract.Admin
-import com.github.asforest.mshell.command.MShellCommandAbstract.CallContext
+import com.github.asforest.mshell.command.MShellCommand.Admin
+import com.github.asforest.mshell.command.MShellCommand.CallingContext
 import com.github.asforest.mshell.command.resolver.TreeCommand
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.exception.business.MissingParamaterException
@@ -18,8 +18,8 @@ object PresetCommand : TreeCommand()
 {
     val ep: PresetsConfig by lazy { PresetsConfig }
 
-    @Command(desc = "创建一个环境预设", permission = Admin)
-    suspend fun CallContext.add(preset: String, charset: String, vararg shell: String)
+    @Command(desc = "创建一个环境预设", aliases = ["a"], permission = Admin)
+    suspend fun CallingContext.add(preset: String, charset: String, vararg shell: String)
     {
         withCatch {
             if (preset in ep.presets.keys)
@@ -44,8 +44,8 @@ object PresetCommand : TreeCommand()
         }
     }
 
-    @Command(desc = "删除一个环境预设", permission = Admin)
-    suspend fun CallContext.remove(preset: String)
+    @Command(desc = "删除一个环境预设", aliases = ["r"], permission = Admin)
+    suspend fun CallingContext.remove(preset: String)
     {
         withCatch {
             getPresetWithThrow(preset)
@@ -55,8 +55,8 @@ object PresetCommand : TreeCommand()
         }
     }
 
-    @Command(desc = "列出所有环境预设配置", permission = Admin)
-    suspend fun CallContext.list(preset: String? = null)
+    @Command(desc = "列出所有环境预设配置", aliases = ["l"], permission = Admin)
+    suspend fun CallingContext.list(preset: String? = null)
     {
         var output = ""
         ep.presets.filter { preset==null || preset in it.key }.forEach {
@@ -65,8 +65,33 @@ object PresetCommand : TreeCommand()
         sendMessage(output.ifEmpty { "还没有任何环境预设" })
     }
 
-    @Command(desc = "设置会话的启动程序", permission = Admin)
-    suspend fun CallContext.shell(preset: String, vararg shell: String)
+    @Command(desc = "设置默认的环境预设方案", aliases = ["d"], permission = Admin)
+    suspend fun CallingContext.def(preset: String? =null)
+    {
+        withCatch {
+            if(preset != null)
+            {
+                getPresetWithThrow(preset)
+
+                ep.defaultPreset = preset
+                ep.write()
+                sendMessage("已设置默环境认预设为 $preset")
+            } else {
+                sendMessage("当前默认环境预设是 ${ep.defaultPreset}")
+            }
+        }
+    }
+
+    @Command(desc = "从配置文件重新加载环境预设方案", aliases = ["r"], permission = Admin)
+    suspend fun CallingContext.reload() {
+        withCatch {
+            ep.read()
+            sendMessage("环境预设配置文件重载完成")
+        }
+    }
+
+    @Command(desc = "设置会话的启动命令行", aliases = ["shell"], permission = Admin)
+    suspend fun CallingContext.cmd(preset: String, vararg shell: String)
     {
         withCatch {
             getPresetWithThrow(preset)
@@ -85,7 +110,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话的工作目录", permission = Admin)
-    suspend fun CallContext.cwd(preset: String, vararg dir: String)
+    suspend fun CallingContext.cwd(preset: String, vararg dir: String)
     {
         withCatch {
             getPresetWithThrow(preset)
@@ -104,7 +129,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话的环境变量", permission = Admin)
-    suspend fun CallContext.env(preset: String, key: String = "", vararg value: String)
+    suspend fun CallingContext.env(preset: String, key: String = "", vararg value: String)
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
@@ -126,7 +151,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话的初始化命令", permission = Admin)
-    suspend fun CallContext.exec(preset: String, vararg exec: String)
+    suspend fun CallingContext.exec(preset: String, vararg exec: String)
     {
         withCatch {
             getPresetWithThrow(preset)
@@ -145,7 +170,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话标准输入输出使用的字符集", permission = Admin)
-    suspend fun CallContext.charset(preset: String, charset: String ="")
+    suspend fun CallingContext.charset(preset: String, charset: String ="")
     {
         withCatch {
             getPresetWithThrow(preset)
@@ -164,7 +189,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话单实例约束", permission = Admin)
-    suspend fun CallContext.singleins(preset: String, singleins: Boolean)
+    suspend fun CallingContext.singleins(preset: String, singleins: Boolean)
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
@@ -180,7 +205,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话的终端宽度", permission = Admin)
-    suspend fun CallContext.columns(preset: String, columns: Int)
+    suspend fun CallingContext.columns(preset: String, columns: Int)
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
@@ -191,7 +216,7 @@ object PresetCommand : TreeCommand()
     }
 
     @Command(desc = "设置会话的终端高度", permission = Admin)
-    suspend fun CallContext.rows(preset: String, rows: Int)
+    suspend fun CallingContext.rows(preset: String, rows: Int)
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
@@ -201,19 +226,8 @@ object PresetCommand : TreeCommand()
         }
     }
 
-    @Command(desc = "设置会话的stdout合并字符数上限", permission = Admin)
-    suspend fun CallContext.truncation(preset: String, thresholdInChars: Int)
-    {
-        withCatch {
-            val _preset = getPresetWithThrow(preset)
-            _preset.truncationThreshold = thresholdInChars
-            sendMessage("环境预设 $preset 的合并字符数上限已更新为 $thresholdInChars 字符")
-            ep.write()
-        }
-    }
-
     @Command(desc = "设置会话的stdout合并间隔", permission = Admin)
-    suspend fun CallContext.batch(preset: String, intevalInMs: Int)
+    suspend fun CallingContext.batch(preset: String, intevalInMs: Int)
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
@@ -223,8 +237,20 @@ object PresetCommand : TreeCommand()
         }
     }
 
+    @Command(desc = "设置会话的stdout合并字符数上限", permission = Admin)
+    suspend fun CallingContext.truncation(preset: String, thresholdInChars: Int)
+    {
+        withCatch {
+            val _preset = getPresetWithThrow(preset)
+            _preset.truncationThreshold = thresholdInChars
+            sendMessage("环境预设 $preset 的合并字符数上限已更新为 $thresholdInChars 字符")
+            ep.write()
+        }
+    }
+
+
     @Command(desc = "设置会话的遗愿消息缓冲区大小", permission = Admin)
-    suspend fun CallContext.lastwill(preset: String, capacityInChars: Int)
+    suspend fun CallingContext.lastwill(preset: String, capacityInChars: Int)
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
@@ -234,39 +260,13 @@ object PresetCommand : TreeCommand()
         }
     }
 
-    @Command(desc = "设置默认的环境预设方案", permission = Admin)
-    suspend fun CallContext.def(preset: String? =null)
-    {
-        withCatch {
-            if(preset != null)
-            {
-                getPresetWithThrow(preset)
-
-                ep.defaultPreset = preset
-                ep.write()
-                sendMessage("已设置默环境认预设为 $preset")
-            } else {
-                sendMessage("当前默认环境预设是 ${ep.defaultPreset}")
-            }
-        }
-    }
-
-    @Command(desc = "从配置文件重新加载环境预设方案", permission = Admin)
-    suspend fun CallContext.reload() {
-        withCatch {
-            ep.read()
-            sendMessage("环境预设配置文件重载完成")
-        }
-    }
-
-
     @Suppress("NOTHING_TO_INLINE")
     inline fun getPresetWithThrow(presetName: String): Preset
     {
         return ep.presets[presetName] ?: throw PresetNotFoundException(presetName)
     }
 
-    suspend inline fun CallContext.withCatch(block: CallContext.() -> Unit)
+    suspend inline fun CallingContext.withCatch(block: CallingContext.() -> Unit)
     {
         MShellPlugin.catchException(sender.user) { block() }
     }

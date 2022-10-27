@@ -1,7 +1,7 @@
 package com.github.asforest.mshell.command
 
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.command.MShellCommandAbstract.CallContext
+import com.github.asforest.mshell.command.MShellCommand.CallingContext
 import com.github.asforest.mshell.command.resolver.TreeCommand
 import com.github.asforest.mshell.exception.business.AmbiguousGroupIdException
 import com.github.asforest.mshell.exception.business.QQGroupNotFoundException
@@ -12,8 +12,8 @@ import net.mamoe.mirai.contact.Group
 
 object GroupCommand : TreeCommand()
 {
-    @Command(desc = "开启一个会话并将这个会话连接到一个群聊", permission = MShellCommandAbstract.Admin)
-    suspend fun CallContext.open(group: Long, preset: String? = null, vararg argument: String)
+    @Command(desc = "开启一个会话并将这个会话连接到一个群聊", aliases = ["o"], permission = MShellCommand.Admin)
+    suspend fun CallingContext.open(group: Long, preset: String? = null, vararg argument: String)
     {
         withCatch {
             val groupUser = getGroupUser(group)
@@ -24,8 +24,8 @@ object GroupCommand : TreeCommand()
         }
     }
 
-    @Command(desc = "将一个群聊连接到一个会话上", permission = MShellCommandAbstract.Admin)
-    suspend fun CallContext.connect(group: Long, pid: Long)
+    @Command(desc = "将一个群聊连接到一个会话上", aliases = ["c"], permission = MShellCommand.Admin)
+    suspend fun CallingContext.connect(group: Long, pid: Long)
     {
         withCatch {
             val groupUser = getGroupUser(group)
@@ -35,8 +35,8 @@ object GroupCommand : TreeCommand()
         }
     }
 
-    @Command(desc = "断开一个群聊的会话", permission = MShellCommandAbstract.Admin)
-    suspend fun CallContext.disconnect(group: Long)
+    @Command(desc = "断开一个群聊的会话", aliases = ["d"], permission = MShellCommand.Admin)
+    suspend fun CallingContext.disconnect(group: Long)
     {
         withCatch {
             val groupUser = getGroupUser(group)
@@ -46,7 +46,7 @@ object GroupCommand : TreeCommand()
         }
     }
 
-    private fun CallContext.getGroupUser(groupId: Long): SessionUser.GroupUser
+    private fun CallingContext.getGroupUser(groupId: Long): SessionUser.GroupUser
     {
         val groupIdStr = groupId.toString()
 
@@ -73,7 +73,7 @@ object GroupCommand : TreeCommand()
         return SessionUser.GroupUser(groupMatched)
     }
 
-    private suspend inline fun CallContext.withCatch(block: CallContext.() -> Unit)
+    private suspend inline fun CallingContext.withCatch(block: CallingContext.() -> Unit)
     {
         MShellPlugin.catchException(sender.user) { block() }
     }

@@ -34,7 +34,7 @@ abstract class AbstractMiraiTreeCommand (
 
             buildString {
                 append(CommandManager.commandPrefix)
-                append(buildUsage(MShellCommandAbstract.rootLabal + if (prefix.isNotEmpty()) " $prefix" else "", func))
+                append(buildUsage(MShellCommand.rootLabal + if (prefix.isNotEmpty()) " $prefix" else "", func))
             }
         }
     }
