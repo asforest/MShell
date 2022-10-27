@@ -285,7 +285,7 @@ MShell有4个大指令，分别是：
 3. `/ms auth`：负责管理MShell的权限授权（指令简写`/ms a`）
 4. `/ms group`：负责管理MShell的群聊会话（指令简写`/ms g`）
 
-参数说明：以尖括号`<>`包裹的参数为必填参数，以方括号`[]`包裹的参数为选填参数
+参数说明：以尖括号`<>`包裹的参数为必填参数，以方括号`[]`包裹的参数为选填参数，以`...`结尾为剩余参数全部有效
 
 如果你忘记指令了，可以随时使用`/ms help`来查看帮助
 
@@ -310,13 +310,14 @@ MShell有4个大指令，分别是：
 /ms list
 
 # 开启一个会话并立即连接上去
-# 如果preset被省略了，则使用默认的环境预设
-# 否则使用指定的环境预设
-/ms open [preset]
+# 如果preset被省略了，则使用默认的环境预设，否则使用指定的环境预设
+# 如果aruments未被省略则会被追加到预设的shell选项的末尾作为额外参数
+# aruments参数仅适用open命令时有效，使用其它任何方式启动会话不会生效
+/ms open [preset] [aruments...]
 
 # 向目标会话stdin里输出内容
 # newline只能是true/false，表示text的末尾是否跟上一个换行符\n
-/ms write <pid> <newline> [text]
+/ms write <pid> <newline> [text...]
 
 # 模拟戳一戳(窗口抖动)消息，主要给是电脑端调试使用，因为电脑端发送窗口抖动消息有较长的冷却时间
 /ms poke
@@ -340,7 +341,7 @@ MShell有4个大指令，分别是：
 # charset: 字符集（Win选择gbk或者gb2312，Linux选择utf-8）
 # shell：具体启动的子程序，一般是cmd.exe或者bash、sh
 # 首次创建的预设会被设置为默认预设
-/ms preset add <preset> <charset> <shell>
+/ms preset add <preset> <charset> <shell...>
 
 # 设置一个环境的编码方式
 # 如果charset被省略，charset就会被清空
@@ -350,7 +351,7 @@ MShell有4个大指令，分别是：
 # 设置环境的工作目录
 # 工作目录可以保持默认的空状态
 # 如果为空，工作目录默认就是mirai的目录
-/ms preset cwd <preset> [cwd]
+/ms preset cwd <preset> [cwd...]
 
 # 切换默认的环境预设方案
 # 如果preset被省略，就会输出当前使用的默认环境预设名
@@ -360,19 +361,19 @@ MShell有4个大指令，分别是：
 # 设置环境的环境变量
 # 如果key被省略，会输出整个env的值
 # 如果value被省略，则会删除对应的key-value
-/ms preset env <preset> [key] [value]
+/ms preset env <preset> [key] [value...]
 
 # 设置环境的初始化命令
 # exec是一个指令或者说一个预先设置好的文字
 # shell启动之后，就会立即发送给shell的stdin
 # 可以在会话启动后自动执行某些程序什么的
 # 如果exec被省略，则会禁用这个功能
-/ms preset exec <preset> [exec]
+/ms preset exec <preset> [exec...]
 
 # 设置会话(子进程)的入口程序(一般是shell程序)
 # 如果shell被省略，shell就会被清空
 # 清空后这个环境就不能正常启动了，需要重新设置一次shell才行
-/ms preset shell <preset> [shell]
+/ms preset shell <preset> [shell...]
 
 # 将会话为单实例会话，默认为false
 # 设置为单实例会话后，后创建的会话会直接连接到第一个会话上
@@ -443,7 +444,8 @@ MShell有4个大指令，分别是：
 ```bash
 # 创建一个新的会话，并将指定的QQ群聊立即连接上去
 # 如果preset被省略了，则使用默认的环境预设，否则使用指定的环境预设
-/ms group open <qq-group> [preset]
+# aruments参数用法同/ms open
+/ms group open <qq-group> [preset] [aruments...]
 
 # 断开一个QQ群聊与其会话的连接
 /ms group disconnect

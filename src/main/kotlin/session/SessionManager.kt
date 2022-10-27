@@ -16,11 +16,12 @@ object SessionManager
     /**
      * 快速开启一个新的Session并完成注册。如果不嫌麻烦，也可以手动new一个Session对象，然后自己注册
      * @param presetName 环境预设
+     * @param argument 会话启动时的附加命令行参数
      * @param user 会话启动后，要立即连接上来的用户
      * @return 创建的Session，也可能是复用的Session
      * @throws SessionUserAlreadyConnectedException 用户已经连接到了另一个会话上了
      */
-    fun createSession(presetName: String?, user: SessionUser?): Session
+    fun createSession(presetName: String?, argument: String?, user: SessionUser?): Session
     {
         // user不能连接到任何会话，否则会抛异常
         if (user != null)
@@ -47,10 +48,10 @@ object SessionManager
 
             // 用户自动连接
             if(user != null)
-                session.connect(user)
+                session.connect(user, false)
         } else {
             // 创建会话
-            session = Session(this, preset, user) // 用户自动连接由构造函数代为完成
+            session = Session(this, preset, argument, user) // 用户自动连接由构造函数代为完成
             registerSession(session)
         }
 
@@ -71,10 +72,9 @@ object SessionManager
 
         if (lastSession != null)
         {
-            lastSession.connect(user)
-//            lastSession.connectionManager.openConnection(user)
+            lastSession.connect(user, false)
         } else {
-            createSession(preset, user)
+            createSession(preset, null, user)
         }
     }
 
@@ -87,7 +87,7 @@ object SessionManager
     fun connect(user: SessionUser, pid: Long): Connection
     {
         val session = getSession(pid) ?: throw NoSuchSessionException(pid)
-        return session.connect(user)
+        return session.connect(user, false)
     }
 
     /**

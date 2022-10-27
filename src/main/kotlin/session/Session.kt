@@ -16,11 +16,16 @@ import kotlin.coroutines.suspendCoroutine
 /**
  * Session 代表一个会话对象，会话对象就是对一个子进程进行封装和管理的对象，
  * 可以粗略地认为一个会话就是一个子进程
+ * @param manager 会话管理器对象
+ * @param preset 会话启动使用的环境预设
+ * @param arguments 会话启动时的附加命令行参数
+ * @param userAutoConnect 会话启动之后自动连接上来的用户
  */
 class Session(
     val manager: SessionManager,
     val preset: Preset,
-    userAutoConnect: SessionUser? = null
+    arguments: String?,
+    userAutoConnect: SessionUser?
 ) {
     val process: PtyProcess
     val stdin: PrintWriter
@@ -28,6 +33,8 @@ class Session(
     val lwm = LastwillMessage(preset.lastwillCapacity)
     var isLive = true
     val connectionManager = ConnectionManager(this)
+    val startCommandLine: String
+    val processWorkingDirectory: String
 
     val onProcessExit = AsyncEvent()
 
@@ -39,10 +46,13 @@ class Session(
 
         val charset = Charset.forName(preset.charset)
 
+        startCommandLine = (preset.command + (if (arguments != null) " $arguments" else ""))
+        processWorkingDirectory = File(preset.workdir.ifEmpty { System.getProperty("user.dir") }).absolutePath
+
         // 启动子进程
         process = PtyProcessBuilder()
-            .setCommand(preset.command.split(" ").toTypedArray())
-            .setDirectory(File(preset.workdir.ifEmpty { System.getProperty("user.dir") }).absolutePath)
+            .setCommand(startCommandLine.split(" ").filter { it.isNotEmpty() }.toTypedArray())
+            .setDirectory(processWorkingDirectory)
             .setEnvironment(System.getenv() + preset.env)
             .setRedirectErrorStream(true)
             .setWindowsAnsiColorEnabled(false)
@@ -92,7 +102,7 @@ class Session(
 
         // 用户自动连接
         if(userAutoConnect != null)
-            connect(userAutoConnect)
+            connect(userAutoConnect, true)
 
         // 启动stdout收集协程
         coStdoutCollector.start()
@@ -133,9 +143,10 @@ class Session(
     /**
      * 使一个用户连接到当前会话上
      * @param user 要连接的用户
+     * @param isCreator 是否是创建者
      * @return Connection 对象
      */
-    fun connect(user: SessionUser): Connection
+    fun connect(user: SessionUser, isCreator: Boolean): Connection
     {
         if(manager.hasUserConnectedToAnySession(user))
             throw SessionUserAlreadyConnectedException(pid)
@@ -164,7 +175,16 @@ class Session(
             }
         }
 
-        conn.sendMessage(if(isReconnection) "已重连到会话 $identity\n" else "会话已创建且已连接 $identity\n")
+        val message = if(isReconnection)
+                "已重连到会话 $identity\n"
+            else
+                if (isCreator)
+//                    "会话已创建且已连接 $identity\n命令行：$startCommandLine\n工作目录：$processWorkingDirectory"
+                    "会话已创建且已连接 $identity\n"
+                else
+                    "会话已连接 $identity\n"
+
+        conn.sendMessage(message)
         conn.sendTruncation()
 
         return conn

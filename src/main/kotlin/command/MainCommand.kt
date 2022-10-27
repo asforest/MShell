@@ -41,7 +41,7 @@ object MainCommand : TreeCommand()
     }
 
     @Command(desc = "开启一个会话并将当前用户连接到这个会话", permission = Admin or User)
-    suspend fun CallContext.open(preset: String? = null)
+    suspend fun CallContext.open(preset: String? = null, vararg argument: String)
     {
         withCatch {
             val user = toSessionUser()
@@ -50,7 +50,8 @@ object MainCommand : TreeCommand()
             SessionManager.getSession(user)?.also { throw SessionUserAlreadyConnectedException(it.pid) }
 
             val _preset = PresetGrants.useDefaultPreset(preset, user)
-            SessionManager.createSession(_preset.name, user)
+            val _argument = if (argument.isNotEmpty()) argument.joinToString(" ") else null
+            SessionManager.createSession(_preset.name, _argument, user)
         }
     }
 

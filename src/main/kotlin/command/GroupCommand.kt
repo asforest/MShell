@@ -13,11 +13,12 @@ import net.mamoe.mirai.contact.Group
 object GroupCommand : TreeCommand()
 {
     @Command(desc = "开启一个会话并将这个会话连接到一个群聊", permission = MShellCommandAbstract.Admin)
-    suspend fun CallContext.open(group: Long, preset: String? = null)
+    suspend fun CallContext.open(group: Long, preset: String? = null, vararg argument: String)
     {
         withCatch {
             val groupUser = getGroupUser(group)
-            val session = SessionManager.createSession(preset, groupUser)
+            val _argument = if (argument.isNotEmpty()) argument.joinToString(" ") else null
+            val session = SessionManager.createSession(preset, _argument, groupUser)
 
             sendMessage("会话 ${session.identity} 已创建到群聊 $groupUser")
         }
