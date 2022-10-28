@@ -50,7 +50,7 @@ object PresetsConfig : YamlConfig("presets.yml")
         preset.rows = fromMap["terminal-rows"] as Int? ?: preset.rows
         preset.truncationThreshold = fromMap["truncation-threshold"] as Int? ?: preset.truncationThreshold
         preset.batchingInteval = fromMap["batching-inteval"] as Int? ?: preset.batchingInteval
-        preset.lastwillCapacity = fromMap["lastwill-capacity1"] as Int? ?: preset.lastwillCapacity
+        preset.lastwillCapacity = fromMap["lastwill-capacity"] as Int? ?: preset.lastwillCapacity
 
         return preset
     }
