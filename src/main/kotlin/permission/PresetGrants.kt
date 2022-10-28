@@ -3,7 +3,7 @@ package com.github.asforest.mshell.permission
 import com.github.asforest.mshell.MShellPlugin
 import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.exception.business.NoPermissionToUsePresetExcetption
-import com.github.asforest.mshell.model.Preset
+import com.github.asforest.mshell.data.Preset
 import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.session.SessionUser
 import net.mamoe.mirai.console.permission.*
@@ -11,7 +11,6 @@ import net.mamoe.mirai.console.permission.PermissionService.Companion.cancel
 import net.mamoe.mirai.console.permission.PermissionService.Companion.permit
 import net.mamoe.mirai.console.permission.PermissionService.Companion.testPermission
 import net.mamoe.mirai.console.plugin.id
-import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 
 object PresetGrants : Map<String, Collection<PermitteeId>>
 {

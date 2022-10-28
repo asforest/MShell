@@ -3,8 +3,9 @@ package com.github.asforest.mshell
 import com.github.asforest.mshell.command.MShellCommand
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.configuration.PresetsConfig
+import com.github.asforest.mshell.data.JsonMessage
 import com.github.asforest.mshell.exception.AbstractBusinessException
-import com.github.asforest.mshell.model.Preset
+import com.github.asforest.mshell.data.Preset
 import com.github.asforest.mshell.permission.MShellPermissions
 import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.Session
@@ -12,14 +13,14 @@ import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.session.SessionUser
 import com.github.asforest.mshell.util.EnvUtil
 import com.github.asforest.mshell.util.MShellUtils
+import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandSender.Companion.asCommandSender
 import net.mamoe.mirai.console.permission.PermissionService.Companion.hasPermission
 import net.mamoe.mirai.console.plugin.jvm.KotlinPlugin
-import net.mamoe.mirai.contact.NormalMember
-import net.mamoe.mirai.contact.User
-import net.mamoe.mirai.contact.asFriend
-import net.mamoe.mirai.contact.isFriend
+import net.mamoe.mirai.console.util.safeCast
+import net.mamoe.mirai.contact.*
+import net.mamoe.mirai.data.UserProfile
 import net.mamoe.mirai.event.GlobalEventChannel
 import net.mamoe.mirai.event.events.BotEvent
 import net.mamoe.mirai.event.events.FriendMessageEvent
@@ -54,16 +55,17 @@ object MShellPlugin : KotlinPlugin(EnvUtil.pluginDescription)
                 if(sender !is NormalMember)
                     return@subscribeAlways
 
-                val session = SessionManager.getSession(SessionUser.GroupUser(group)) ?: return@subscribeAlways
+                val groupUser = SessionUser.GroupUser(group)
+                val session = SessionManager.getSession(groupUser) ?: return@subscribeAlways
 
                 if (sender.asFriend().asCommandSender().hasPermission(MShellPermissions.root))
                 {
-                    handleSessionInput(message, session)
+                    handleSessionInput(message, session, groupUser, sender)
                 } else {
                     // 当做普通用户处理
                     val presetName = session.preset.name
                     if (PresetGrants.testGrant(presetName, sender.id) || PresetGrants.testGrant(presetName, 0)) // 0: anyone
-                        handleSessionInput(message, session)
+                        handleSessionInput(message, session, groupUser, sender)
                 }
             }
         }
@@ -75,21 +77,22 @@ object MShellPlugin : KotlinPlugin(EnvUtil.pluginDescription)
                 if (sender.asCommandSender().hasPermission(MShellPermissions.root))
                 {
                     val session = SessionManager.getSession(fuser)
-                    handleMessage(message, session, fuser)
+                    handleMessage(message, session, null, fuser, sender)
                 } else if (PresetGrants.isGranted(fuser.user.id)) { // 处理授权用户
                     val session = SessionManager.getSession(fuser)
                     val preset = PresetGrants.useDefaultPreset(null, fuser)
-                    handleMessage(message, session, fuser, preset)
+                    handleMessage(message, session, preset, fuser, sender)
                 }
             }
         }
     }
 
-    fun handleMessage(
+    suspend fun handleMessage(
         message: MessageChain,
         session: Session?,
+        preset: Preset?,
         user: SessionUser,
-        preset: Preset? = null
+        sender: User
     ) {
         val pokePresent = message.anyIsInstance<PokeMessage>()
 
@@ -101,22 +104,64 @@ object MShellPlugin : KotlinPlugin(EnvUtil.pluginDescription)
                 SessionManager.reconnectOrCreate(user, preset?.name)
         } else {
             if(session != null)
-                handleSessionInput(message, session)
+                handleSessionInput(message, session, user, sender)
         }
     }
 
-    fun handleSessionInput(message: MessageChain, session: Session)
-    {
+    suspend fun handleSessionInput(
+        message: MessageChain,
+        session: Session,
+        user: SessionUser,
+        sender: User
+    ) {
         val messageText = message.content
         val inputPrefix = MShellConfig.sessionInputPrefix
-
-        if(inputPrefix.isNotEmpty())
-        {
+        var text = if(inputPrefix.isNotEmpty()) {
             if(messageText.startsWith(inputPrefix) && messageText.length > inputPrefix.length)
-                session.stdin.println(messageText.substring(inputPrefix.length))
+                messageText.substring(inputPrefix.length)
+            else
+                return
         } else {
-            session.stdin.println(messageText)
+            messageText
         }
+
+        if (text.isEmpty())
+            return
+
+        // 处理json模式
+        if (session.preset.jsonMode)
+        {
+            val profile = sender.queryProfile()
+            val normalMember = sender.safeCast<NormalMember>()
+
+            text = JsonMessage(
+                bot = sender.bot.id.toString(),
+                group = if (user is SessionUser.GroupUser) user.group.id.toString() else "",
+                relation = when (user) {
+                    is SessionUser.ConsoleUser -> "console" // 永远不可能执行到此分支
+                    is SessionUser.FriendUser -> "friend"
+                    is SessionUser.GroupUser -> when (normalMember!!.permission) {
+                        MemberPermission.MEMBER -> "member"
+                        MemberPermission.ADMINISTRATOR -> "admin"
+                        MemberPermission.OWNER -> "owner"
+                    }
+                },
+                message = text,
+                nick = sender.nick,
+                id = sender.id.toString(),
+                remark = sender.remark,
+                join = normalMember?.joinTimestamp ?: -1,
+                speak = normalMember?.lastSpeakTimestamp ?: -1,
+                namecard = normalMember?.nameCard ?: "",
+                title = normalMember?.specialTitle ?: "",
+                email = profile.email,
+                age = profile.age,
+                level = profile.qLevel,
+                sex = profile.sex,
+            ).toString()
+        }
+
+        session.stdin.println(text)
     }
 
     private suspend inline fun MessageEvent.withCatch(func: () -> Unit)

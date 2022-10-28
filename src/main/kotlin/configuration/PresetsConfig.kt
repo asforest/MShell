@@ -1,6 +1,6 @@
 package com.github.asforest.mshell.configuration
 
-import com.github.asforest.mshell.model.Preset
+import com.github.asforest.mshell.data.Preset
 
 object PresetsConfig : YamlConfig("presets.yml")
 {
@@ -51,6 +51,7 @@ object PresetsConfig : YamlConfig("presets.yml")
         preset.truncationThreshold = fromMap["truncation-threshold"] as Int? ?: preset.truncationThreshold
         preset.batchingInteval = fromMap["batching-inteval"] as Int? ?: preset.batchingInteval
         preset.lastwillCapacity = fromMap["lastwill-capacity"] as Int? ?: preset.lastwillCapacity
+        preset.jsonMode = fromMap["json-mode"] as Boolean? ?: preset.jsonMode
 
         return preset
     }
@@ -70,6 +71,7 @@ object PresetsConfig : YamlConfig("presets.yml")
         map["truncation-threshold"] = preset.truncationThreshold
         map["batching-inteval"] = preset.batchingInteval
         map["lastwill-capacity"] = preset.lastwillCapacity
+        map["json-mode"] = preset.jsonMode
 
         return map
     }

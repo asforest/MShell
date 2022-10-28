@@ -2,6 +2,7 @@ package com.github.asforest.mshell.session
 
 import net.mamoe.mirai.console.command.ConsoleCommandSender
 import net.mamoe.mirai.contact.Group
+import net.mamoe.mirai.contact.NormalMember
 import net.mamoe.mirai.contact.User
 
 /**
@@ -19,10 +20,6 @@ sealed class SessionUser
     abstract override fun equals(other: Any?): Boolean
 
     abstract override fun hashCode(): Int
-
-    companion object {
-
-    }
 
     class ConsoleUser : SessionUser()
     {
@@ -80,7 +77,6 @@ sealed class SessionUser
 
     class GroupUser(val group: Group) : SessionUser()
     {
-
         override suspend fun sendMessage(message: String)
         {
             group.sendMessage(message)

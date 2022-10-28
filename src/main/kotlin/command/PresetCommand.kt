@@ -9,7 +9,7 @@ import com.github.asforest.mshell.exception.business.MissingParamaterException
 import com.github.asforest.mshell.exception.business.PresetAlreadyExistedYetException
 import com.github.asforest.mshell.exception.business.PresetNotFoundException
 import com.github.asforest.mshell.exception.business.UnsupportedCharsetException
-import com.github.asforest.mshell.model.Preset
+import com.github.asforest.mshell.data.Preset
 import net.mamoe.mirai.console.util.ConsoleExperimentalApi
 import java.nio.charset.Charset
 
@@ -197,8 +197,24 @@ object PresetCommand : TreeCommand()
 
             if(singleins)
                 sendMessage("已启用环境预设 $preset 的单实例约束")
-             else
+            else
                 sendMessage("已禁用环境预设 $preset 的单实例约束")
+
+            ep.write()
+        }
+    }
+
+    @Command(desc = "设置会话是否进入JsonMode", permission = Admin)
+    suspend fun CallingContext.jsonmode(preset: String, jsonMode: Boolean)
+    {
+        withCatch {
+            val _preset = getPresetWithThrow(preset)
+            _preset.jsonMode = jsonMode
+
+            if(jsonMode)
+                sendMessage("已启用环境预设 $preset 的JsonMode")
+            else
+                sendMessage("已禁用环境预设 $preset 的JsonMode")
 
             ep.write()
         }

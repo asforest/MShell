@@ -1,4 +1,4 @@
-package com.github.asforest.mshell.model
+package com.github.asforest.mshell.data
 
 /**
  * @param name 预设的名字，不能重复
@@ -27,6 +27,7 @@ data class Preset(
     var truncationThreshold: Int = 2048,
     var batchingInteval: Int = 300,
     var lastwillCapacity: Int = 2048,
+    var jsonMode: Boolean = false,
 ) {
     override fun toString(): String
     {
@@ -36,11 +37,12 @@ data class Preset(
             "workdir=$workdir",
             "env=$env",
             "exec=$input",
-            "singleInstance=$singleInstance",
-            "ptySize=${columns}x$rows",
+            "single-instance=$singleInstance",
+            "pty-size=${columns}x$rows",
             "truncation: $truncationThreshold",
             "batching: $batchingInteval",
-            "lastwill: $lastwillCapacity"
+            "lastwill: $lastwillCapacity",
+            "json-mode: $jsonMode",
         ).joinToString(", ")
 
         return "[$str]"

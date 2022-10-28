@@ -4,7 +4,7 @@ import com.github.asforest.mshell.configuration.PresetsConfig
 import com.github.asforest.mshell.exception.business.*
 import com.github.asforest.mshell.exception.system.SessionAlreadyRegisteredException
 import com.github.asforest.mshell.exception.system.SessionNotRegisteredException
-import com.github.asforest.mshell.model.Preset
+import com.github.asforest.mshell.data.Preset
 
 object SessionManager
 {

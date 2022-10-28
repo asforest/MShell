@@ -7,7 +7,7 @@ import com.github.asforest.mshell.command.MShellCommand.User
 import com.github.asforest.mshell.command.resolver.TreeCommand
 import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.exception.business.*
-import com.github.asforest.mshell.model.Preset
+import com.github.asforest.mshell.data.Preset
 import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager

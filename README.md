@@ -276,6 +276,41 @@ QQ群聊中所有的成员都能看到命令的执行结果。但只有有对应
 
 当连接上以后，还是要使用`/ms write <pid> <true/false> <text>`来往会话里进行输入，具体参数的用法请参考**用指令发送消息**章节
 
+### 4.Json模式
+
+Json模式是为了方便其它程序处理MShell的消息所设计的一种特殊工作模式
+
++ 开启后MShell插件不会直接透传QQ消息，而是转换成特定的Json格式再传递。
++ 关闭后MShell插件正常透传QQ消息（默认值）
+
+开启后MShell会将收到的每个消息输入转换为Json格式发送到会话的stdin中，每个消息都是一个JsonObject格式，这个Json消息里包括了一些消息发送者的信息和bot相关的信息，使得子进程更方便地处理消息
+
+每个Json消息对象包括以下字段：
+
+| 类型   | 名称     | 描述                                                         |
+| ------ | -------- | ------------------------------------------------------------ |
+| string | bot      | 消息来源的bot的qq号码                                        |
+| string | group    | 消息来源的群聊号码，如果是不是群里消息而是私聊则是空字符     |
+| string | relation | 消息发送者的权限等级，可能的值：friend(私), member(群), admin(群), owner(群) |
+| string | message  | 消息的内容                                                   |
+| string | nick     | 消息发送者的昵称                                             |
+| string | id       | 消息发送者的qq号码                                           |
+| string | remark   | bot对消息发送者的备注，没有备注则为空字符串                  |
+| int    | join     | 消息发送者的入群时间戳，单位秒。私聊会话时永远是-1           |
+| int    | speak    | 消息发送者的群内上次发言时间戳，单位秒。私聊会话时永远是-1   |
+| string | namecard | 消息发送者的群内群名片，可能为空字符串                       |
+| string | title    | 消息发送者的群内群头像，可能为空字符串                       |
+| string | email    | 消息发送者的邮箱，未设置时为空字符串                         |
+| int    | age      | 消息发送者的年龄                                             |
+| int    | level    | 消息发送者的QQ等级                                           |
+| string | sex      | 消息发送者的性别，可能的值：male, female, unknown(保密)      |
+
+开启此选项后：
+
+1. 不影响`/ms write`相关指令
+2. 同样会对私聊会话生效
+3. 不会影响会话`stdout`传出的消息格式
+
 ##  指令参考
 
 MShell有4个大指令，分别是：
@@ -417,6 +452,9 @@ MShell有4个大指令，分别是：
 # 设置为单实例会话后，后创建的会话会直接连接到第一个会话上
 # 对于同一个环境预设来说，永远只会有一个会话对象
 /ms preset singleins <preset> <true/false>
+
+# 开启/关闭会话的JsonMode，默认为false
+/ms preset jsonmode <preset> <true/false>
 
 # 设置会话PTY的宽度，默认为80
 /ms preset columns <preset> <columns>

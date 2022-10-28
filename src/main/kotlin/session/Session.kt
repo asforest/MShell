@@ -2,7 +2,7 @@ package com.github.asforest.mshell.session
 
 import com.github.asforest.mshell.event.AsyncEvent
 import com.github.asforest.mshell.exception.business.*
-import com.github.asforest.mshell.model.Preset
+import com.github.asforest.mshell.data.Preset
 import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
 import kotlinx.coroutines.*
