@@ -24,8 +24,8 @@ repositories {
 }
 
 dependencies {
-    implementation("org.yaml:snakeyaml:1.30")
-    implementation("org.jetbrains.pty4j:pty4j:0.12.7")
+    implementation("org.yaml:snakeyaml:1.33")
+    implementation("org.jetbrains.pty4j:pty4j:0.12.10")
 
     // 告知 mirai-console 在打包插件时包含此依赖，不要剥离掉此依赖；无需包含版本号
     "shadowLink"("org.jetbrains.pty4j:pty4j")
