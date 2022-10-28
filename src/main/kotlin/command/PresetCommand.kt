@@ -99,11 +99,11 @@ object PresetCommand : TreeCommand()
             if(shell.isEmpty())
             {
                 ep.presets[preset]!!.command = ""
-                sendMessage("已清空 $preset 环境预设的 shell 选项")
+                sendMessage("已清空 $preset 环境预设的启动命令行选项")
             } else {
                 val s = shell.joinToString(" ")
                 ep.presets[preset]!!.command = s
-                sendMessage("已更新 $preset 环境预设的 shell 为 $s")
+                sendMessage("已更新 $preset 环境预设的启动命令行为 $s")
             }
             ep.write()
         }
@@ -118,11 +118,11 @@ object PresetCommand : TreeCommand()
             if(dir.isEmpty())
             {
                 ep.presets[preset]!!.workdir = ""
-                sendMessage("已清空 $preset 环境预设的 cwd 选项")
+                sendMessage("已清空 $preset 环境预设的工作目录选项")
             } else {
                 val d = dir.joinToString(" ")
                 ep.presets[preset]!!.workdir = d
-                sendMessage("已更新 $preset 环境预设的 cwd 为 $d")
+                sendMessage("已更新 $preset 环境预设的工作目录为 $d")
             }
             ep.write()
         }
@@ -138,7 +138,7 @@ object PresetCommand : TreeCommand()
                 if(value.isEmpty())
                 {
                     ep.presets[preset]!!.env.remove(key)
-                    sendMessage("已移除 $preset 环境预设的环境变量键 $key")
+                    sendMessage("已移除 $preset 环境预设的环境变量 $key")
                 } else {
                     val v = value.joinToString(" ")
                     ep.presets[preset]!!.env[key] = v
@@ -150,20 +150,20 @@ object PresetCommand : TreeCommand()
         }
     }
 
-    @Command(desc = "设置会话的初始化命令", permission = Admin)
-    suspend fun CallingContext.exec(preset: String, vararg exec: String)
+    @Command(desc = "设置会话的初始化输入", aliases = ["exec"], permission = Admin)
+    suspend fun CallingContext.initial(preset: String, vararg exec: String)
     {
         withCatch {
             getPresetWithThrow(preset)
 
             if(exec.isEmpty())
             {
-                ep.presets[preset]!!.input = ""
-                sendMessage("已清空 $preset 环境预设的 exec 选项")
+                ep.presets[preset]!!.initialInput = ""
+                sendMessage("已清空 $preset 环境预设的初始化输入")
             } else {
                 val e = exec.joinToString(" ")
-                ep.presets[preset]!!.input = e
-                sendMessage("已更新 $preset 环境预设的 exec 为 $e")
+                ep.presets[preset]!!.initialInput = e
+                sendMessage("已更新 $preset 环境预设的初始化输入为 $e")
             }
             ep.write()
         }
@@ -177,19 +177,19 @@ object PresetCommand : TreeCommand()
 
             if(charset.isEmpty()) {
                 ep.presets[preset]!!.charset = ""
-                sendMessage("已清空 $preset 环境预设的 charset 选项")
+                sendMessage("已清空 $preset 环境预设的编码选项")
             } else {
                 if(!Charset.isSupported(charset))
                     throw UnsupportedCharsetException(charset)
                 ep.presets[preset]!!.charset = charset
-                sendMessage("已更新 $preset 环境预设的 charset 为 $charset")
+                sendMessage("已更新 $preset 环境预设的编码为 $charset")
             }
             ep.write()
         }
     }
 
-    @Command(desc = "设置会话单实例约束", permission = Admin)
-    suspend fun CallingContext.singleins(preset: String, singleins: Boolean)
+    @Command(desc = "设置会话单实例约束", aliases = ["singleins"], permission = Admin)
+    suspend fun CallingContext.single(preset: String, singleins: Boolean)
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
@@ -212,9 +212,9 @@ object PresetCommand : TreeCommand()
             _preset.jsonMode = jsonMode
 
             if(jsonMode)
-                sendMessage("已启用环境预设 $preset 的JsonMode")
+                sendMessage("已启用环境预设 $preset 的Json模式")
             else
-                sendMessage("已禁用环境预设 $preset 的JsonMode")
+                sendMessage("已禁用环境预设 $preset 的Json模式")
 
             ep.write()
         }

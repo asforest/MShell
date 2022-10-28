@@ -13,6 +13,7 @@ object PresetsConfig : YamlConfig("presets.yml")
             defaultPreset = ""
     }
 
+    @Suppress("UNCHECKED_CAST")
     override fun onLoad(deserialized: HashMap<String, Any>)
     {
         defaultPreset = (deserialized["default-preset"] as String)
@@ -36,15 +37,16 @@ object PresetsConfig : YamlConfig("presets.yml")
         validate()
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun map2preset(name: String, fromMap: HashMap<String, Any>): Preset
     {
         val preset = Preset(name)
 
-        preset.command = fromMap["shell"] as String? ?: preset.command
+        preset.command = fromMap["command"] as String? ?: fromMap["shell"] as String? ?: preset.command
         preset.charset = fromMap["charset"] as String? ?: preset.charset
         preset.workdir = fromMap["workdir"] as String? ?: preset.workdir
         preset.env = fromMap["env"] as MutableMap<String, String>? ?: preset.env
-        preset.input = fromMap["exec"] as String? ?: preset.input
+        preset.initialInput = fromMap["initial-input"] as String? ?: fromMap["exec"] as String? ?: preset.initialInput
         preset.singleInstance = fromMap["single-instance"] as Boolean? ?: preset.singleInstance
         preset.columns = fromMap["terminal-columns"] as Int? ?: preset.columns
         preset.rows = fromMap["terminal-rows"] as Int? ?: preset.rows
@@ -60,11 +62,11 @@ object PresetsConfig : YamlConfig("presets.yml")
     {
         val map = LinkedHashMap<String, Any>()
 
-        map["shell"] = preset.command
+        map["command"] = preset.command
         map["charset"] = preset.charset
         map["workdir"] = preset.workdir
         map["env"] = preset.env
-        map["exec"] = preset.input
+        map["initial-input"] = preset.initialInput
         map["single-instance"] = preset.singleInstance
         map["terminal-columns"] = preset.columns
         map["terminal-rows"] = preset.rows

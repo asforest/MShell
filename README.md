@@ -334,48 +334,48 @@ MShell有4个大指令，分别是：
 
 ```bash
 # 输出插件的帮助信息
-# 简写：h
+# 别名：h
 /ms help
 
 # 开启一个会话并立即连接上去
 # 如果preset被省略了，则使用默认的环境预设，否则使用指定的环境预设
 # 如果aruments未被省略则会被追加到预设的shell选项的末尾作为额外参数
 # aruments参数仅适用open命令时有效，使用其它任何方式启动会话不会生效
-# 简写：o
+# 别名：o
 /ms open [preset] [aruments...]
 
 # 连接到一个会话，会话使用pid指定
-# 简写：c
+# 别名：c
 /ms connect <pid>
 
 # 断开当前会话
-# 简写：d
+# 别名：d
 /ms disconnect
 
 # 强制断开一个会话的所有连接
-# 简写：d
+# 别名：d
 /ms disconnect <pid>
 
 # 强制结束一个会话
-# 简写：k
+# 别名：k
 /ms kill <pid>
 
 # 显示所有运行中的会话
-# 简写：l
+# 别名：l
 /ms list
 
 # 向目标会话stdin里输出内容
 # newline只能是true/false，表示text的末尾是否跟上一个换行符\n
-# 简写：w
+# 别名：w
 /ms write <pid> <newline> [text...]
 
 # 模拟戳一戳(窗口抖动)消息，主要给是电脑端调试使用，
 # 因为电脑端发送窗口抖动消息有较长的冷却时间
-# 简写：s, poke
+# 别名：s, poke
 /ms shake
 
 # 重新加载config.yml
-# 简写：r
+# 别名：r
 /ms reload
 
 # 查看可用的环境预设列表
@@ -395,30 +395,30 @@ MShell有4个大指令，分别是：
 # charset: 字符集（Win选择gbk或者gb2312，Linux选择utf-8）
 # shell：具体启动的子程序，一般是cmd.exe或者bash、sh
 # 首次创建的预设会被设置为默认预设
-# 简写：a
+# 别名：a
 /ms preset add <preset> <charset> <shell...>
 
 # 删除一个环境预设
-# 简写：r
+# 别名：r
 /ms preset remove <preset>
 
 # 列出所有环境预设配置
 # 列出当前都有哪些环境预设方案
 # 如果preset被省略，会显示所有环境预设方案
 # 如果preset没被省略，会显示预设名中包含preset的所有方案（可以理解为搜索）
-# 简写：l
+# 别名：l
 /ms preset list [preset]
 
 # 切换默认的环境预设方案
 # 如果preset被省略，就会输出当前使用的默认环境预设名
 # 如果preset没有省略，就会设置默认环境预设名（preset必须是已存在的预设）
-# 简写：d
+# 别名：d
 /ms preset def [preset]
 
 # 从配置文件重新加载环境预设方案
 # 如果你手动改了配置文件presets.yml，可以使用这个指令来强制重载
 # 一般不建议直接改配置文件，很容易出错
-# 简写：r
+# 别名：r
 /ms preset reload
 
 # 设置会话(子进程)的入口程序(一般是shell程序)
@@ -441,7 +441,8 @@ MShell有4个大指令，分别是：
 # shell启动之后，就会立即发送给shell的stdin
 # 可以在会话启动后自动执行某些程序什么的
 # 如果exec被省略，则会禁用这个功能
-/ms preset exec <preset> [exec...]
+# 别名：exec
+/ms preset initial <preset> [exec...]
 
 # 设置一个环境的编码方式
 # 如果charset被省略，charset就会被清空
@@ -451,7 +452,8 @@ MShell有4个大指令，分别是：
 # 将会话为单实例会话，默认为false
 # 设置为单实例会话后，后创建的会话会直接连接到第一个会话上
 # 对于同一个环境预设来说，永远只会有一个会话对象
-/ms preset singleins <preset> <true/false>
+# 别名：singleins
+/ms preset single <preset> <true/false>
 
 # 开启/关闭会话的JsonMode，默认为false
 /ms preset jsonmode <preset> <true/false>

@@ -97,8 +97,8 @@ class Session(
         }
 
         // 向子进程的stdin输入input选项里的内容
-        if(preset.input.isNotEmpty())
-            stdin.println(preset.input)
+        if(preset.initialInput.isNotEmpty())
+            stdin.println(preset.initialInput)
 
         // 用户自动连接
         if(userAutoConnect != null)
