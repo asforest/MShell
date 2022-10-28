@@ -51,7 +51,7 @@ object MShellPlugin : KotlinPlugin(EnvUtil.pluginDescription)
         // 订阅群聊消息
         botEvents.subscribeAlways<GroupMessageEvent> {
             withCatch {
-                if(sender !is NormalMember || !sender.isFriend)
+                if(sender !is NormalMember)
                     return@subscribeAlways
 
                 val session = SessionManager.getSession(SessionUser.GroupUser(group)) ?: return@subscribeAlways
