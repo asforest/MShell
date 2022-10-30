@@ -138,6 +138,14 @@ object MShellPlugin : KotlinPlugin(EnvUtil.pluginDescription)
         if (text.isEmpty())
             return
 
+        // 处理转义字符
+        text = text.replace(Regex("(?<!\\\\)\\\\n"), "\n")
+        text = text.replace(Regex("(?<!\\\\)\\\\r"), "\r")
+        text = text.replace(Regex("(?<!\\\\)\\\\t"), "\t")
+        text = text.replace(Regex("(?<!\\\\)\\\\b"), "\b")
+        text = text.replace(Regex("(?<!\\\\)\\\\e"), "\u001b")
+        text = text.replace(Regex("\\\\\\\\"), "\\\\")
+
         // 处理json模式
         if (session.preset.jsonMode)
         {
