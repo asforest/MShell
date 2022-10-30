@@ -1,5 +1,6 @@
 package com.github.asforest.mshell.session
 
+import com.github.asforest.mshell.MShellPlugin
 import com.github.asforest.mshell.event.AsyncEvent
 import com.github.asforest.mshell.exception.business.*
 import com.github.asforest.mshell.data.Preset
@@ -40,6 +41,7 @@ class Session(
 
     private var coStdoutCollector: Job
     private var stdoutOpen = true
+    private var killed = false
 
     init {
         validatePreset(preset)
@@ -123,10 +125,13 @@ class Session(
      */
     private suspend fun cleanup()
     {
-        // 发送退出消息
-        broadcastMessageTruncation()
-        broadcastMessageBatchly("已从会话断开 $identity 因为会话已结束。返回码为 ${process.exitValue()}\n")
-//        println("开始刷新缓冲区")
+        if (!MShellPlugin.stoped)
+        {
+            // 发送退出消息
+            broadcastMessageTruncation()
+            val reason = if (killed) "因为会话收到kill信号" else "因为会话已结束运行"
+            broadcastMessageBatchly("已从会话断开 $identity $reason。返回码为 ${process.exitValue()}\n")
+        }
 
         // 关掉连接管理器
         connectionManager.closeAndWait()
@@ -137,6 +142,7 @@ class Session(
 
     fun kill()
     {
+        killed = true
         process.destroy()
     }
 

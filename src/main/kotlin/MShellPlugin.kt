@@ -33,8 +33,12 @@ import net.mamoe.mirai.message.data.content
 
 object MShellPlugin : KotlinPlugin(EnvUtil.pluginDescription)
 {
+    var stoped = false
+
     override fun onEnable()
     {
+        stoped = true
+
         // 加载配置文件
         MShellConfig.read(saveDefault = true)
         PresetsConfig.read()
@@ -85,6 +89,12 @@ object MShellPlugin : KotlinPlugin(EnvUtil.pluginDescription)
                 }
             }
         }
+    }
+
+    override fun onDisable()
+    {
+        stoped = true
+        SessionManager.killAll()
     }
 
     suspend fun handleMessage(
