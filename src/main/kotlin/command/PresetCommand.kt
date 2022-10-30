@@ -60,9 +60,9 @@ object PresetCommand : TreeCommand()
     {
         var output = ""
         ep.presets.filter { preset==null || preset in it.key }.forEach {
-            output += "${it.key}: ${it.value}\n"
+            output += "${it.key}: ${it.value}\n\n"
         }
-        sendMessage(output.ifEmpty { "还没有任何环境预设" })
+        sendMessage(output.trim().ifEmpty { "还没有任何环境预设" })
     }
 
     @Command(desc = "设置默认的环境预设方案", aliases = ["d"], permission = Admin)
