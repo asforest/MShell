@@ -61,23 +61,35 @@ object MainCommand : TreeCommand()
         withCatch {
             val session = pidToSession(pid)
 
-            check(session.preset) ?: throw NoPermissionToUsePresetExcetption(session.preset.name)
+            checkPermission(session.preset) ?: throw NoPermissionToUsePresetExcetption(session.preset.name)
 
             session.stdin.print(text.joinToString(" ") + (if(newline) "\n" else ""))
         }
     }
 
-    @Command(desc = "强制结束一个会话", aliases = ["k"], permission = Admin or User)
+    @Command(desc = "给当前连接中的会话发送kill信号", aliases = ["k"], permission = Admin or User)
+    suspend fun CallingContext.kill()
+    {
+        withCatch {
+            val user = toSessionUser()
+            val session = SessionManager.getSession(user) ?: throw UserNotConnectedException()
+
+            session.kill()
+            sendMessage("kill 信号已发送给 ${session.identity}")
+        }
+    }
+
+    @Command(desc = "给指定的会话发送kill信号", aliases = ["k"], permission = Admin or User)
     suspend fun CallingContext.kill(pid: Long)
     {
         withCatch {
             val session = pidToSession(pid)
 
             // 检查权限
-            check(session.preset) ?: throw NoPermissionToKillSessionException(pid)
+            checkPermission(session.preset) ?: throw NoPermissionToKillSessionException(pid)
 
-            pidToSession(pid).kill()
-            sendMessage("进程已终止($pid)")
+            session.kill()
+            sendMessage("kill 信号已发送给 ${session.identity}")
         }
     }
 
@@ -88,7 +100,7 @@ object MainCommand : TreeCommand()
             val session = pidToSession(pid)
 
             // 检查权限
-            check(session.preset) ?: throw NoPermissionToConnectToASessionException(pid)
+            checkPermission(session.preset) ?: throw NoPermissionToConnectToASessionException(pid)
 
             SessionManager.connect(toSessionUser(), pid)
         }
@@ -177,7 +189,7 @@ object MainCommand : TreeCommand()
      * 检查指定用户有没有一个预设的使用权限
      */
     @Suppress("NOTHING_TO_INLINE")
-    private inline fun CallingContext.check(preset: Preset): Preset?
+    private inline fun CallingContext.checkPermission(preset: Preset): Preset?
     {
         return if (PresetGrants.isPresetAvailable(preset, toSessionUser())) preset else null
     }
