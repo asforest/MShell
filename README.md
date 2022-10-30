@@ -88,7 +88,7 @@ MShell不会响应任何陌生人消息、临时会话（同一个mirai-console�
 接下来，在后台创建一个环境预设，使用指令：`/ms preset add <preset> <charset> <shell>`
 
 + `<preset>`：预设的名字，可以随意取
-+ `<charset>`：预设的字符集，一般可以选`utf-8`或者`gb2312`或者`gbk`，如果选错中文会乱码
++ `<charset>`：预设的字符集，一般可以选`utf-8`或者`gb2312`、`gb18030`或者`gbk`，如果选错中文会乱码
 + `[shell]`：预设的启动命令行，Windows可以选`cmd.exe`、`powershell.exe`，Linux可以选`bash`、`sh`、`zsh`
 
 环境预设创建好以后，需要给自己MShell管理员权限。没有权限的话是没法使用MShell插件的
