@@ -54,6 +54,7 @@ object PresetsConfig : YamlConfig("presets.yml")
         preset.batchingInteval = fromMap["batching-inteval"] as Int? ?: preset.batchingInteval
         preset.lastwillCapacity = fromMap["lastwill-capacity"] as Int? ?: preset.lastwillCapacity
         preset.jsonMode = fromMap["json-mode"] as Boolean? ?: preset.jsonMode
+        preset.ptyMode = fromMap["pty-mode"] as Boolean? ?: preset.ptyMode
 
         return preset
     }
@@ -74,6 +75,7 @@ object PresetsConfig : YamlConfig("presets.yml")
         map["batching-inteval"] = preset.batchingInteval
         map["lastwill-capacity"] = preset.lastwillCapacity
         map["json-mode"] = preset.jsonMode
+        map["pty-mode"] = preset.ptyMode
 
         return map
     }

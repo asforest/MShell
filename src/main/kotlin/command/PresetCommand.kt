@@ -204,7 +204,7 @@ object PresetCommand : TreeCommand()
         }
     }
 
-    @Command(desc = "设置会话是否进入JsonMode", permission = Admin)
+    @Command(desc = "设置会话是否使用Json模式运行", permission = Admin)
     suspend fun CallingContext.jsonmode(preset: String, jsonMode: Boolean)
     {
         withCatch {
@@ -215,6 +215,22 @@ object PresetCommand : TreeCommand()
                 sendMessage("已启用环境预设 $preset 的Json模式")
             else
                 sendMessage("已禁用环境预设 $preset 的Json模式")
+
+            ep.write()
+        }
+    }
+
+    @Command(desc = "设置会话是否使用PTY模式运行", permission = Admin)
+    suspend fun CallingContext.ptymode(preset: String, ptyMode: Boolean)
+    {
+        withCatch {
+            val _preset = getPresetWithThrow(preset)
+            _preset.ptyMode = ptyMode
+
+            if(ptyMode)
+                sendMessage("已启用环境预设 $preset 的PTY模式")
+            else
+                sendMessage("已禁用环境预设 $preset 的PTY模式")
 
             ep.write()
         }

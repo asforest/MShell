@@ -28,7 +28,7 @@ class Session(
     arguments: String?,
     userAutoConnect: SessionUser?
 ) {
-    val process: PtyProcess
+    val process: Process
     val stdin: PrintWriter
     var pid: Long = -1
     val lwm = LastwillMessage(preset.lastwillCapacity)
@@ -52,15 +52,25 @@ class Session(
         processWorkingDirectory = File(preset.workdir.ifEmpty { System.getProperty("user.dir") }).absolutePath
 
         // 启动子进程
-        process = PtyProcessBuilder()
-            .setCommand(startCommandLine.split(" ").filter { it.isNotEmpty() }.toTypedArray())
-            .setDirectory(processWorkingDirectory)
-            .setEnvironment(System.getenv() + preset.env)
-            .setRedirectErrorStream(true)
-            .setWindowsAnsiColorEnabled(false)
-            .setInitialColumns(preset.columns)
-            .setInitialRows(preset.rows)
-            .start()
+        if (preset.ptyMode)
+        {
+            process = PtyProcessBuilder()
+                .setCommand(startCommandLine.split(" ").filter { it.isNotEmpty() }.toTypedArray())
+                .setDirectory(processWorkingDirectory)
+                .setEnvironment(System.getenv() + preset.env)
+                .setRedirectErrorStream(true)
+                .setWindowsAnsiColorEnabled(false)
+                .setInitialColumns(preset.columns)
+                .setInitialRows(preset.rows)
+                .start()
+        } else {
+            process = ProcessBuilder()
+                .command(startCommandLine.split(" ").filter { it.isNotEmpty() }.toMutableList())
+                .directory(File(processWorkingDirectory))
+                .also { p -> p.environment().apply { (System.getenv() + preset.env).forEach { this[it.key] = it.value } } }
+                .redirectErrorStream(true)
+                .start()
+        }
 
         pid = process.pid()
         stdin = PrintWriter(process.outputStream, true, charset)

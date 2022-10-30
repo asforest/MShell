@@ -13,6 +13,8 @@ package com.github.asforest.mshell.data
  * @param truncationThreshold 子进程stdout合并字符数上限（单位：字符）
  * @param batchingInteval 子进程stdout合并间隔（单位：字符）
  * @param lastwillCapacity 遗愿消息缓冲区大小（单位：字符）
+ * @param jsonMode 是否启用JsonMode
+ * @param ptyMode 是否使用PTY运行会话
  */
 data class Preset(
     var name: String,
@@ -28,6 +30,7 @@ data class Preset(
     var batchingInteval: Int = 300,
     var lastwillCapacity: Int = 2048,
     var jsonMode: Boolean = false,
+    var ptyMode: Boolean = true,
 ) {
     override fun toString(): String
     {
@@ -43,6 +46,7 @@ data class Preset(
             "batching: $batchingInteval",
             "lastwill: $lastwillCapacity",
             "json-mode: $jsonMode",
+            "pty-mode: $ptyMode",
         ).joinToString(", ")
 
         return "[$str]"

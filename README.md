@@ -311,6 +311,14 @@ Json模式是为了方便其它程序处理MShell的消息所设计的一种特�
 2. 同样会对私聊会话生效
 3. 不会影响会话`stdout`传出的消息格式
 
+### 5.PTY模式
+
+PTY模式全程Pseudo TTY，是Linux里一种虚拟控制台。PTY和普通的子进程不一样，PTY是一个真正的终端，有自己的高度和宽度，而且能支持一些Ansi转义字符来控制终端的一些行为，比如修改窗口标题或者在终端里绘制终端用户界面TUI（比如vim，nano，aptitude等就是使用了TUI的软件）
+
+从MShell 2.0.0版本开始，会话默认会使用PTY环境运行。PTY环境虽好但也会有一些小问题，比如所有的输入都会有回显（Echo）。当然关闭之后一些依赖TTY环境的命令可能会执行不了，所以推荐遇到问题时再考虑关闭PTY模式，不要一股脑全关闭了
+
+PTY参考：https://www.cnblogs.com/zzdyyy/p/7538077.html
+
 ##  指令参考
 
 MShell有4个大指令，分别是：
@@ -457,6 +465,11 @@ MShell有4个大指令，分别是：
 
 # 开启/关闭会话的JsonMode，默认为false
 /ms preset jsonmode <preset> <true/false>
+
+# 开启/关闭会话的PtyMode，默认为false
+# 开启后会话会以PTY环境运行
+# 关闭后会话会以普通的子进程运行，没有PTY环境
+/ms preset ptymode <preset> <true/false>
 
 # 设置会话PTY的宽度，默认为80
 /ms preset columns <preset> <columns>
