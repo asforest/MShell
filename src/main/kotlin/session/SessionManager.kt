@@ -102,15 +102,6 @@ object SessionManager
     }
 
     /**
-     * 强制停止所有会话
-     */
-    fun killAll()
-    {
-        for (session in sessions)
-            session.kill()
-    }
-
-    /**
      * 尝试将一个用户从所连接的会话上断开，如果用户没有连接到任何会话，则不做任何事情
      * @param user 要断开的用户
      */

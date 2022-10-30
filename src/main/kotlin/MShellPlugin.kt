@@ -33,11 +33,11 @@ import net.mamoe.mirai.message.data.content
 
 object MShellPlugin : KotlinPlugin(EnvUtil.pluginDescription)
 {
-    var stoped = false
+    var stoped = true
 
     override fun onEnable()
     {
-        stoped = true
+        stoped = false
 
         // 加载配置文件
         MShellConfig.read(saveDefault = true)
@@ -93,8 +93,20 @@ object MShellPlugin : KotlinPlugin(EnvUtil.pluginDescription)
 
     override fun onDisable()
     {
+        // mirai / mirai-console 2.12有bug会导致onDisable()调用两遍
+        if (stoped)
+            return
+
         stoped = true
-        SessionManager.killAll()
+
+        for (session in SessionManager.sessions)
+        {
+            if (session.isLive)
+            {
+                logger.info("Kill the running session ${session.identity}")
+                session.kill()
+            }
+        }
     }
 
     suspend fun handleMessage(
