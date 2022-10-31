@@ -289,17 +289,18 @@ Json模式是为了方便其它程序处理MShell的消息所设计的一种特�
 
 | 类型   | 名称     | 描述                                                         |
 | ------ | -------- | ------------------------------------------------------------ |
-| string | bot      | 消息来源的bot的qq号码                                        |
-| string | group    | 消息来源的群聊号码，如果是不是群里消息而是私聊则是空字符     |
+| long   | bot      | 消息来源的bot的qq号码                                        |
+| long   | group    | 消息来源的群聊号码，如果是不是群里消息而是私聊则是-1         |
 | string | relation | 消息发送者的权限等级，可能的值：friend(私), member(群), admin(群), owner(群) |
 | string | message  | 消息的内容                                                   |
 | string | nick     | 消息发送者的昵称                                             |
-| string | id       | 消息发送者的qq号码                                           |
+| long   | id       | 消息发送者的qq号码                                           |
 | string | remark   | bot对消息发送者的备注，没有备注则为空字符串                  |
 | int    | join     | 消息发送者的入群时间戳，单位秒。私聊会话时永远是-1           |
 | int    | speak    | 消息发送者的群内上次发言时间戳，单位秒。私聊会话时永远是-1   |
 | string | namecard | 消息发送者的群内群名片，可能为空字符串                       |
 | string | title    | 消息发送者的群内群头像，可能为空字符串                       |
+| long   | at       | 消息发送者的群内at对象，没有时为-1                           |
 | string | email    | 消息发送者的邮箱，未设置时为空字符串                         |
 | int    | age      | 消息发送者的年龄                                             |
 | int    | level    | 消息发送者的QQ等级                                           |

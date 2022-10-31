@@ -9,13 +9,13 @@ import java.util.*
  * 代表预设开启json-mode之后发往会话stdin的json消息
  */
 data class JsonMessage(
-    val bot: String,
-    val group: String,
+    val bot: Long,
+    val group: Long,
     val relation: String,
     val message: String,
 
     val nick: String,
-    val id: String,
+    val id: Long,
     val remark: String,
 
     // group related
@@ -23,6 +23,7 @@ data class JsonMessage(
     val speak: Int,
     val namecard: String,
     val title: String,
+    var at: Long,
 
     // profile
     val email: String,
@@ -45,6 +46,7 @@ data class JsonMessage(
             "speak" to JsonPrimitive(speak),
             "namecard" to JsonPrimitive(namecard),
             "title" to JsonPrimitive(title),
+            "at" to JsonPrimitive(at),
 
             "email" to JsonPrimitive(email),
             "age" to JsonPrimitive(age),

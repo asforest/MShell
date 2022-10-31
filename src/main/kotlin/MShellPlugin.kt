@@ -26,10 +26,7 @@ import net.mamoe.mirai.event.events.BotEvent
 import net.mamoe.mirai.event.events.FriendMessageEvent
 import net.mamoe.mirai.event.events.GroupMessageEvent
 import net.mamoe.mirai.event.events.MessageEvent
-import net.mamoe.mirai.message.data.MessageChain
-import net.mamoe.mirai.message.data.PokeMessage
-import net.mamoe.mirai.message.data.anyIsInstance
-import net.mamoe.mirai.message.data.content
+import net.mamoe.mirai.message.data.*
 
 object MShellPlugin : KotlinPlugin(EnvUtil.pluginDescription)
 {
@@ -165,8 +162,8 @@ object MShellPlugin : KotlinPlugin(EnvUtil.pluginDescription)
             val normalMember = sender.safeCast<NormalMember>()
 
             text = JsonMessage(
-                bot = sender.bot.id.toString(),
-                group = if (user is SessionUser.GroupUser) user.group.id.toString() else "",
+                bot = sender.bot.id,
+                group = if (user is SessionUser.GroupUser) user.group.id else -1,
                 relation = when (user) {
                     is SessionUser.ConsoleUser -> "console" // 永远不可能执行到此分支
                     is SessionUser.FriendUser -> "friend"
@@ -178,12 +175,13 @@ object MShellPlugin : KotlinPlugin(EnvUtil.pluginDescription)
                 },
                 message = text,
                 nick = sender.nick,
-                id = sender.id.toString(),
+                id = sender.id,
                 remark = sender.remark,
                 join = normalMember?.joinTimestamp ?: -1,
                 speak = normalMember?.lastSpeakTimestamp ?: -1,
                 namecard = normalMember?.nameCard ?: "",
                 title = normalMember?.specialTitle ?: "",
+                at = message.filterIsInstance<At>().firstOrNull()?.target ?: -1,
                 email = profile.email,
                 age = profile.age,
                 level = profile.qLevel,
