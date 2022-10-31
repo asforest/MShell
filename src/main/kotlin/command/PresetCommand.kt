@@ -241,7 +241,7 @@ object PresetCommand : TreeCommand()
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
-            _preset.silentInGroup = silentMode
+            _preset.silentMode = silentMode
 
             if(silentMode)
                 sendMessage("已启用环境预设 $preset 的Silent模式")

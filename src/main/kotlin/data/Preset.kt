@@ -15,7 +15,7 @@ package com.github.asforest.mshell.data
  * @param lastwillCapacity 遗愿消息缓冲区大小（单位：字符）
  * @param jsonMode 是否启用JsonMode
  * @param ptyMode 是否使用PTY运行会话
- * @param silentInGroup 是否屏蔽群聊会话内的连接和断开等状态消息，其它消息不受影响
+ * @param silentMode 是否屏蔽群聊会话内的连接和断开等状态消息，其它消息不受影响
  */
 data class Preset(
     var name: String,
@@ -32,26 +32,45 @@ data class Preset(
     var lastwillCapacity: Int = 2048,
     var jsonMode: Boolean = false,
     var ptyMode: Boolean = true,
-    var silentInGroup: Boolean = false,
+    var silentMode: Boolean = false,
 ) {
     override fun toString(): String
     {
-        val str = listOf(
-            "command=$command",
-            "charset=$charset",
-            "workdir=$workdir",
-            "env=$env",
-            "initial-input=$initialInput",
-            "single-instance=$singleInstance",
-            "pty-size=${columns}x$rows",
-            "truncation: $truncationThreshold",
-            "batching: $batchingInteval",
-            "lastwill: $lastwillCapacity",
-            "json-mode: $jsonMode",
-            "pty-mode: $ptyMode",
-            "silent-in-group: $silentInGroup"
-        ).joinToString(", ")
+        val str2 = buildList {
+            add("command=$command")
+            add("charset=$charset")
 
+            if (workdir.isNotEmpty())
+                add("workdir=$workdir")
+
+            if (env.isNotEmpty())
+                add("env=$env")
+
+            if (initialInput.isNotEmpty())
+                add("initial-input=$initialInput")
+
+            add("pty=${if (ptyMode) "${columns}x$rows" else "disabled"}")
+
+            if (truncationThreshold != 2048)
+                add("truncation= $truncationThreshold")
+
+            if (batchingInteval != 300)
+                add("batch= $batchingInteval")
+
+            if (lastwillCapacity != 2048)
+                add("lastwill= $lastwillCapacity")
+
+            if (singleInstance)
+                add("single-instance")
+
+            if (jsonMode)
+                add("json-mode")
+
+            if (silentMode)
+                add("group-silent-mode")
+        }
+
+        val str = str2.joinToString(", ")
         return "[$str]"
     }
 }

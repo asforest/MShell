@@ -1,11 +1,9 @@
 package com.github.asforest.mshell.session
 
 import com.github.asforest.mshell.MShellPlugin
-import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.event.AsyncEvent
 import com.github.asforest.mshell.exception.business.*
 import com.github.asforest.mshell.data.Preset
-import com.pty4j.PtyProcess
 import com.pty4j.PtyProcessBuilder
 import kotlinx.coroutines.*
 import java.io.File
@@ -139,9 +137,9 @@ class Session(
         if (!MShellPlugin.stoped)
         {
             // 发送退出消息
-            broadcastMessageTruncation(preset.silentInGroup)
+            broadcastMessageTruncation(preset.silentMode)
             val reason = if (killed) "因为会话收到kill信号" else "因为会话已结束运行"
-            broadcastMessageBatchly("已从会话断开 $identity $reason。返回码为 ${process.exitValue()}\n", preset.silentInGroup)
+            broadcastMessageBatchly("已从会话断开 $identity $reason。返回码为 ${process.exitValue()}\n", preset.silentMode)
         }
 
         // 关掉连接管理器
@@ -192,7 +190,7 @@ class Session(
             }
         }
 
-        if (!preset.silentInGroup || user !is SessionUser.GroupUser)
+        if (!preset.silentMode || user !is SessionUser.GroupUser)
         {
             val message = if(isReconnection)
                     "已重连到会话 $identity\n"
@@ -223,7 +221,7 @@ class Session(
                 throw UserNotConnectedException()
 
         // 发送消息
-        if (!preset.silentInGroup || connection.user !is SessionUser.GroupUser)
+        if (!preset.silentMode || connection.user !is SessionUser.GroupUser)
         {
             connection.sendTruncation()
             connection.sendMessage("已从会话断开 $identity\n")
