@@ -15,6 +15,7 @@ package com.github.asforest.mshell.data
  * @param lastwillCapacity 遗愿消息缓冲区大小（单位：字符）
  * @param jsonMode 是否启用JsonMode
  * @param ptyMode 是否使用PTY运行会话
+ * @param silentInGroup 是否屏蔽群聊会话内的连接和断开等状态消息，其它消息不受影响
  */
 data class Preset(
     var name: String,
@@ -31,6 +32,7 @@ data class Preset(
     var lastwillCapacity: Int = 2048,
     var jsonMode: Boolean = false,
     var ptyMode: Boolean = true,
+    var silentInGroup: Boolean = false,
 ) {
     override fun toString(): String
     {
@@ -47,6 +49,7 @@ data class Preset(
             "lastwill: $lastwillCapacity",
             "json-mode: $jsonMode",
             "pty-mode: $ptyMode",
+            "silent-in-group: $silentInGroup"
         ).joinToString(", ")
 
         return "[$str]"

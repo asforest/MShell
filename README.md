@@ -320,6 +320,12 @@ PTY模式全程Pseudo TTY，是Linux里一种虚拟控制台。PTY和普通的�
 
 PTY参考：https://www.cnblogs.com/zzdyyy/p/7538077.html
 
+6.GroupSilent模式
+
+GroupSilent模式开启之后，群聊会话中将不再显示连接状态消息（包括：创建连接，断开连接，重新连接），除了这三个消息以外，其它消息仍然会正常显示不影响。
+
+此模式的设计初衷是避免消息打扰，对预设开启GroupSilent模式之后，群聊内就看不到连接状态消息了。如果需要查看连接状态，可以使用`/ms list`指令。此默认默认为关闭状态
+
 ##  指令参考
 
 MShell有4个大指令，分别是：
@@ -472,6 +478,11 @@ MShell有4个大指令，分别是：
 # 关闭后会话会以普通的子进程运行，没有PTY环境
 /ms preset ptymode <preset> <true/false>
 
+# 开启/关闭会话的GroupSilentMode，默认为false
+# 开启后群聊会话中不显示连接和断开连接的状态消息，其它消息不受影响
+# 关闭后所有消息都会被发送到群里会话中，包括连接状态消息
+/ms preset silent <preset> <true/false>
+
 # 设置会话PTY的宽度，默认为80
 /ms preset columns <preset> <columns>
 
@@ -553,10 +564,6 @@ MShell有4个大指令，分别是：
 # 全局的会话输入前缀
 # 重新加载后此选项会立即生效
 session-input-prefix: ''
-
-# 群聊会话中不显示连接和断开连接的状态消息，其它消息不受影响
-# 重新加载后此选项会立即生效
-silent-in-group: false
 ```
 
 ## 技术细节

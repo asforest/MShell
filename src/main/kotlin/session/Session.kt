@@ -139,9 +139,9 @@ class Session(
         if (!MShellPlugin.stoped)
         {
             // 发送退出消息
-            broadcastMessageTruncation(MShellConfig.silentInGroup)
+            broadcastMessageTruncation(preset.silentInGroup)
             val reason = if (killed) "因为会话收到kill信号" else "因为会话已结束运行"
-            broadcastMessageBatchly("已从会话断开 $identity $reason。返回码为 ${process.exitValue()}\n", MShellConfig.silentInGroup)
+            broadcastMessageBatchly("已从会话断开 $identity $reason。返回码为 ${process.exitValue()}\n", preset.silentInGroup)
         }
 
         // 关掉连接管理器
@@ -192,7 +192,7 @@ class Session(
             }
         }
 
-        if (!MShellConfig.silentInGroup || user !is SessionUser.GroupUser)
+        if (!preset.silentInGroup || user !is SessionUser.GroupUser)
         {
             val message = if(isReconnection)
                     "已重连到会话 $identity\n"
@@ -223,7 +223,7 @@ class Session(
                 throw UserNotConnectedException()
 
         // 发送消息
-        if (!MShellConfig.silentInGroup || connection.user !is SessionUser.GroupUser)
+        if (!preset.silentInGroup || connection.user !is SessionUser.GroupUser)
         {
             connection.sendTruncation()
             connection.sendMessage("已从会话断开 $identity\n")

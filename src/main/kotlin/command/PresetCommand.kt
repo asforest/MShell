@@ -236,6 +236,22 @@ object PresetCommand : TreeCommand()
         }
     }
 
+    @Command(desc = "设置是否屏蔽群聊内的会话连接和断开等状态消息", permission = Admin)
+    suspend fun CallingContext.silent(preset: String, silentMode: Boolean)
+    {
+        withCatch {
+            val _preset = getPresetWithThrow(preset)
+            _preset.silentInGroup = silentMode
+
+            if(silentMode)
+                sendMessage("已启用环境预设 $preset 的Silent模式")
+            else
+                sendMessage("已禁用环境预设 $preset 的Silent模式")
+
+            ep.write()
+        }
+    }
+
     @Command(desc = "设置会话的终端宽度", permission = Admin)
     suspend fun CallingContext.columns(preset: String, columns: Int)
     {
