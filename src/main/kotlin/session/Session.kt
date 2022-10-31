@@ -1,6 +1,7 @@
 package com.github.asforest.mshell.session
 
 import com.github.asforest.mshell.MShellPlugin
+import com.github.asforest.mshell.configuration.MShellConfig
 import com.github.asforest.mshell.event.AsyncEvent
 import com.github.asforest.mshell.exception.business.*
 import com.github.asforest.mshell.data.Preset
@@ -138,9 +139,9 @@ class Session(
         if (!MShellPlugin.stoped)
         {
             // 发送退出消息
-            broadcastMessageTruncation()
+            broadcastMessageTruncation(MShellConfig.silentInGroup)
             val reason = if (killed) "因为会话收到kill信号" else "因为会话已结束运行"
-            broadcastMessageBatchly("已从会话断开 $identity $reason。返回码为 ${process.exitValue()}\n")
+            broadcastMessageBatchly("已从会话断开 $identity $reason。返回码为 ${process.exitValue()}\n", MShellConfig.silentInGroup)
         }
 
         // 关掉连接管理器
@@ -191,17 +192,20 @@ class Session(
             }
         }
 
-        val message = if(isReconnection)
-                "已重连到会话 $identity\n"
-            else
-                if (isCreator)
-//                    "会话已创建且已连接 $identity\n命令行：$startCommandLine\n工作目录：$processWorkingDirectory"
-                    "会话已创建且已连接 $identity\n"
+        if (!MShellConfig.silentInGroup || user !is SessionUser.GroupUser)
+        {
+            val message = if(isReconnection)
+                    "已重连到会话 $identity\n"
                 else
-                    "会话已连接 $identity\n"
+                    if (isCreator)
+    //                    "会话已创建且已连接 $identity\n命令行：$startCommandLine\n工作目录：$processWorkingDirectory"
+                        "会话已创建且已连接 $identity\n"
+                    else
+                        "会话已连接 $identity\n"
 
-        conn.sendMessage(message)
-        conn.sendTruncation()
+            conn.sendMessage(message)
+            conn.sendTruncation()
+        }
 
         return conn
     }
@@ -219,9 +223,13 @@ class Session(
                 throw UserNotConnectedException()
 
         // 发送消息
-        connection.sendTruncation()
-        connection.sendMessage("已从会话断开 $identity\n")
-        connection.sendTruncation()
+        if (!MShellConfig.silentInGroup || connection.user !is SessionUser.GroupUser)
+        {
+            connection.sendTruncation()
+            connection.sendMessage("已从会话断开 $identity\n")
+            connection.sendTruncation()
+        }
+
         connection.close()
 
         return connection
@@ -239,18 +247,24 @@ class Session(
     /**
      * 向所有连接到当前Session上的用户广播消息
      * @param message 要发送的消息
+     * @param excludeGroup 是否不发送给群聊会话
      */
-    fun broadcastMessageBatchly(message: String)
+    fun broadcastMessageBatchly(message: String, excludeGroup: Boolean)
     {
-        connections.forEach { it.sendMessage(message) }
+        for (connection in connections)
+            if (!excludeGroup || connection.user !is SessionUser.GroupUser)
+                connection.sendMessage(message)
     }
 
     /**
      * 强制打断消息合并，拆分成2条消息发送
+     * @param excludeGroup 是否不发送给群聊会话
      */
-    fun broadcastMessageTruncation()
+    fun broadcastMessageTruncation(excludeGroup: Boolean)
     {
-        connections.forEach { it.sendTruncation() }
+        for (connection in connections)
+            if (!excludeGroup || connection.user !is SessionUser.GroupUser)
+                connection.sendTruncation()
     }
 
     /**

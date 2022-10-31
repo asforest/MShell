@@ -9,13 +9,20 @@ object MShellConfig : YamlConfig("config.yml")
      */
     var sessionInputPrefix: String = ""
 
+    /**
+     * 群聊会话中不显示连接和断开连接的状态消息，其它消息不受影响
+     */
+    var silentInGroup: Boolean = false
+
     override fun onLoad(deserialized: HashMap<String, Any>)
     {
-        sessionInputPrefix = deserialized["session-input-prefix"] as String
+        sessionInputPrefix = deserialized["session-input-prefix"] as String? ?: ""
+        silentInGroup = deserialized["silent-in-group"] as Boolean? ?: false
     }
 
     override fun onSave(serialized: HashMap<String, Any>)
     {
         serialized["session-input-prefix"] = sessionInputPrefix
+        serialized["silent-in-group"] = silentInGroup
     }
 }
