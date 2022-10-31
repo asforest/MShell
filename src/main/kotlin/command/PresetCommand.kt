@@ -297,13 +297,13 @@ object PresetCommand : TreeCommand()
     }
 
 
-    @Command(desc = "设置会话的遗愿消息缓冲区大小", permission = Admin)
-    suspend fun CallingContext.lastwill(preset: String, capacityInChars: Int)
+    @Command(desc = "设置会话的历史消息缓冲区大小", aliases = ["lastwill"], permission = Admin)
+    suspend fun CallingContext.history(preset: String, capacityInChars: Int)
     {
         withCatch {
             val _preset = getPresetWithThrow(preset)
-            _preset.lastwillCapacity = capacityInChars
-            sendMessage("环境预设 $preset 的遗愿消息缓冲区大小已更新为 $capacityInChars 字符")
+            _preset.historyCapacity = capacityInChars
+            sendMessage("环境预设 $preset 的历史消息缓冲区大小已更新为 $capacityInChars 字符")
             ep.write()
         }
     }

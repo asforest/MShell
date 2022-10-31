@@ -216,14 +216,14 @@ MShell的消息合并机制是依赖2个参数运行的，一个是合并时间�
 
 如果你的程序在运行过程中有比较频繁的输出，那么请适当调大改这些选项的值
 
-### 3.遗愿消息
+### 3.历史消息
 
-在断开与会话的连接期间，会话输出的最新一部分会被保留，并在你重连会会话之后发送给你，以告诉你当你不在的时候，当前会话最后都输出了什么，发生了什么。这部分被保留的消息，就叫遗愿消息
+在断开与会话的连接期间，会话输出的最新一部分会被保留，并在你重连会会话之后发送给你，以告诉你当你不在的时候，当前会话最后都输出了什么，发生了什么。这部分被保留的消息，就叫历史消息
 
 当然这个保留区的大小可以使用环境预设指令来配置：
 
 ```
-/mshell preset lastwill <preset> <capacity-in-chars>: 设置会话的遗愿消息缓冲区大小（单位是字符数）
+/mshell preset history <preset> <capacity-in-chars>: 设置会话的历史消息缓冲区大小（单位是字符数）
 ```
 
 ### 4.群聊会话
@@ -495,8 +495,8 @@ MShell有4个大指令，分别是：
 # 设置会话的stdout合并上限，单位：字符数
 /ms preset truncation <preset> <threshold-in-chars>
 
-# 设置会话的遗愿消息缓冲区大小，单位是字符数
-/ms preset lastwill <preset> <capacity-in-chars>
+# 设置会话的历史消息缓冲区大小，单位是字符数
+/ms preset history <preset> <capacity-in-chars>
 ```
 
 ### 3.权限管理指令 /ms auth

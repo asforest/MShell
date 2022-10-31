@@ -12,7 +12,7 @@ package com.github.asforest.mshell.data
  * @param rows PTY的高度（单位：行）
  * @param truncationThreshold 子进程stdout合并字符数上限（单位：字符）
  * @param batchingInteval 子进程stdout合并间隔（单位：字符）
- * @param lastwillCapacity 遗愿消息缓冲区大小（单位：字符）
+ * @param historyCapacity 历史消息缓冲区大小（单位：字符）
  * @param jsonMode 是否启用JsonMode
  * @param ptyMode 是否使用PTY运行会话
  * @param silentMode 是否屏蔽群聊会话内的连接和断开等状态消息，其它消息不受影响
@@ -29,7 +29,7 @@ data class Preset(
     var rows: Int = 24,
     var truncationThreshold: Int = 2048,
     var batchingInteval: Int = 300,
-    var lastwillCapacity: Int = 2048,
+    var historyCapacity: Int = 2048,
     var jsonMode: Boolean = false,
     var ptyMode: Boolean = true,
     var silentMode: Boolean = false,
@@ -57,8 +57,8 @@ data class Preset(
             if (batchingInteval != 300)
                 add("batch= $batchingInteval")
 
-            if (lastwillCapacity != 2048)
-                add("lastwill= $lastwillCapacity")
+            if (historyCapacity != 2048)
+                add("history= $historyCapacity")
 
             if (singleInstance)
                 add("single-instance")

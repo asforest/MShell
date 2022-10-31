@@ -30,7 +30,7 @@ class Session(
     val process: Process
     val stdin: PrintWriter
     var pid: Long = -1
-    val lwm = LastwillMessage(preset.lastwillCapacity)
+    val lwm = HistoryMessageReserver(preset.historyCapacity)
     var isLive = true
     val connectionManager = ConnectionManager(this)
     val startCommandLine: String
@@ -171,7 +171,7 @@ class Session(
 
         if (isReconnection)
         {
-            // 发送遗愿消息
+            // 发送历史消息
             if(whenOnlineChanged != -1L && lwm.hasMessage(whenOnlineChanged))
             {
                 var last: Long = 0

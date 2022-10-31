@@ -52,7 +52,7 @@ object PresetsConfig : YamlConfig("presets.yml")
         preset.rows = fromMap["terminal-rows"] as Int? ?: preset.rows
         preset.truncationThreshold = fromMap["truncation-threshold"] as Int? ?: preset.truncationThreshold
         preset.batchingInteval = fromMap["batching-inteval"] as Int? ?: preset.batchingInteval
-        preset.lastwillCapacity = fromMap["lastwill-capacity"] as Int? ?: preset.lastwillCapacity
+        preset.historyCapacity = fromMap["history-capacity"] as Int? ?: fromMap["lastwill-capacity"] as Int? ?: preset.historyCapacity
         preset.jsonMode = fromMap["json-mode"] as Boolean? ?: preset.jsonMode
         preset.ptyMode = fromMap["pty-mode"] as Boolean? ?: preset.ptyMode
 
@@ -73,7 +73,7 @@ object PresetsConfig : YamlConfig("presets.yml")
         map["terminal-rows"] = preset.rows
         map["truncation-threshold"] = preset.truncationThreshold
         map["batching-inteval"] = preset.batchingInteval
-        map["lastwill-capacity"] = preset.lastwillCapacity
+        map["history-capacity"] = preset.historyCapacity
         map["json-mode"] = preset.jsonMode
         map["pty-mode"] = preset.ptyMode
 
