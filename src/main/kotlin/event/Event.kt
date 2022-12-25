@@ -2,10 +2,11 @@ package com.github.asforest.mshell.event
 
 import com.github.asforest.mshell.exception.system.ListenerAlreadyAddedException
 import com.github.asforest.mshell.exception.system.ListenerNotFoundException
+import io.ktor.util.collections.*
 
 class Event : Iterable<Event.Listener>
 {
-    val listeners = mutableListOf<Listener>()
+    val listeners = ConcurrentList<Listener>()
 
     fun always(cb: () -> Unit): Listener
     {
