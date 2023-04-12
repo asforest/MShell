@@ -367,17 +367,23 @@ MShell有4个大指令，分别是：
 # 别名：d
 /ms disconnect
 
-# 强制断开一个会话的所有连接
+# 断开一个会话的所有连接
 # 别名：d
 /ms disconnect <pid>
 
-# 强制结束当前连接中的会话
+# 结束当前连接中的会话
 # 别名：k
 /ms kill
 
-# 强制结束一个会话
+# 结束一个会话
 # 别名：k
 /ms kill <pid>
+
+# 使用系统命令行来强制结束一个会话
+# 别名：fk
+# 当会话无法使用kill命令正常终止时可以使用forcekill来强制结束（此命令仅支持和Linux平台）
+# 此命令在Windows使用`taskkill /F /PID $pid`完成，Linux平台使用`kill -9 $pid`完成
+/ms forcekill <pid>
 
 # 显示所有运行中的会话
 # 别名：l

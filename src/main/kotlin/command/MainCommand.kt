@@ -12,6 +12,8 @@ import com.github.asforest.mshell.permission.PresetGrants
 import com.github.asforest.mshell.session.Session
 import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.util.MShellUtils.buildUsage
+import java.util.*
+import java.util.concurrent.TimeUnit
 
 object MainCommand : TreeCommand()
 {
@@ -90,6 +92,37 @@ object MainCommand : TreeCommand()
 
             session.kill()
             sendMessage("kill 信号已发送给 ${session.identity}")
+        }
+    }
+
+    @Command(desc = "给指定的会话发送kill信号", aliases = ["fk"], permission = Admin or User)
+    suspend fun CallingContext.forcekill(pid: Long)
+    {
+        withCatch {
+            val session = pidToSession(pid)
+
+            // 检查权限
+            checkPermission(session.preset) ?: throw NoPermissionToKillSessionException(pid)
+
+            val os = System.getProperty("os.name").lowercase(Locale.getDefault())
+
+            val cli = if ("windows" in os) {
+                "taskkill /F /PID $pid"
+            } else if ("linux" in os) {
+                "kill -9 /F /PID $pid"
+            } else {
+                 throw ForceKillException("当前操作系统 $os 不支持使用 forcekill 命令")
+            }
+
+            val process = ProcessBuilder().command(cli).start()
+
+            if (!process.waitFor(5, TimeUnit.SECONDS))
+                throw ForceKillException("出现错误，forcekill 命令行的执行时间超时！请考虑手动结束 forcekill 的进程(pid: ${process.pid()})")
+
+            if (process.exitValue() != 0)
+                throw ForceKillException("出现错误，forcekill 命令行的返回值不等于0，实际返回值为：${process.exitValue()}。原始命令行为：$cli")
+
+            sendMessage("已强制结束会话 $pid")
         }
     }
 
