@@ -29,6 +29,7 @@ dependencies {
 
     // 告知 mirai-console 在打包插件时包含此依赖，不要剥离掉此依赖；无需包含版本号
     "shadowLink"("org.jetbrains.pty4j:pty4j")
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 mirai {

@@ -13,6 +13,9 @@ import com.github.asforest.mshell.session.SessionManager
 import com.github.asforest.mshell.session.SessionUser
 import com.github.asforest.mshell.util.EnvUtil
 import com.github.asforest.mshell.util.MShellUtils
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.forEach
+import kotlinx.coroutines.flow.toList
 import net.mamoe.mirai.Bot
 import net.mamoe.mirai.console.command.CommandManager.INSTANCE.register
 import net.mamoe.mirai.console.command.CommandSender.Companion.asCommandSender
